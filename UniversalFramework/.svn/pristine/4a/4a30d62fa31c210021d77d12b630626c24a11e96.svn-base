@@ -1,0 +1,21 @@
+/**
+ * 
+ */
+package com.cccollector.universal.app.service;
+
+import com.cccollector.universal.app.model.UserDetail;
+import com.cccollector.universal.service.GenericService;
+
+/**
+ * 用户详情服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public interface UserDetailService extends GenericService<Integer, UserDetail> {
+
+	/**
+	 * 获取用户头像缩略图URL
+	 */
+	public String getAvatarThumbnailUsersUrl();
+}

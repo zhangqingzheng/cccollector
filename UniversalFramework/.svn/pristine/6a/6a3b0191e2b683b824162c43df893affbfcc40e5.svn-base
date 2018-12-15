@@ -1,0 +1,120 @@
+/**
+ * 
+ */
+package com.cccollector.universal.app.service.impl;
+
+import java.io.File;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import javax.ws.rs.core.Form;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+
+import org.apache.cxf.jaxrs.client.WebClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.universal.app.dao.UserDetailDao;
+import com.cccollector.universal.app.model.UserDetail;
+import com.cccollector.universal.app.service.UserDetailService;
+import com.cccollector.universal.cxf.WebClientUtils;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 用户详情服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("app_userDetailService")
+public class UserDetailServiceImpl extends GenericServiceHibernateImpl<Integer, UserDetail> implements UserDetailService, UserDetailsService {
+	
+	@SuppressWarnings("unused")
+	@Autowired
+	private UserDetailDao app_userDetailDao;	
+	
+	/**
+	 * 平台标识符
+	 */
+	@Value("${platformBundleId}")
+	private String platformBundleId;
+
+	/**
+	 * Tomcat数据目录
+	 */
+	@Value("${paths.tomcatDataPath}")
+	private String tomcatDataPath;
+	
+	/**
+	 * 客户端证书路径
+	 */
+	@Value("${paths.clientCertificates}")
+	private String clientCertificates;
+	
+	/**
+	 * 应用管理平台webService地址
+	 */
+	@Value("${appManagement.webServiceAddress}")
+	private String appManagementWebServiceAddress;
+	
+	/**
+	 * 用户头像缩略图URL
+	 */
+	@Value("${appManagement.userAvatarThumbnailUrl}")
+	private String userAvatarThumbnailUrl;
+
+	@Override
+	public String getAvatarThumbnailUsersUrl() {
+		return userAvatarThumbnailUrl;
+	}
+
+	/**
+	 * 获取带证书的JSON WebClient
+	 * 
+	 * @return 带证书的客户端
+	 */
+	public WebClient getJsonWebClientWithCertificate() {
+		try {
+			WebClient webClient = null;
+			File clientCertificatesFile = new File(tomcatDataPath + platformBundleId + File.separator + clientCertificates);
+			DirectoryStream<Path> directoryStream = Files.newDirectoryStream(clientCertificatesFile.toPath(), path -> path.toString().endsWith(".p12"));
+			for (Path clientCertificatePath : directoryStream) {
+				webClient = WebClientUtils.getMultipartWebClientWithCertificate(appManagementWebServiceAddress, clientCertificatePath.toFile());
+				break;
+			}
+			directoryStream.close();
+			return webClient;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@Override
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		WebClient webClient = getJsonWebClientWithCertificate();
+		if (webClient == null) {
+			return null;
+		}
+		return webClient.path("/userDetails/getByUsername").query("username", username).get(new GenericType<UserDetail>() {});
+	}
+
+	@Override
+	public boolean modifyPassword(int userId, String oldPassword, String newPassword) {
+		WebClient webClient = getJsonWebClientWithCertificate();
+		if (webClient == null) {
+			return false;
+		}
+		Form form = new Form();
+		form.param("oldPassword", oldPassword);
+		form.param("newPassword", newPassword);
+		Response response = webClient.path("/userDetails/" + userId + "/modifyPassword").form(form);
+		return response.getStatus() == Response.Status.OK.getStatusCode();
+	}
+}

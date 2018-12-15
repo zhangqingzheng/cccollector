@@ -1,0 +1,542 @@
+/**
+ * 
+ */
+package com.cccollector.universal.view;
+
+import java.beans.PropertyDescriptor;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+
+import org.primefaces.PrimeFaces;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.model.SortMeta;
+import org.primefaces.model.SortOrder;
+
+/**
+ * 泛型列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public abstract class GenericListBean<T> {
+	
+	/**
+	 * 模型显示名称
+	 */
+	protected String modelDisplayName;
+	
+	/**
+	 * 模型属性名称
+	 */
+	protected String modelAttributeName;
+	
+	/**
+	 * 模型ID属性名称
+	 */
+	protected String modelIdAttributeName;
+	
+	/**
+	 * 是否使用对话框编辑
+	 */
+	protected boolean useDialog = true;
+	
+	/**
+	 * 泛型列表Bean处理器
+	 */
+	protected GenericListBeanHandler<T> genericListBeanHandler;
+
+	/**
+	 * 通过键获取配置字符串
+	 * 
+	 * @param key 键
+	 * @return 值字符串
+	 */
+	public String stringFromConfig(String key) {
+		ResourceBundle resourceBundle = FacesContext.getCurrentInstance().getApplication().getResourceBundle(FacesContext.getCurrentInstance(), "configBundle");
+		return resourceBundle.getString(key);
+	}
+
+	/**
+	 * 屏幕类别
+	 */
+	private String screenType;
+
+	public String getScreenType() {
+		return screenType;
+	}
+
+	public void setScreenType(String _screenType) {
+		screenType = _screenType;
+	}
+
+	/**
+	 * 是否手机屏幕
+	 */
+	public boolean isMobileScreen() {
+		return screenType != null && screenType.equals("mobileScreen");
+	}
+
+	/**
+	 * 模型ID1
+	 */
+	private String modelId1;
+
+	public String getModelId1() {
+		return modelId1;
+	}
+
+	public void setModelId1(String _modelId1) {
+		modelId1 = _modelId1;
+		
+		// 加载
+		if (relatedModel(1) == null) {
+			Integer id = 0;
+			try {
+				id = Integer.valueOf(modelId1);
+			} catch (Exception e) {}
+			if (id != 0) {
+				Object relatedModel = genericListBeanHandler.loadRelatedModel(1, id);
+				if (relatedModel != null) {
+					relatedModelMap.put(1, relatedModel);
+				}
+			}
+		}
+	}
+
+	/**
+	 * 模型ID2
+	 */
+	private String modelId2;
+
+	public String getModelId2() {
+		return modelId2;
+	}
+
+	public void setModelId2(String _modelId2) {
+		modelId2 = _modelId2;
+		
+		// 加载
+		if (relatedModel(2) == null) {
+			Integer id = 0;
+			try {
+				id = Integer.valueOf(modelId2);
+			} catch (Exception e) {}
+			if (id != 0) {
+				Object relatedModel = genericListBeanHandler.loadRelatedModel(2, id);
+				if (relatedModel != null) {
+					relatedModelMap.put(2, relatedModel);
+				}
+			}
+		}
+	}
+
+	/**
+	 * 模型ID3
+	 */
+	private String modelId3;
+
+	public String getModelId3() {
+		return modelId3;
+	}
+
+	public void setModelId3(String _modelId3) {
+		modelId3 = _modelId3;
+		
+		// 加载
+		if (relatedModel(3) == null) {
+			Integer id = 0;
+			try {
+				id = Integer.valueOf(modelId3);
+			} catch (Exception e) {}
+			if (id != 0) {
+				Object relatedModel = genericListBeanHandler.loadRelatedModel(3, id);
+				if (relatedModel != null) {
+					relatedModelMap.put(3, relatedModel);
+				}
+			}
+		}
+	}
+
+	/**
+	 * 模型ID4
+	 */
+	private String modelId4;
+	
+	public String getModelId4() {
+		return modelId4;
+	}
+	
+	public void setModelId4(String _modelId4) {
+		modelId4 = _modelId4;
+		
+		// 加载
+		if (relatedModel(4) == null) {
+			Integer id = 0;
+			try {
+				id = Integer.valueOf(modelId4);
+			} catch (Exception e) {}
+			if (id != 0) {
+				Object relatedModel = genericListBeanHandler.loadRelatedModel(4, id);
+				if (relatedModel != null) {
+					relatedModelMap.put(4, relatedModel);
+				}
+			}
+		}
+	}
+
+	/**
+	 * 关联模型映射
+	 */
+	private Map<Integer, Object> relatedModelMap = new HashMap<>();
+
+	/**
+	 * 通过序号获取关联模型
+	 * 
+	 * @param index 序号
+	 * @return 关联模型
+	 */
+	public Object relatedModel(int index) {
+		return relatedModelMap.get(index);
+	}
+
+	/**
+	 * 全部模型
+	 */
+	protected List<T> allModels;
+
+	public List<T> getAllModels() {
+		if (allModels == null) {
+			allModels = genericListBeanHandler.loadAllModelList();
+		}
+		return allModels;
+	}
+	
+	/**
+	 * 分页模型
+	 */
+	protected GenericLazyDataModel<T> pageModel;
+	
+	public GenericLazyDataModel<T> getPageModel() {
+		if (pageModel == null) {
+			pageModel = new GenericLazyDataModel<T>(modelIdAttributeName, genericListBeanHandler);
+		}
+		return pageModel;
+	}
+
+	/**
+	 * 是否多选
+	 */
+	private boolean multiSelect;
+
+	public boolean getMultiSelect() {
+		return multiSelect;
+	}
+
+	public void setMultiSelect(boolean _multiSelect) {
+		multiSelect = _multiSelect;
+	}
+
+	/**
+	 * 选中的模型
+	 */
+	private List<T> selectedModels;
+
+	public List<T> getSelectedModels() {
+		return selectedModels;
+	}
+
+	public void setSelectedModels(List<T> _selectedModels) {
+		selectedModels = _selectedModels;
+	}
+	
+	/**
+	 * 添加模型
+	 */
+	public void addModelAction(ActionEvent actionEvent) {
+		if (useDialog && !isMobileScreen()) {
+			// 对话框选项
+			Map<String, Object> options = new HashMap<String, Object>();
+			options.put("resizable", false);
+			options.put("width", 600);
+			options.put("height", 400);
+			options.put("contentWidth", "100%");
+			options.put("contentHeight", "100%");
+			options.put("includeViewParams", true);
+			
+			// 传递的参数
+			Map<String, List<String>> params = new HashMap<String, List<String>>();
+			List<String> param = new ArrayList<String>();
+			param.add("true");
+			params.put("useDialog", param);
+			param = new ArrayList<String>();
+			param.add("");
+			params.put(modelIdAttributeName, param);
+			
+			// 显示添加对话框
+			PrimeFaces.current().dialog().openDynamic(modelAttributeName + "Edit", options, params);
+		} else {
+			try {
+				FacesContext.getCurrentInstance().getExternalContext().redirect(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=");
+			} catch (Exception e) {}
+		}
+	}
+	
+	/**
+	 * 处理添加模型返回
+	 */
+	public void handleAddModelReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success) {
+			// 清空选中的模型
+			selectedModels = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加" + modelDisplayName + "成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "添加" + modelDisplayName + "失败，请重新尝试！"));
+		}
+		
+		// 刷新全部模型
+		allModels = null;
+		// 刷新分页模型
+		pageModel = null;
+	}
+	
+	/**
+	 * 编辑模型
+	 */
+	public void editModelAction(T t) {
+		Object modelId = null;
+		try {
+			PropertyDescriptor propertyDescriptor = new PropertyDescriptor(modelIdAttributeName, t.getClass());
+			modelId = propertyDescriptor.getReadMethod().invoke(t);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if (useDialog && !isMobileScreen()) {
+			// 对话框选项
+			Map<String, Object> options = new HashMap<String, Object>();
+			options.put("resizable", false);
+			options.put("width", 600);
+			options.put("height", 400);
+			options.put("contentWidth", "100%");
+			options.put("contentHeight", "100%");
+			options.put("includeViewParams", true);
+			
+			// 传递的参数
+			Map<String, List<String>> params = new HashMap<String, List<String>>();
+			List<String> param = new ArrayList<String>();
+			param.add("true");
+			params.put("useDialog", param);
+			param = new ArrayList<String>();
+			param.add(modelId.toString());
+			params.put(modelIdAttributeName, param);
+			
+			// 显示编辑对话框
+			PrimeFaces.current().dialog().openDynamic(modelAttributeName + "Edit", options, params);
+		} else {
+			try {
+				FacesContext.getCurrentInstance().getExternalContext().redirect(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=" + modelId.toString());
+			} catch (Exception e) {}
+		}
+	}
+	
+	/**
+	 * 编辑模型
+	 */
+	public void editModelAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedModels != null && selectedModels.size() > 0) {
+			if (selectedModels.size() == 1) {
+				Object modelId = null;
+				try {
+					T t = selectedModels.get(0);
+					PropertyDescriptor propertyDescriptor = new PropertyDescriptor(modelIdAttributeName, t.getClass());
+					modelId = propertyDescriptor.getReadMethod().invoke(t);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+				if (useDialog && !isMobileScreen()) {
+					// 对话框选项
+					Map<String, Object> options = new HashMap<String, Object>();
+					options.put("resizable", false);
+					options.put("width", 600);
+					options.put("height", 400);
+					options.put("contentWidth", "100%");
+					options.put("contentHeight", "100%");
+					options.put("includeViewParams", true);
+					
+					// 传递的参数
+					Map<String, List<String>> params = new HashMap<String, List<String>>();
+					List<String> param = new ArrayList<String>();
+					param.add("true");
+					params.put("useDialog", param);
+					param = new ArrayList<String>();
+					param.add(modelId.toString());
+					params.put(modelIdAttributeName, param);
+					
+					// 显示编辑对话框
+					PrimeFaces.current().dialog().openDynamic(modelAttributeName + "Edit", options, params);
+				} else {
+					try {
+						FacesContext.getCurrentInstance().getExternalContext().redirect(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=" + modelId.toString());
+					} catch (Exception e) {}
+				}
+			} else {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "只能选择一个" + modelDisplayName + "进行编辑！"));
+			}
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个" + modelDisplayName + "进行编辑！"));
+		}
+	}
+	
+	/**
+	 * 编辑选中模型
+	 */
+	public void editSelectedModelAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedModels != null && selectedModels.size() > 0) {
+			if (selectedModels.size() == 1) {
+				Object modelId = null;
+				try {
+					T t = selectedModels.get(0);
+					PropertyDescriptor propertyDescriptor = new PropertyDescriptor(modelIdAttributeName, t.getClass());
+					modelId = propertyDescriptor.getReadMethod().invoke(t);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+
+				if (useDialog && !isMobileScreen()) {
+					// 对话框选项
+					Map<String, Object> options = new HashMap<String, Object>();
+					options.put("resizable", false);
+					options.put("width", 600);
+					options.put("height", 400);
+					options.put("contentWidth", "100%");
+					options.put("contentHeight", "100%");
+					options.put("includeViewParams", true);
+					
+					// 传递的参数
+					Map<String, List<String>> params = new HashMap<String, List<String>>();
+					List<String> param = new ArrayList<String>();
+					param.add("true");
+					params.put("useDialog", param);
+					param = new ArrayList<String>();
+					param.add(modelId.toString());
+					params.put(modelIdAttributeName, param);
+					
+					// 显示编辑对话框
+					PrimeFaces.current().dialog().openDynamic(modelAttributeName + "Edit", options, params);
+				} else {
+					try {
+						FacesContext.getCurrentInstance().getExternalContext().redirect(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=" + modelId.toString());
+					} catch (Exception e) {}
+				}
+			} else {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "只能选择一个" + modelDisplayName + "进行编辑！"));
+			}
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个" + modelDisplayName + "进行编辑！"));
+		}
+	}
+	
+	/**
+	 * 处理编辑模型返回
+	 */
+	public void handleEditModelReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "编辑" + modelDisplayName + "成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "编辑" + modelDisplayName + "失败，请重新尝试！"));
+		}
+		
+		// 刷新全部模型
+		allModels = null;
+		// 刷新分页模型
+		pageModel = null;
+	}
+
+	/**
+	 * 泛型列表Bean处理器全部
+	 */
+	public static abstract class GenericListBeanHandlerAll<T> implements GenericListBeanHandler<T> {
+
+		@Override
+		public Object loadRelatedModel(int index, int relatedModelId) {
+			return null;
+		}
+
+		@Override
+		public List<T> loadPageModelList(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+
+		@Override
+		public List<T> loadMultiSortPageModelList(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+    }
+
+	/**
+	 * 泛型列表Bean处理器相关和全部
+	 */
+	public static abstract class GenericListBeanHandlerRelatedAll<T> implements GenericListBeanHandler<T> {
+
+		@Override
+		public List<T> loadPageModelList(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+
+		@Override
+		public List<T> loadMultiSortPageModelList(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+   }
+
+	/**
+	 * 泛型列表Bean处理器分页
+	 */
+	public static abstract class GenericListBeanHandlerPage<T> implements GenericListBeanHandler<T> {
+
+		@Override
+		public Object loadRelatedModel(int index, int relatedModelId) {
+			return null;
+		}
+
+		@Override
+		public List<T> loadAllModelList() {
+			return null;
+		}
+
+		@Override
+		public List<T> loadMultiSortPageModelList(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+    }
+
+	/**
+	 * 泛型列表Bean处理器相关和分页
+	 */
+	public static abstract class GenericListBeanHandlerRelatedPage<T> implements GenericListBeanHandler<T> {
+
+		@Override
+		public List<T> loadAllModelList() {
+			return null;
+		}
+
+		@Override
+		public List<T> loadMultiSortPageModelList(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+    }
+}

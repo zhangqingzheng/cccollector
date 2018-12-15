@@ -1,0 +1,397 @@
+/**
+ * 
+ */
+package com.cccollector.universal.subscription.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+/**
+ * 期刊类
+ *
+ * @author 杨彪
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public class Issue implements Serializable {
+
+	private static final long serialVersionUID = -5566611297200146704L;
+
+	private Integer _issueId;
+
+	/**
+	 * 期刊ID
+	 */
+	public Integer getIssueId() {
+		return _issueId;
+	}
+
+	public void setIssueId(Integer issueId) {
+		_issueId = issueId;
+	}
+
+	private String _issueIdentifier;
+
+	/**
+	 * 期刊标识符
+	 */
+	public String getIssueIdentifier() {
+		return _issueIdentifier;
+	}
+
+	public void setIssueIdentifier(String issueIdentifier) {
+		_issueIdentifier = issueIdentifier;
+	}
+
+	private Integer _type;
+
+	/**
+	 * 类别
+	 */
+	public Integer getType() {
+		return _type;
+	}
+
+	public void setType(Integer type) {
+		_type = type;
+	}
+
+	/**
+	 * 类别枚举
+	 */
+	public static enum TypeEnum {
+		正刊, 增刊, 预留一, 预留二, 预留三
+	}
+
+	/**
+	 * 类别枚举数组
+	 */
+	public TypeEnum[] getTypeEnums() {
+		return TypeEnum.values();
+	}
+
+	/**
+	 * 类别的枚举
+	 */
+	public TypeEnum getTypeEnum() {
+		return TypeEnum.values()[_type];
+	}
+
+	private Integer _year;
+
+	/**
+	 * 年份
+	 */
+	public Integer getYear() {
+		return _year;
+	}
+
+	public void setYear(Integer year) {
+		_year = year;
+	}
+
+	private Integer _issueNumber;
+
+	/**
+	 * 期号
+	 */
+	public Integer getIssueNumber() {
+		return _issueNumber;
+	}
+
+	public void setIssueNumber(Integer issueNumber) {
+		_issueNumber = issueNumber;
+	}
+
+	private Integer _totalIssueNumber;
+
+	/**
+	 * 总期号
+	 */
+	public Integer getTotalIssueNumber() {
+		return _totalIssueNumber;
+	}
+
+	public void setTotalIssueNumber(Integer totalIssueNumber) {
+		_totalIssueNumber = totalIssueNumber;
+	}
+
+	private Date _issueDate;
+
+	/**
+	 * 发行日期
+	 */
+	public Date getIssueDate() {
+		return _issueDate;
+	}
+
+	public void setIssueDate(Date issueDate) {
+		_issueDate = issueDate;
+	}
+
+	private String _title;
+
+	/**
+	 * 标题
+	 */
+	public String getTitle() {
+		return _title;
+	}
+
+	public void setTitle(String title) {
+		_title = title;
+	}
+
+	private String _summary;
+
+	/**
+	 * 摘要
+	 */
+	public String getSummary() {
+		return _summary;
+	}
+
+	public void setSummary(String summary) {
+		_summary = summary;
+	}
+
+	private Integer _covers;
+
+	/**
+	 * 封面
+	 */
+	public Integer getCovers() {
+		return _covers;
+	}
+
+	public void setCovers(Integer covers) {
+		_covers = covers;
+	}
+
+	/**
+	 * 封面数量
+	 */
+	public static final int CoverCount = 1;
+
+	/**
+	 * 封面名称
+	 */
+	public String coverName(long index) {
+		switch ((int) index) {
+		case 0:
+			return "封面1";
+		case 1:
+			return "封面2";
+		case 2:
+			return "封面3";
+		default:
+			return "封面";
+		}
+	}
+
+	/**
+	 * 封面宽度
+	 */
+	public int coverWidth(long index) {
+		switch ((int) index) {
+		case 0:
+			return 1440;
+		case 1:
+			return 1440;
+		case 2:
+			return 0;
+		default:
+			return 0;
+		}
+	}
+
+	/**
+	 * 封面高度
+	 */
+	public int coverHeight(long index) {
+		switch ((int) index) {
+		case 0:
+			return 0;
+		case 1:
+			return 960;
+		case 2:
+			return 0;
+		default:
+			return 0;
+		}
+	}
+
+	/**
+	 * 封面是否存在
+	 */
+	public Boolean coverExists(long index) {
+		return (_covers & (int) Math.pow(2, index)) > 0;
+	}
+
+	private Integer _previews;
+
+	/**
+	 * 预览
+	 */
+	public Integer getPreviews() {
+		return _previews;
+	}
+
+	public void setPreviews(Integer previews) {
+		_previews = previews;
+	}
+
+	/**
+	 * 预览数量
+	 */
+	public static final int PreviewCount = 5;
+
+	/**
+	 * 预览名称
+	 */
+	public String previewName(long index) {
+		switch ((int) index) {
+		case 0:
+			return "预览1";
+		case 1:
+			return "预览2";
+		case 2:
+			return "预览3";
+		case 3:
+			return "预览4";
+		case 4:
+			return "预览5";
+		default:
+			return "预览";
+		}
+	}
+
+	/**
+	 * 预览是否存在
+	 */
+	public Boolean previewExists(long index) {
+		return (_previews & (int) Math.pow(2, index)) > 0;
+	}
+
+	/**
+	 * 预览宽度
+	 */
+	public int previewWidth(long index) {
+		switch ((int) index) {
+		case 0:
+			return 1440;
+		case 1:
+			return 1440;
+		case 2:
+			return 0;
+		default:
+			return 0;
+		}
+	}
+
+	/**
+	 * 预览高度
+	 */
+	public int previewHeight(long index) {
+		switch ((int) index) {
+		case 0:
+			return 0;
+		case 1:
+			return 960;
+		case 2:
+			return 0;
+		default:
+			return 0;
+		}
+	}
+
+	private Date _saleTime;
+
+	/**
+	 * 发售时间
+	 */
+	public Date getSaleTime() {
+		return _saleTime;
+	}
+
+	public void setSaleTime(Date saleTime) {
+		_saleTime = saleTime;
+	}
+
+	private Integer _updateTime;
+
+	/**
+	 * 更新时间
+	 */
+	public Integer getUpdateTime() {
+		return _updateTime;
+	}
+
+	public void setUpdateTime(Integer updateTime) {
+		_updateTime = updateTime;
+	}
+
+	/**
+	 * Date类型更新时间
+	 */
+	public Date getUpdateTimeDate() {
+		if (_updateTime != null) {
+			return new Date((long) _updateTime * 1000);
+		}
+		return null;
+	}
+
+	public void setUpdateTimeDate(Date updateTimeDate) {
+		if (updateTimeDate != null) {
+			_updateTime = (int) (updateTimeDate.getTime() / 1000);
+		} else {
+			_updateTime = (int) (new Date().getTime() / 1000);
+		}
+	}
+
+	private Integer _status;
+
+	/**
+	 * 状态
+	 */
+	public Integer getStatus() {
+		return _status;
+	}
+
+	public void setStatus(Integer status) {
+		_status = status;
+	}
+
+	/**
+	 * 状态枚举
+	 */
+	public static enum StatusEnum {
+		未发布, 已发布, 已废弃
+	}
+
+	/**
+	 * 状态枚举数组
+	 */
+	public StatusEnum[] getStatusEnums() {
+		return StatusEnum.values();
+	}
+
+	/**
+	 * 状态的枚举
+	 */
+	public StatusEnum getStatusEnum() {
+		return StatusEnum.values()[_status];
+	}
+
+	private Magazine _magazine;
+
+	/**
+	 * 所属的杂志
+	 */
+	public Magazine getMagazine() {
+		return _magazine;
+	}
+
+	public void setMagazine(Magazine magazine) {
+		_magazine = magazine;
+	}
+}

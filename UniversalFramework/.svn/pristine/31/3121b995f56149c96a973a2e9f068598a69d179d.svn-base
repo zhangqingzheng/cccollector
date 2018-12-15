@@ -1,0 +1,52 @@
+/**
+ * 
+ */
+package com.cccollector.universal.view;
+
+/**
+ * 泛型编辑Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public abstract class GenericEditBean<T> {
+
+	/**
+	 * 模型ID
+	 */
+	private String modelId;
+
+	public String getModelId() {
+		return modelId;
+	}
+
+	public void setModelId(String _modelId) {
+		modelId = _modelId;
+		
+		// 新建或加载
+		if (model == null) {
+			Integer id = null;
+			try {
+				id = Integer.valueOf(modelId);
+			} catch (Exception e) {}
+			model = loadModel(id);
+		}
+	}
+
+	/**
+	 * 模型
+	 */
+	private T model;
+
+	public T getModel() {
+		return model;
+	}
+	
+	/**
+	 * 加载模型
+	 * 
+	 * @param modelId 模型ID
+	 * @return 加载后的模型
+	 */
+	public abstract T loadModel(Integer modelId);
+}

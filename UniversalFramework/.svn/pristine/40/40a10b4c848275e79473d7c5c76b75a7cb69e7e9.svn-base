@@ -1,0 +1,525 @@
+/**
+ * 
+ */
+package com.cccollector.universal.view;
+
+import java.beans.PropertyDescriptor;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.event.ActionEvent;
+
+import org.primefaces.PrimeFaces;
+import org.primefaces.component.menuitem.UIMenuItem;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.model.DefaultTreeNode;
+import org.primefaces.model.SortMeta;
+import org.primefaces.model.SortOrder;
+import org.primefaces.model.TreeNode;
+
+/**
+ * 泛型列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public abstract class GenericListBean<T> extends BaseBean {
+
+	/**
+	 * 模型显示名称
+	 */
+	protected String modelDisplayName;
+	
+	/**
+	 * 模型属性名称
+	 */
+	protected String modelAttributeName;
+	
+	/**
+	 * 模型类
+	 */
+	protected Class<T> modelClazz;
+	
+	/**
+	 * 模型ID属性名称
+	 */
+	protected String modelIdAttributeName;
+	
+	/**
+	 * 子模型属性名称
+	 */
+	protected String submodelAttributeName;
+	
+	/**
+	 * 父模型属性名称
+	 */
+	protected String parentModelAttributeName;
+	
+	/**
+	 * 是否使用对话框编辑
+	 */
+	protected boolean useDialog = true;
+	
+	/**
+	 * 泛型列表Bean处理器
+	 */
+	protected GenericListBeanHandler<T> genericListBeanHandler;
+	
+	/**
+	 * 获取基础Bean处理器
+	 */
+	@Override
+	public BaseBeanHandler getBaseBeanHandler() {
+		return genericListBeanHandler;
+	}
+
+	/**
+	 * 屏幕类别
+	 */
+	private String screenType;
+
+	public String getScreenType() {
+		return screenType;
+	}
+
+	public void setScreenType(String _screenType) {
+		screenType = _screenType;
+	}
+
+	/**
+	 * 是否手机屏幕
+	 */
+	public boolean isMobileScreen() {
+		return screenType != null && screenType.equals("mobileScreen");
+	}
+
+	/**
+	 * 全部模型
+	 */
+	protected List<T> allModels;
+
+	public List<T> getAllModels() {
+		if (allModels == null) {
+			allModels = genericListBeanHandler.loadAllModelList();
+		}
+		return allModels;
+	}
+	
+	/**
+	 * 分页模型
+	 */
+	protected GenericLazyDataModel<T> pageModel;
+	
+	public GenericLazyDataModel<T> getPageModel() {
+		if (pageModel == null) {
+			pageModel = new GenericLazyDataModel<T>(modelIdAttributeName, genericListBeanHandler);
+		}
+		return pageModel;
+	}
+
+	/**
+	 * 根模型TreeNode
+	 */
+	protected TreeNode rootModelTreeNode;
+
+	public TreeNode getRootModelTreeNode() {
+		if (rootModelTreeNode == null) {
+			try {
+				Map<Integer, TreeNode> treeNodeMap = new HashMap<Integer, TreeNode>();
+				// 根模型TreeNode
+				T rootModel = modelClazz.newInstance();
+				rootModelTreeNode = new DefaultTreeNode(rootModel);
+				
+				// 根据模型生成模型TreeNode
+				PropertyDescriptor parentModelPropertyDescriptor = new PropertyDescriptor(parentModelAttributeName, modelClazz);
+				PropertyDescriptor modelIdPropertyDescriptor = new PropertyDescriptor(modelIdAttributeName, modelClazz);
+				for (T model : getAllModels()) {
+					// 获取父模型TreeNode
+					TreeNode parentModelTreeNode = null;
+					@SuppressWarnings("unchecked")
+					T parentModel = (T) parentModelPropertyDescriptor.getReadMethod().invoke(model);
+					if (parentModel == null) {
+						parentModelTreeNode = rootModelTreeNode;
+					} else {
+						Integer parentId = (Integer) modelIdPropertyDescriptor.getReadMethod().invoke(parentModel);
+						parentModelTreeNode = treeNodeMap.get(parentId);
+					}
+					
+					// 获取模型TreeNode
+					TreeNode modelTreeNode = new DefaultTreeNode(model, parentModelTreeNode);
+					Integer modelId = (Integer) modelIdPropertyDescriptor.getReadMethod().invoke(model);
+					treeNodeMap.put(modelId, modelTreeNode);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return rootModelTreeNode;
+	}
+
+	/**
+	 * 是否多选
+	 */
+	private boolean multiSelect;
+
+	public boolean getMultiSelect() {
+		return multiSelect;
+	}
+
+	public void setMultiSelect(boolean _multiSelect) {
+		multiSelect = _multiSelect;
+	}
+
+	/**
+	 * 选中的模型
+	 */
+	private List<T> selectedModels;
+
+	public List<T> getSelectedModels() {
+		return selectedModels;
+	}
+
+	public void setSelectedModels(List<T> _selectedModels) {
+		selectedModels = _selectedModels;
+	}
+	
+	/**
+	 * 选中的模型TreeNode
+	 */
+	private TreeNode selectedModelTreeNode;
+
+	public TreeNode getSelectedModelTreeNode() {
+		return selectedModelTreeNode;
+	}
+
+	public void setSelectedModelTreeNode(TreeNode _selectedModelTreeNode) {
+		selectedModelTreeNode = _selectedModelTreeNode;
+	}
+
+	/**
+	 * 选中的模型ID
+	 */
+	private Integer selectedModelId;
+
+	public Integer getSelectedModelId() {
+		return selectedModelId;
+	}
+
+	public void setSelectedModelId(Integer _selectedModelId) {
+		selectedModelId = _selectedModelId;
+	}
+
+	/**
+	 * 打开对话框
+	 * 
+	 * @param modelId 模型ID
+	 */
+	protected void openDialog(String modelId) {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("resizable", false);
+		options.put("width", 600);
+		options.put("height", 400);
+		options.put("contentWidth", "100%");
+		options.put("contentHeight", "100%");
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add("true");
+		params.put("useDialog", param);
+		param = new ArrayList<String>();
+		param.add(modelId);
+		params.put(modelIdAttributeName, param);
+		
+		// 显示添加对话框
+		PrimeFaces.current().dialog().openDynamic(modelAttributeName + "Edit", options, params);
+	}
+	
+	/**
+	 * 选择模型
+	 */
+	public void selectModelAction(SelectEvent event) {
+		Object modelId = null;
+		try {
+			@SuppressWarnings("unchecked")
+			T t = (T) event.getObject();
+			PropertyDescriptor propertyDescriptor = new PropertyDescriptor(modelIdAttributeName, t.getClass());
+			modelId = propertyDescriptor.getReadMethod().invoke(t);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		if (multiSelect) {
+			handleNavigation(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=" + modelId.toString());
+		} else {
+			handleNavigation(submodelAttributeName + "List.xhtml?" + modelIdAttributeName + "=" + modelId.toString());
+		}
+	}
+	
+	/**
+	 * 添加模型
+	 */
+	public void addModelAction(ActionEvent actionEvent) {
+		if (useDialog && !isMobileScreen() && !(actionEvent.getSource() instanceof UIMenuItem)) {
+			openDialog("");
+		} else {
+			handleNavigation(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=null");
+		}
+	}
+	
+	/**
+	 * 处理添加模型返回
+	 */
+	public void handleAddModelReturn(SelectEvent event) {
+		addInfoMessage("添加" + modelDisplayName + "成功！");
+		
+		// 清空选中的模型
+		selectedModels = null;
+		// 刷新全部模型
+		allModels = null;
+		// 刷新分页模型
+		pageModel = null;
+	}
+	
+	/**
+	 * 编辑模型
+	 */
+	public void editModelAction(T t) {
+		Object modelId = null;
+		try {
+			PropertyDescriptor propertyDescriptor = new PropertyDescriptor(modelIdAttributeName, t.getClass());
+			modelId = propertyDescriptor.getReadMethod().invoke(t);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if (useDialog && !isMobileScreen()) {
+			openDialog(modelId.toString());
+		} else {
+			handleNavigation(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=" + modelId.toString());
+		}
+	}
+	
+	/**
+	 * 编辑选中模型
+	 */
+	public void editSelectedModelAction(ActionEvent actionEvent) {
+		if (selectedModels == null || selectedModels.size() == 0) {
+			addErrorMessage("请选择一个" + modelDisplayName + "进行编辑！");
+			return;
+		}
+		if (selectedModels.size() != 1) {
+			addErrorMessage("只能选择一个" + modelDisplayName + "进行编辑！");
+			return;
+		}
+		
+		Object modelId = null;
+		try {
+			T t = selectedModels.get(0);
+			PropertyDescriptor propertyDescriptor = new PropertyDescriptor(modelIdAttributeName, t.getClass());
+			modelId = propertyDescriptor.getReadMethod().invoke(t);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if (useDialog && !isMobileScreen() && !(actionEvent.getSource() instanceof UIMenuItem)) {
+			openDialog(modelId.toString());
+		} else {
+			handleNavigation(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=" + modelId.toString());
+		}
+	}
+	
+	/**
+	 * 处理编辑模型返回
+	 */
+	public void handleEditModelReturn(SelectEvent event) {
+		addInfoMessage("编辑" + modelDisplayName + "成功！");
+		
+		// 刷新全部模型
+		allModels = null;
+		// 刷新分页模型
+		pageModel = null;
+	}
+
+	/**
+	 * 打开树状对话框
+	 * 
+	 * @param modelId 模型ID
+	 * @param parentModelId 父模型ID
+	 */
+	protected void openTreeDialog(String modelId, String parentModelId) {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("resizable", false);
+		options.put("width", 600);
+		options.put("height", 400);
+		options.put("contentWidth", "100%");
+		options.put("contentHeight", "100%");
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add("true");
+		params.put("useDialog", param);
+		param = new ArrayList<String>();
+		param.add(modelId);
+		params.put(modelIdAttributeName, param);
+		param = new ArrayList<String>();
+		param.add(parentModelId);
+		params.put("parentModelId", param);
+		
+		// 显示添加对话框
+		PrimeFaces.current().dialog().openDynamic(modelAttributeName + "Edit", options, params);
+	}
+	
+	/**
+	 * 添加树状模型
+	 */
+	public void addTreeModelAction(ActionEvent actionEvent) {
+		String parentModelId = "";
+		if (selectedModelTreeNode != null) {
+			try {
+				Object selectedModel = selectedModelTreeNode.getData();
+				PropertyDescriptor propertyDescriptor = new PropertyDescriptor(modelIdAttributeName, modelClazz);
+				parentModelId = propertyDescriptor.getReadMethod().invoke(selectedModel).toString();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		if (useDialog && !isMobileScreen() && !(actionEvent.getSource() instanceof UIMenuItem)) {
+			openTreeDialog("", parentModelId);
+		} else {
+			handleNavigation(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=null&parentModelId=" + parentModelId);
+		}
+	}
+	
+	/**
+	 * 处理添加树状模型返回
+	 */
+	public void handleAddTreeModelReturn(SelectEvent event) {
+		addInfoMessage("添加" + modelDisplayName + "成功！");
+		
+		// 清空选中的模型TreeNode
+		selectedModelTreeNode = null;
+		// 刷新全部模型
+		allModels = null;
+		// 刷新根模型TreeNode
+		rootModelTreeNode = null;
+	}
+	
+	/**
+	 * 编辑选中树状模型
+	 */
+	public void editSelectedTreeModelAction(ActionEvent actionEvent) {
+		if (selectedModelTreeNode == null) {
+			addErrorMessage("请选择一个" + modelDisplayName + "进行编辑！");
+			return;
+		}
+		
+		Object modelId = null;
+		try {
+			Object selectedModel = selectedModelTreeNode.getData();
+			PropertyDescriptor propertyDescriptor = new PropertyDescriptor(modelIdAttributeName, modelClazz);
+			modelId = propertyDescriptor.getReadMethod().invoke(selectedModel).toString();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if (useDialog && !isMobileScreen() && !(actionEvent.getSource() instanceof UIMenuItem)) {
+			openDialog(modelId.toString());
+		} else {
+			handleNavigation(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=" + modelId.toString());
+		}
+	}
+	
+	/**
+	 * 处理编辑树状模型返回
+	 */
+	public void handleEditTreeModelReturn(SelectEvent event) {
+		addInfoMessage("编辑" + modelDisplayName + "成功！");
+		
+		// 刷新全部模型
+		allModels = null;
+		// 刷新根模型TreeNode
+		rootModelTreeNode = null;
+	}
+
+	/**
+	 * 泛型列表Bean处理器全部
+	 */
+	public static abstract class GenericListBeanHandlerAll<T> implements GenericListBeanHandler<T> {
+
+		@Override
+		public Object loadRelatedModel(int index, int relatedModelId) {
+			return null;
+		}
+
+		@Override
+		public List<T> loadPageModelList(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+
+		@Override
+		public List<T> loadMultiSortPageModelList(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+    }
+
+	/**
+	 * 泛型列表Bean处理器相关和全部
+	 */
+	public static abstract class GenericListBeanHandlerRelatedAll<T> implements GenericListBeanHandler<T> {
+
+		@Override
+		public List<T> loadPageModelList(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+
+		@Override
+		public List<T> loadMultiSortPageModelList(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+   }
+
+	/**
+	 * 泛型列表Bean处理器分页
+	 */
+	public static abstract class GenericListBeanHandlerPage<T> implements GenericListBeanHandler<T> {
+
+		@Override
+		public Object loadRelatedModel(int index, int relatedModelId) {
+			return null;
+		}
+
+		@Override
+		public List<T> loadAllModelList() {
+			return null;
+		}
+
+		@Override
+		public List<T> loadMultiSortPageModelList(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+    }
+
+	/**
+	 * 泛型列表Bean处理器相关和分页
+	 */
+	public static abstract class GenericListBeanHandlerRelatedPage<T> implements GenericListBeanHandler<T> {
+
+		@Override
+		public List<T> loadAllModelList() {
+			return null;
+		}
+
+		@Override
+		public List<T> loadMultiSortPageModelList(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+    }
+}

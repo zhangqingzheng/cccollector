@@ -1,0 +1,43 @@
+/**
+ * 
+ */
+package com.cccollector.universal.app.service;
+
+import java.util.Map;
+
+import com.cccollector.universal.app.model.Permission;
+import com.cccollector.universal.app.model.UserDetail;
+import com.cccollector.universal.service.GenericService;
+
+/**
+ * 用户详情服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public interface UserDetailService extends GenericService<Integer, UserDetail> {
+
+	/**
+	 * 获取用户头像缩略图URL
+	 */
+	public String getAvatarThumbnailUsersUrl();
+	
+	/**
+	 * 修改密码
+     * 
+     * @param userId 用户ID
+     * @param oldPassword 旧密码
+     * @param newPassword 新密码
+	 * @return 是否成功 
+	 */
+	public boolean modifyPassword(int userId, String oldPassword, String newPassword);
+	
+	/**
+	 * 根据用户ID和平台ID加载用户所有的权限
+	 * 
+	 * @param userId 用户ID
+	 * @param platformId 平台ID
+	 * @return 用户权限 
+	 */
+	public Map<Integer, Permission> getUserPermissions(int userId, int platformId);
+}

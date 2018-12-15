@@ -1,0 +1,16 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/templateMain.xhtml">
+    <ui:define name="title">
+        用户没有当前页面的访问权限
+    </ui:define>
+
+    <ui:define name="implementation">
+		<h:form id="noPermissionForm">
+			<p:commandButton icon="fa fa-fw fa-user-times" value="注销" actionListener="#{templateBean.logoutAction}" />
+		</h:form>
+    </ui:define>
+</ui:composition>

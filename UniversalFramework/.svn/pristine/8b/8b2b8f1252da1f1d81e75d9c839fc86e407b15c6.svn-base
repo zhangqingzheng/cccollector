@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets">
+	<h:head>
+		<h:outputStylesheet name="main/css/showcase.css" />
+		<h:outputStylesheet name="main/css/perfect-scrollbar.css" />
+		<h:outputStylesheet name="main/css/sh.css" />
+		<h:outputStylesheet name="main/css/grid.css" />
+		<h:outputScript name="jquery/jquery.js" library="primefaces" />
+		<h:outputScript name="jquery/jquery-plugins.js" library="primefaces" />
+		<h:outputScript name="core.js" library="primefaces" />
+		<h:outputScript name="main/js/perfect-scrollbar.js" />
+		<h:outputScript name="main/js/showcase.js" />
+		
+		<ui:insert name="head" />
+		<title><ui:insert name="title" /></title>
+	</h:head>
+
+	<h:body style="background-color:#ffffff;margin:10px;">
+		<span style="display:none"><ui:insert name="subtitle" /></span>
+		<ui:insert name="implementation" />
+	</h:body>
+</html>

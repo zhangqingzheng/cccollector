@@ -1,0 +1,278 @@
+/**
+ * 
+ */
+package com.cccollector.universal.subscription.model;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * 商品类
+ *
+ * @author 杨彪
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public class Product implements Serializable {
+	
+	private static final long serialVersionUID = -2270603766181499902L;
+
+	private Integer _productId;
+
+	/**
+	 * 商品ID
+	 */
+	public Integer getProductId() {
+		return _productId;
+	}
+
+	public void setProductId(Integer productId) {
+		_productId = productId;
+	}
+	
+	private Integer _type;
+
+	/**
+	 * 类别
+	 */
+	public Integer getType() {
+		return _type;
+	}
+
+	public void setType(Integer type) {
+		_type = type;
+	}
+	
+	/**
+	 * 类别枚举
+	 */
+	public static enum TypeEnum {
+		期刊,
+		订阅,
+		促销
+	}
+
+	/**
+	 * 类别枚举数组
+	 */
+	public TypeEnum[] getTypeEnums() {
+		return TypeEnum.values();
+	}
+
+	/**
+	 * 类别的枚举
+	 */
+	public TypeEnum getTypeEnum() {
+		return TypeEnum.values()[_type];
+	}
+	
+	private String _name;
+
+	/**
+	 * 名称
+	 */
+	public String getName() {
+		return _name;
+	}
+
+	public void setName(String name) {
+		_name = name;
+	}
+
+	private String _productIdentifier;
+	
+	/**
+	 * 商品标识符
+	 */
+	public String getProductIdentifier() {
+		return _productIdentifier;
+	}
+
+	public void setProductIdentifier(String productIdentifier) {
+		_productIdentifier = productIdentifier;
+	}
+	
+	private String _title;
+	
+	/**
+	 * 标题
+	 */
+	public String getTitle() {
+		return _title;
+	}
+
+	public void setTitle(String title) {
+		_title = title;
+	}
+	
+	private String _note;
+
+	/**
+	 * 说明
+	 */
+	public String getNote() {
+		return _note;
+	}
+
+	public void setNote(String note) {
+		_note = note;
+	}
+	
+	private BigDecimal _sellingPrice;
+	
+	/**
+	 * 售价
+	 */
+	public BigDecimal getSellingPrice() {
+		return _sellingPrice;
+	}
+
+	public void setSellingPrice(BigDecimal sellingPrice) {
+		_sellingPrice = sellingPrice;
+	}
+	
+	private BigDecimal _originalPrice;
+	
+	/**
+	 * 原价
+	 */
+	public BigDecimal getOriginalPrice() {
+		return _originalPrice;
+	}
+
+	public void setOriginalPrice(BigDecimal originalPrice) {
+		_originalPrice = originalPrice;
+	}
+	
+	private BigDecimal _discountPrice;
+	
+	/**
+	 * 折扣价
+	 */
+	public BigDecimal getDiscountPrice() {
+		return _discountPrice;
+	}
+
+	public void setDiscountPrice(BigDecimal discountPrice) {
+		_discountPrice = discountPrice;
+	}
+	
+	private Integer _createTime;
+
+	/**
+	 * 上架时间
+	 */
+	public Integer getCreateTime() {
+		return _createTime;
+	}
+
+	public void setCreateTime(Integer createTime) {
+		_createTime = createTime;
+	}
+	
+	/**
+	 * Date类型上架时间
+	 */
+	public Date getCreateTimeDate() {
+		if (_createTime != null) {
+			return new Date((long) _createTime * 1000);
+		}
+		return null;
+	}
+	
+	public void setCreateTimeDate(Date createTimeDate) {
+		if (createTimeDate != null) {
+			_createTime = (int) (createTimeDate.getTime() / 1000);
+		} else {
+			_createTime = (int) (new Date().getTime() / 1000);
+		}
+	}	
+	
+	private Integer _updateTime;
+
+	/**
+	 * 更新时间
+	 */
+	public Integer getUpdateTime() {
+		return _updateTime;
+	}
+
+	public void setUpdateTime(Integer updateTime) {
+		_updateTime = updateTime;
+	}
+	
+	/**
+	 * Date类型更新时间
+	 */
+	public Date getUpdateTimeDate() {
+		if (_updateTime != null) {
+			return new Date((long) _updateTime * 1000);
+		}
+		return null;
+	}
+	
+	public void setUpdateTimeDate(Date updateTimeDate) {
+		if (updateTimeDate != null) {
+			_updateTime = (int) (updateTimeDate.getTime() / 1000);
+		} else {
+			_updateTime = (int) (new Date().getTime() / 1000);
+		}
+	}	
+
+	private Boolean _visible;
+
+	/**
+	 * 是否可见
+	 */
+	public Boolean getVisible() {
+		return _visible;
+	}
+
+	public void setVisible(Boolean visible) {
+		_visible = visible;
+	}
+	
+	/**
+	 * 是否可见枚举
+	 */
+	public static enum VisibleEnum {
+		否,
+		是
+	}
+
+	/**
+	 * 是否可见的枚举
+	 */
+	public VisibleEnum getVisibleEnum() {
+		int index = _visible ? 1 : 0;
+		return VisibleEnum.values()[index];
+	}
+
+	private Store _store;
+
+	/**
+	 * 所属的商店
+	 */
+	public Store getStore() {
+		return _store;
+	}
+
+	public void setStore(Store store) {
+		_store = store;
+	}
+	
+	private List<Detail> _details = new ArrayList<Detail>();
+	
+	/**
+	 * 包含的明细
+	 */
+	public List<Detail> getDetails() {
+		return _details;
+	}
+
+	public void setDetails(List<Detail> details) {
+		_details = details;
+	}
+}

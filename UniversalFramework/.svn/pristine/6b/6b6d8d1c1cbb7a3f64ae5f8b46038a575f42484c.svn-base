@@ -1,0 +1,275 @@
+/**
+ * 
+ */
+package com.cccollector.universal.app.model;
+
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+/**
+ * 用户详情类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public class UserDetail implements UserDetails {
+	
+	private static final long serialVersionUID = -445621527933366444L;
+	
+	private Integer _userId;
+
+	/**
+	 * 用户ID
+	 */
+	public Integer getUserId() {
+		return _userId;
+	}
+
+	public void setUserId(Integer userId) {
+		_userId = userId;
+	}
+
+	private String _username;
+
+	/**
+	 * 用户名
+	 */
+	@Override
+	public String getUsername() {
+		return _username;
+	}
+
+	public void setUsername(String username) {
+		_username = username;
+	}
+
+	private String _realName;	
+
+	/**
+	 * 真实姓名
+	 */	
+	public String getRealName() {
+		return _realName;
+	}
+
+	public void setRealName(String realName) {
+		_realName = realName;
+	}
+	
+	private Boolean _hasAvatar;
+
+	/**
+	 * 是否有头像
+	 */
+	public Boolean getHasAvatar() {
+		return _hasAvatar;
+	}
+
+	public void setHasAvatar(Boolean hasAvatar) {
+		_hasAvatar = hasAvatar;
+	}
+	
+	/**
+	 * 头像文件路径
+	 */
+	public String avatarFilePath() {
+		return _userId + "_avatar.jpg";
+	}
+	
+	private String _email;
+	
+	/**
+	 * 电子邮箱
+	 */	
+	public String getEmail() {
+		return _email;
+	}
+
+	public void setEmail(String email) {
+		_email = email;
+	}
+
+	private String _cellphone;	
+
+	/**
+	 * 手机号
+	 */
+	public String getCellphone() {
+		return _cellphone;
+	}
+
+	public void setCellphone(String cellphone) {
+		_cellphone = cellphone;
+	}
+
+	private Integer _type;
+
+	/**
+	 * 类别
+	 */
+	public Integer getType() {
+		return _type;
+	}
+
+	public void setType(Integer type) {
+		_type = type;
+	}
+
+	/**
+	 * 类别枚举
+	 */
+	public static enum TypeEnum {
+		正式,
+		试用,
+		兼职,
+		临时,
+		外部一,
+		外部二,
+		外部三
+	}
+
+	/**
+	 * 类别枚举数组
+	 */
+	public TypeEnum[] getTypeEnums() {
+		return TypeEnum.values();
+	}
+
+	/**
+	 * 类别的枚举
+	 */
+	public TypeEnum getTypeEnum() {
+		return TypeEnum.values()[_type];
+	}	
+	
+	private Boolean _enabled;
+
+	/**
+	 * 是否可用
+	 */
+	@Override
+	public boolean isEnabled() {
+		return _enabled;
+	}	
+
+	public void setEnabled(Boolean enabled) {
+		_enabled = enabled;
+	}
+
+	private Date _expiresDate;
+
+	/**
+	 * 到期日期
+	 */
+	public Date getExpiresDate() {
+		return _expiresDate;
+	}
+
+	public void setExpiresDate(Date expiresDate) {
+		_expiresDate = expiresDate;
+	}	
+	
+	private Boolean _certificateEnabled;
+
+	/**
+	 * 证书是否可用
+	 */
+	public Boolean getCertificateEnabled() {
+		return _certificateEnabled;
+	}
+
+	public void setCertificateEnabled(Boolean certificateEnabled) {
+		_certificateEnabled = certificateEnabled;
+	}
+	
+	private Integer _lastLoginTime;
+
+	/**
+	 * 最近登录时间
+	 */
+	public Integer getLastLoginTime() {
+		return _lastLoginTime;
+	}
+
+	public void setLastLoginTime(Integer lastLoginTime) {
+		_lastLoginTime = lastLoginTime;
+	}
+
+	/**
+	 * Date类型编辑时间
+	 */
+	public Date getLastLoginTimeDate() {
+		if (_lastLoginTime != null) {
+			return new Date((long) _lastLoginTime * 1000);
+		}
+		return null;
+	}
+	
+	public void setLastLoginTimeDate(Date lastLoginTimeDate) {
+		if (lastLoginTimeDate != null) {
+			_lastLoginTime = (int) (lastLoginTimeDate.getTime() / 1000);
+		} else {
+			_lastLoginTime = (int) (new Date().getTime() / 1000);
+		}
+	}
+	
+	private List<AppManagementGrantedAuthority> _authorities;
+
+	/**
+	 * 权限
+	 */
+	@Override
+	public List<AppManagementGrantedAuthority> getAuthorities() {
+		return _authorities;
+	}
+
+	public void setAuthorities(List<AppManagementGrantedAuthority> authorities) {
+		_authorities = authorities;
+	}
+
+	@Override
+	public String getPassword() {
+		return null;
+	}
+
+	@Override
+	public boolean isAccountNonExpired() {
+		return _expiresDate == null || _expiresDate.after(new Date());
+	}
+
+	@Override
+	public boolean isAccountNonLocked() {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	@Override
+	public boolean isCredentialsNonExpired() {
+		return _certificateEnabled == null ? true : _certificateEnabled;
+	}
+	
+	/**
+	 * 应用管理平台授权类
+	 */
+	public static class AppManagementGrantedAuthority implements GrantedAuthority {
+
+		private static final long serialVersionUID = 608908951337823381L;
+		
+		private String _authority;
+
+		/**
+		 * 权限
+		 */
+		@Override
+		public String getAuthority() {
+			return _authority;
+		}
+
+		public void setAuthority(String authority) {
+			_authority = authority;
+		}
+	}
+}

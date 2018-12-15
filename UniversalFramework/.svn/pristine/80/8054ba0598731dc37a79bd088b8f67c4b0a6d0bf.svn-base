@@ -1,0 +1,137 @@
+/**
+ * 
+ */
+package com.cccollector.universal.app.model;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 权限类
+ * 
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public class Permission implements Serializable {
+
+	private static final long serialVersionUID = 1444865703711458412L;
+	
+	private Integer _permissionId;
+
+	/**
+	 * 权限ID
+	 */
+	public Integer getPermissionId() {
+		return _permissionId;
+	}
+
+	public void setPermissionId(Integer permissionId) {
+		_permissionId = permissionId;
+	}
+
+	private String _name;
+
+	/**
+	 * 名称
+	 */
+	public String getName() {
+		return _name;
+	}
+
+	public void setName(String name) {
+		_name = name;
+	}
+
+	private Integer _type;
+
+	/**
+	 * 类别
+	 */
+	public Integer getType() {
+		return _type;
+	}
+
+	public void setType(Integer type) {
+		_type = type;
+	}
+
+	private String _specificIds;
+
+	/**
+	 * 特定ID
+	 */
+	public String getSpecificIds() {
+		return _specificIds;
+	}
+
+	public void setSpecificIds(String specificIds) {
+		_specificIds = specificIds;
+	}
+
+	private Boolean _enabled;
+
+	/**
+	 * 是否可用
+	 */
+	public Boolean getEnabled() {
+		return _enabled;
+	}
+
+	public void setEnabled(Boolean enabled) {
+		_enabled = enabled;
+	}
+
+	private Module _module;
+	
+	/**
+	 * 所属的模块
+	 */
+	public Module getModule() {
+		return _module;
+	}
+
+	public void setModule(Module module) {
+		_module = module;
+	}
+	
+	private List<Role> _roles = new ArrayList<Role>();
+	
+	/**
+	 * 关联的角色
+	 */
+	public List<Role> getRoles() {
+		return _roles;
+	}
+
+	public void setRoles(List<Role> roles) {
+		_roles = roles;
+	}
+	
+	private List<Department> _departments = new ArrayList<Department>();
+
+	/**
+	 * 关联的部门
+	 */
+	public List<Department> getDepartments() {
+		return _departments;
+	}
+
+	public void setDepartments(List<Department> departments) {
+		_departments = departments;
+	}		
+	
+	private List<Job> _jobs = new ArrayList<Job>();
+	
+	/**
+	 * 关联的岗位
+	 */
+	public List<Job> getJobs() {
+		return _jobs;
+	}
+	
+	public void setJobs(List<Job> jobs) {
+		_jobs = jobs;
+	}		
+}

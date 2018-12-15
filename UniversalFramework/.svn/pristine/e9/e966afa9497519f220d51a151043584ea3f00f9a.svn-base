@@ -1,0 +1,343 @@
+/**
+ * 
+ */
+package com.cccollector.universal.view;
+
+import java.beans.PropertyDescriptor;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.event.ActionEvent;
+
+import org.primefaces.PrimeFaces;
+import org.primefaces.component.menuitem.UIMenuItem;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.model.SortMeta;
+import org.primefaces.model.SortOrder;
+
+/**
+ * 泛型列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public abstract class GenericListBean<T> extends BaseBean {
+
+	/**
+	 * 模型显示名称
+	 */
+	protected String modelDisplayName;
+	
+	/**
+	 * 模型属性名称
+	 */
+	protected String modelAttributeName;
+	
+	/**
+	 * 模型ID属性名称
+	 */
+	protected String modelIdAttributeName;
+	
+	/**
+	 * 子模型属性名称
+	 */
+	protected String submodelAttributeName;
+	
+	/**
+	 * 是否使用对话框编辑
+	 */
+	protected boolean useDialog = true;
+	
+	/**
+	 * 泛型列表Bean处理器
+	 */
+	protected GenericListBeanHandler<T> genericListBeanHandler;
+	
+	/**
+	 * 获取基础Bean处理器
+	 */
+	@Override
+	public BaseBeanHandler getBaseBeanHandler() {
+		return genericListBeanHandler;
+	}
+
+	/**
+	 * 屏幕类别
+	 */
+	private String screenType;
+
+	public String getScreenType() {
+		return screenType;
+	}
+
+	public void setScreenType(String _screenType) {
+		screenType = _screenType;
+	}
+
+	/**
+	 * 是否手机屏幕
+	 */
+	public boolean isMobileScreen() {
+		return screenType != null && screenType.equals("mobileScreen");
+	}
+
+	/**
+	 * 全部模型
+	 */
+	protected List<T> allModels;
+
+	public List<T> getAllModels() {
+		if (allModels == null) {
+			allModels = genericListBeanHandler.loadAllModelList();
+		}
+		return allModels;
+	}
+	
+	/**
+	 * 分页模型
+	 */
+	protected GenericLazyDataModel<T> pageModel;
+	
+	public GenericLazyDataModel<T> getPageModel() {
+		if (pageModel == null) {
+			pageModel = new GenericLazyDataModel<T>(modelIdAttributeName, genericListBeanHandler);
+		}
+		return pageModel;
+	}
+
+	/**
+	 * 是否多选
+	 */
+	private boolean multiSelect;
+
+	public boolean getMultiSelect() {
+		return multiSelect;
+	}
+
+	public void setMultiSelect(boolean _multiSelect) {
+		multiSelect = _multiSelect;
+	}
+
+	/**
+	 * 选中的模型
+	 */
+	private List<T> selectedModels;
+
+	public List<T> getSelectedModels() {
+		return selectedModels;
+	}
+
+	public void setSelectedModels(List<T> _selectedModels) {
+		selectedModels = _selectedModels;
+	}
+
+	/**
+	 * 打开对话框
+	 * 
+	 * @param modelId 模型ID
+	 */
+	protected void openDialog(String modelId) {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("resizable", false);
+		options.put("width", 600);
+		options.put("height", 400);
+		options.put("contentWidth", "100%");
+		options.put("contentHeight", "100%");
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add("true");
+		params.put("useDialog", param);
+		param = new ArrayList<String>();
+		param.add(modelId);
+		params.put(modelIdAttributeName, param);
+		
+		// 显示添加对话框
+		PrimeFaces.current().dialog().openDynamic(modelAttributeName + "Edit", options, params);
+	}
+	
+	/**
+	 * 选择模型
+	 */
+	public void selectModelAction(SelectEvent event) {
+		Object modelId = null;
+		try {
+			@SuppressWarnings("unchecked")
+			T t = (T) event.getObject();
+			PropertyDescriptor propertyDescriptor = new PropertyDescriptor(modelIdAttributeName, t.getClass());
+			modelId = propertyDescriptor.getReadMethod().invoke(t);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		if (multiSelect) {
+			handleNavigation(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=" + modelId.toString());
+		} else {
+			handleNavigation(submodelAttributeName + "List.xhtml?" + modelIdAttributeName + "=" + modelId.toString());
+		}
+	}
+	
+	/**
+	 * 添加模型
+	 */
+	public void addModelAction(ActionEvent actionEvent) {
+		if (useDialog && !isMobileScreen() && !(actionEvent.getSource() instanceof UIMenuItem)) {
+			openDialog("");
+		} else {
+			handleNavigation(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=null");
+		}
+	}
+	
+	/**
+	 * 处理添加模型返回
+	 */
+	public void handleAddModelReturn(SelectEvent event) {
+		addInfoMessage("添加" + modelDisplayName + "成功！");
+		
+		// 清空选中的模型
+		selectedModels = null;
+		// 刷新全部模型
+		allModels = null;
+		// 刷新分页模型
+		pageModel = null;
+	}
+	
+	/**
+	 * 编辑模型
+	 */
+	public void editModelAction(T t) {
+		Object modelId = null;
+		try {
+			PropertyDescriptor propertyDescriptor = new PropertyDescriptor(modelIdAttributeName, t.getClass());
+			modelId = propertyDescriptor.getReadMethod().invoke(t);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if (useDialog && !isMobileScreen()) {
+			openDialog(modelId.toString());
+		} else {
+			handleNavigation(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=" + modelId.toString());
+		}
+	}
+	
+	/**
+	 * 编辑选中模型
+	 */
+	public void editSelectedModelAction(ActionEvent actionEvent) {
+		if (selectedModels == null || selectedModels.size() == 0) {
+			addErrorMessage("请选择一个" + modelDisplayName + "进行编辑！");
+			return;
+		}
+		if (selectedModels.size() != 1) {
+			addErrorMessage("只能选择一个" + modelDisplayName + "进行编辑！");
+			return;
+		}
+		
+		Object modelId = null;
+		try {
+			T t = selectedModels.get(0);
+			PropertyDescriptor propertyDescriptor = new PropertyDescriptor(modelIdAttributeName, t.getClass());
+			modelId = propertyDescriptor.getReadMethod().invoke(t);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		if (useDialog && !isMobileScreen() && !(actionEvent.getSource() instanceof UIMenuItem)) {
+			openDialog(modelId.toString());
+		} else {
+			handleNavigation(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=" + modelId.toString());
+		}
+	}
+	
+	/**
+	 * 处理编辑模型返回
+	 */
+	public void handleEditModelReturn(SelectEvent event) {
+		addInfoMessage("编辑" + modelDisplayName + "成功！");
+		
+		// 刷新全部模型
+		allModels = null;
+		// 刷新分页模型
+		pageModel = null;
+	}
+
+	/**
+	 * 泛型列表Bean处理器全部
+	 */
+	public static abstract class GenericListBeanHandlerAll<T> implements GenericListBeanHandler<T> {
+
+		@Override
+		public Object loadRelatedModel(int index, int relatedModelId) {
+			return null;
+		}
+
+		@Override
+		public List<T> loadPageModelList(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+
+		@Override
+		public List<T> loadMultiSortPageModelList(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+    }
+
+	/**
+	 * 泛型列表Bean处理器相关和全部
+	 */
+	public static abstract class GenericListBeanHandlerRelatedAll<T> implements GenericListBeanHandler<T> {
+
+		@Override
+		public List<T> loadPageModelList(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+
+		@Override
+		public List<T> loadMultiSortPageModelList(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+   }
+
+	/**
+	 * 泛型列表Bean处理器分页
+	 */
+	public static abstract class GenericListBeanHandlerPage<T> implements GenericListBeanHandler<T> {
+
+		@Override
+		public Object loadRelatedModel(int index, int relatedModelId) {
+			return null;
+		}
+
+		@Override
+		public List<T> loadAllModelList() {
+			return null;
+		}
+
+		@Override
+		public List<T> loadMultiSortPageModelList(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+    }
+
+	/**
+	 * 泛型列表Bean处理器相关和分页
+	 */
+	public static abstract class GenericListBeanHandlerRelatedPage<T> implements GenericListBeanHandler<T> {
+
+		@Override
+		public List<T> loadAllModelList() {
+			return null;
+		}
+
+		@Override
+		public List<T> loadMultiSortPageModelList(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters, StringBuffer totalRowCount) {
+			return null;
+		}
+    }
+}

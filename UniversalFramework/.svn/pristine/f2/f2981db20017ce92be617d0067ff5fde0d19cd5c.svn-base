@@ -1,0 +1,215 @@
+/**
+ * 
+ */
+package com.cccollector.universal.dao;
+
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
+
+import javax.persistence.EntityManager;
+
+import org.hibernate.Session;
+
+/**
+ * 泛型DAO接口
+ *
+ * @author 谢朋
+ * Copyright © 2016年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public interface GenericDao<K extends Serializable, T extends Serializable> {
+
+	/**
+	 * 获取当前EntityManager对象
+	 * 
+	 * @return EntityManager对象
+	 */
+	public EntityManager getEntityManager();
+
+	/**
+	 * 获取当前Session对象
+	 * 
+	 * @return Session对象
+	 */
+	public Session getSession();
+	
+	/**
+	 * 根据ID加载实体对象
+	 * 
+	 * @param id 待加载实体对象的ID
+	 * @param lazyAttributeNames 同时加载的延迟加载属性名称
+	 * @return 对应的实体对象
+	 */
+	public T loadById(K id, String... lazyAttributeNames);
+	
+	/**
+	 * 根据实体对象重新加载
+	 * 
+	 * @param t 待加载实体对象
+	 * @return 新的的实体对象
+	 */
+	public T loadNew(T t);
+	
+	/**
+	 * 加载全部实体对象列表
+	 * 
+	 * @return 全部实体对象列表
+	 */
+	public List<T> loadAll();
+	
+	/**
+	 * 加载全部实体对象列表
+	 * 
+	 * @param orderQueryFieldList 排序查询字段列表
+	 * @return 全部实体对象列表
+	 */
+	public List<T> loadAll(List<QueryField> orderQueryFieldList);
+	
+	/**
+	 * 加载全部实体对象列表
+	 * 
+	 * @param predicateQueryFieldList 谓词查询字段列表
+	 * @param orderQueryFieldList 排序查询字段列表
+	 * @return 全部实体对象列表
+	 */
+	public List<T> loadAll(List<QueryField> predicateQueryFieldList, List<QueryField> orderQueryFieldList);
+	
+	/**
+	 * 加载全部实体对象列表
+	 * 
+	 * @param <X> 查询结果对象的泛型
+	 * @param resultClass 查询结果对象的类
+	 * @param resultQueryField 查询结果对象的查询字段
+	 * @param predicateQueryFieldList 谓词查询字段列表
+	 * @param orderQueryFieldList 排序查询字段列表
+	 * @return 全部实体对象列表
+	 */
+	public <X> List<X> loadAll(Class<X> resultClass, QueryField resultQueryField, List<QueryField> predicateQueryFieldList, List<QueryField> orderQueryFieldList);
+	
+	/**
+	 * 分页加载实体对象列表
+	 * 
+	 * @param orderQueryFieldList 排序查询字段列表
+	 * @param first 起始行数
+	 * @param pageSize 每页行数
+	 * @return 分页实体对象列表
+	 */
+	public List<T> loadPage(List<QueryField> orderQueryFieldList, Integer first, Integer pageSize);
+	
+	/**
+	 * 分页加载实体对象列表
+	 * 
+	 * @param predicateQueryFieldList 谓词查询字段列表
+	 * @param orderQueryFieldList 排序查询字段列表
+	 * @param first 起始行数
+	 * @param pageSize 每页行数
+	 * @return 分页实体对象列表
+	 */
+	public List<T> loadPage(List<QueryField> predicateQueryFieldList, List<QueryField> orderQueryFieldList, Integer first, Integer pageSize);
+	
+	/**
+	 * 分页加载实体对象列表
+	 * 
+	 * @param <X> 查询结果对象的泛型
+	 * @param resultClass 查询结果对象的类
+	 * @param resultQueryField 查询结果对象的查询字段
+	 * @param predicateQueryFieldList 谓词查询字段列表
+	 * @param orderQueryFieldList 排序查询字段列表
+	 * @param first 起始行数
+	 * @param pageSize 每页行数
+	 * @return 分页实体对象列表
+	 */
+	public <X> List<X> loadPage(Class<X> resultClass, QueryField resultQueryField, List<QueryField> predicateQueryFieldList, List<QueryField> orderQueryFieldList, Integer first, Integer pageSize);
+	
+	/**
+	 * 计算实体对象数量
+	 * 
+	 * @param predicateQueryFieldList 谓词查询字段列表
+	 * @return 数量
+	 */
+	public Long count(List<QueryField> predicateQueryFieldList);
+	
+	/**
+	 * 获取实体对象的指定属性的最大值
+	 * 
+	 * @param attributeName 指定属性名称
+	 * @param predicateQueryFieldList 谓词查询字段列表
+	 * @return 最大值
+	 */
+	public Integer max(String attributeName, List<QueryField> predicateQueryFieldList);
+	
+	/**
+	 * 锁定实体对象
+	 * 
+	 * @param t 待锁定的实体对象
+	 */
+	public void lock(T t);
+	
+	/**
+	 * 清除实体对象
+	 * 
+	 * @param t 待清除的实体对象
+	 */
+	public void evict(T t);
+	
+	/**
+	 * 保存实体对象
+	 * 
+	 * @param t 待保存的实体对象
+	 * @return 保存后的实体对象的ID
+	 */
+	public K save(T t);
+	
+	/**
+	 * 保存全部实体对象
+	 * 
+	 * @param ct 待保存的实体对象集合
+	 */
+	public void saveAll(Collection<T> ct);
+	
+	/**
+	 * 更新实体对象
+	 * 
+	 * @param t 待更新的实体对象
+	 * @return 更新后的实体对象
+	 */
+	public T update(T t);
+	
+	/**
+	 * 更新实体对象的指定属性
+	 * 
+	 * @param t 待更新的实体对象
+	 * @param attributeNames 指定的属性名称
+	 */
+	public void update(T t, String... attributeNames);
+	
+	/**
+	 * 保存或更新实体对象
+	 * 
+	 * @param t 待保存或更新的实体对象
+	 * @return 保存或更新后的实体对象
+	 */
+	public T saveOrUpdate(T t);
+	
+	/**
+	 * 删除实体对象
+	 * 
+	 * @param t 待删除的实体对象
+	 */
+	public void delete(T t);
+	
+	/**
+	 * 根据ID删除实体对象
+	 * 
+	 * @param id 待删除实体对象的ID
+	 * @return 是否删除成功
+	 */
+	public boolean deleteById(K id);
+	
+	/**
+	 * 删除全部实体对象
+	 * 
+	 * @param ct 待删除的实体对象集合
+	 */
+	public void deleteAll(Collection<T> ct);
+}

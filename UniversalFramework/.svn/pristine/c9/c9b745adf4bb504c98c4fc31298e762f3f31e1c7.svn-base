@@ -1,0 +1,43 @@
+/**
+ * 
+ */
+package com.cccollector.universal.subscription.model;
+
+import java.io.Serializable;
+
+/**
+ * 应用商店类
+ *
+ * @author 杨彪
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+*/
+public class AppStore implements Serializable {
+
+	private static final long serialVersionUID = 7987897815371774121L;
+
+	private Integer _appStoreId;
+
+	/**
+	 * 应用商店ID
+	 */
+	public Integer getAppStoreId() {
+		return _appStoreId;
+	}
+
+	public void setAppStoreId(Integer appStoreId) {
+		_appStoreId = appStoreId;
+	}
+
+	private Store _store;
+
+	/**
+	 * 商店
+	 */
+	public Store getStore() {
+		return _store;
+	}
+
+	public void setStore(Store store) {
+		_store = store;
+	}
+}

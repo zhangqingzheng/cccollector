@@ -1,0 +1,25 @@
+/**
+ * 
+ */
+package com.cccollector.universal.app.service;
+
+import javax.ws.rs.core.Form;
+
+import com.cccollector.universal.app.model.User;
+import com.cccollector.universal.service.GenericService;
+
+/**
+ * 用户服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public interface UserService extends GenericService<Integer, User> {
+	
+	/**
+	 * 修改密码
+	 * 
+	 * @return 是否成功 
+	 */
+	public boolean modifyPassword(String userId, Form form);
+}

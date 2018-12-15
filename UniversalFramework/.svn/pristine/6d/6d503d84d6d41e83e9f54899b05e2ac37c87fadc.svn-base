@@ -1,0 +1,284 @@
+/**
+ * 
+ */
+package com.cccollector.universal.view;
+
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+
+import javax.faces.bean.ManagedProperty;
+import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.cxf.jaxrs.swagger.Swagger2Feature;
+import org.primefaces.PrimeFaces;
+import org.primefaces.model.DefaultOrganigramNode;
+import org.primefaces.model.OrganigramNode;
+import org.springframework.security.web.WebAttributes;
+
+import com.cccollector.universal.app.model.Department;
+
+/**
+ * 模版基础Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public abstract class TemplateBaseBean extends BaseBean {
+
+	/**
+	 * apiSwagger2Feature
+	 */
+	@ManagedProperty(value = "#{apiSwagger2Feature}")
+	private Swagger2Feature apiSwagger2Feature;
+
+	public void setApiSwagger2Feature(Swagger2Feature _apiSwagger2Feature) {
+		apiSwagger2Feature = _apiSwagger2Feature;
+	}
+	
+	/**
+	 * 获取头像缩略图URL
+	 */
+	public String getAvatarThumbnailUrl() {
+		if (isLoginAuthentication() && getLoginUserDetail().getHasAvatar()) {
+			String avatarFilePath = getLoginUserDetail().avatarFilePath();	
+			return stringFromConfigApp("appManagement.userAvatarThumbnailUrl") + avatarFilePath;
+		} else {
+			return getRelativeRootPath() + "main/images/noAvatar.png";
+		}
+	}
+
+	/**
+	 * 获取当前年份
+	 */
+	public String getCurrentYear() {
+		return Calendar.getInstance().get(Calendar.YEAR) + "";
+	}	
+
+	/**
+	 * 获取接口文档地址
+	 */
+	public String getApiDocs() {
+		return apiSwagger2Feature.getSchemes()[0] + "://" + apiSwagger2Feature.getHost() + apiSwagger2Feature.getBasePath() + "/api-docs?url=" + apiSwagger2Feature.getBasePath() + "/swagger.json";
+	}
+	
+	/**
+	 * 修改资料
+	 */
+	public void modifyProfileAction() {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("resizable", false);
+		options.put("width", 360);
+		options.put("contentWidth", "100%");
+		options.put("includeViewParams", true);
+		
+		// 显示添加对话框
+		PrimeFaces.current().dialog().openDynamic("/auth/modifyProfile", options, null);
+    }
+	
+	/**
+	 * 修改密码
+	 */
+	public void modifyPasswordAction() {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("resizable", false);
+		options.put("width", 360);
+		options.put("contentWidth", "100%");
+		options.put("includeViewParams", true);
+		
+		// 显示添加对话框
+		PrimeFaces.current().dialog().openDynamic("/auth/modifyPassword", options, null);
+    }
+	
+	/**
+	 * 人员信息表
+	 */
+	public void showPersonnelInfoAction() {
+		
+	}
+	
+	/**
+	 * 组织结构图
+	 */
+	public void showOrganizationChartAction() {
+		handleNavigation("/auth/organizationChartList.xhtml");
+	}
+	
+	/**
+	 * 注销账户
+	 */
+	public void logoutAction() {
+		try {
+			FacesContext.getCurrentInstance().getExternalContext().redirect(getRelativeRootPath() + "logout/cas");
+		} catch (Exception e) {}
+	}
+	
+	/**
+	 * 电子邮箱
+	 */
+	private String email;
+
+	public String getEmail() {
+		if (email == null) {
+			email = getLoginUserDetail().getEmail();
+		}
+		return email;
+	}
+
+	public void setEmail(String _email) {
+		email = _email;
+	}
+	
+	/**
+	 * 手机号
+	 */
+	private String cellphone;
+
+	public String getCellphone() {
+		if (cellphone == null) {
+			cellphone = getLoginUserDetail().getCellphone();
+		}
+		return cellphone;
+	}
+
+	public void setCellphone(String _cellphone) {
+		cellphone = _cellphone;
+	}
+	
+	/**
+	 * 更新资料
+	 */
+	public void updateProfileAction() {
+		// 置空
+		if (email.equals("")) {
+			email = null;
+		}
+		if (cellphone.equals("")) {
+			cellphone = null;
+		}
+		boolean success = app_userDetailService.modifyUserProfile(getLoginUserDetail().getUserId(), email, cellphone);
+		if (!success) {
+			addValidatingMessage("修改资料失败，请核对之后重新输入！");
+			return;
+		}
+		
+		getLoginUserDetail().setEmail(email);
+		getLoginUserDetail().setCellphone(cellphone);
+		PrimeFaces.current().dialog().closeDynamic(null);
+	}
+	
+	/**
+	 * 旧密码
+	 */
+	private String oldPassword;
+
+	public String getOldPassword() {
+		return oldPassword;
+	}
+
+	public void setOldPassword(String _oldPassword) {
+		oldPassword = _oldPassword;
+	}
+
+	/**
+	 * 新密码
+	 */
+	private String newPassword;
+
+	public String getNewPassword() {
+		return newPassword;
+	}
+
+	public void setNewPassword(String _newPassword) {
+		newPassword = _newPassword;
+	}
+
+	/**
+	 * 确认新密码
+	 */
+	private String confirmPassword;
+
+	public String getConfirmPassword() {
+		return confirmPassword;
+	}
+
+	public void setConfirmPassword(String _confirmPassword) {
+		confirmPassword = _confirmPassword;
+	}
+	
+	/**
+	 * 更新密码
+	 */
+	public void updatePasswordAction() {
+		if (newPassword.length() < 8 || confirmPassword.length() < 8) {
+			addValidatingMessage("密码长度必须不少于8位，请符合规则！");
+			return;
+		}
+		boolean match = Pattern.matches("^.*[A-Z]+.*$", newPassword) && Pattern.matches("^.*[a-z]+.*$", newPassword) && Pattern.matches("^.*[0-9]+.*$", newPassword);
+		if (!match) {
+			addValidatingMessage("新密码必须包含大小写字母和数字，请符合规则！");
+			return;
+		}
+		if (!newPassword.equals(confirmPassword)) {
+			addValidatingMessage("两次输入密码不一致，请重新输入！");
+			return;
+		}
+		if (newPassword.equals(oldPassword)) {
+			addValidatingMessage("新密码与原密码相同，请重新输入！");
+			return;
+		}
+		
+		boolean success = app_userDetailService.modifyUserPassword(getLoginUserDetail().getUserId(), oldPassword, newPassword);
+		if (!success) {
+			addValidatingMessage("修改密码失败，请核对之后重新输入！");
+			return;
+		}
+		
+		PrimeFaces.current().dialog().closeDynamic(null);
+	}
+	
+	/**
+	 * 获取认证失败消息
+	 */
+	public String getAuthenticationFailureMessage() {
+		try {
+			HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+			Exception exception = (Exception) request.getSession().getAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
+			return exception.getMessage();
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	/**
+	 * 获取组织图根节点
+	 */
+	private OrganigramNode rootDepartmentOrganigramNode;
+	
+    public OrganigramNode getRootDepartmentOrganigramNode() {
+    	if (rootDepartmentOrganigramNode == null) {
+    		Map<Integer, Department> userIndependentDepartments = app_userDetailService.getUserIndependentDepartments(getLoginUserDetail().getUserId());
+        	rootDepartmentOrganigramNode= new DefaultOrganigramNode("root", "组织结构", null);
+        	for (Integer key : userIndependentDepartments.keySet()) {
+        		List<Department> departments = app_userDetailService.loadDepartments(userIndependentDepartments.get(key).getCode());
+        		Map<Integer, OrganigramNode> organigramNodeMap = new HashMap<Integer, OrganigramNode>();
+    			for (Department department : departments) {
+    				OrganigramNode parentOrganigramNode = department.getParentDepartment() == null ? rootDepartmentOrganigramNode : organigramNodeMap.get(department.getParentDepartment().getDepartmentId());
+    				OrganigramNode organigramNode = new DefaultOrganigramNode("department", department.getName(), parentOrganigramNode);
+    				organigramNodeMap.put(department.getDepartmentId(), organigramNode);
+    			}
+        	}
+    	}
+    	return rootDepartmentOrganigramNode;
+    }
+
+	@Override
+	public BaseBeanHandler getBaseBeanHandler() {
+		return null;
+	}
+}

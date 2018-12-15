@@ -1,0 +1,146 @@
+/**
+ * 
+ */
+package com.cccollector.universal.service;
+
+import java.beans.BeanInfo;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.cccollector.universal.dao.GenericDao;
+import com.cccollector.universal.dao.QueryField;
+
+/**
+ * 泛型服务的Hibernate实现类
+ *
+ * @author 谢朋
+ * Copyright © 2016年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Transactional(propagation = Propagation.REQUIRED)
+public abstract class GenericServiceHibernateImpl<K extends Serializable, T extends Serializable> implements GenericService<K, T> {
+
+	@Autowired
+	private GenericDao<K, T> genericDao;
+
+	@Override
+	public T loadById(K id) {
+		return genericDao.loadById(id);
+	}
+
+	@Override
+	public T loadById(K id, String... lazyAttributeNames) {
+		return genericDao.loadById(id, lazyAttributeNames);
+	}
+
+	@Override
+	public List<T> loadAll() {
+		return genericDao.loadAll();
+	}
+	
+	@Override
+	public List<T> loadAll(List<QueryField> orderQueryFieldList) {
+		return genericDao.loadAll(orderQueryFieldList);
+	}
+
+	@Override
+	public List<T> loadAll(List<QueryField> predicateQueryFieldList, List<QueryField> orderQueryFieldList) {
+		return genericDao.loadAll(predicateQueryFieldList, orderQueryFieldList);
+	}
+
+	@Override
+	public <X> List<X> loadAll(Class<X> resultClass, QueryField resultQueryField, List<QueryField> predicateQueryFieldList, List<QueryField> orderQueryFieldList) {
+		return genericDao.loadAll(resultClass, resultQueryField, predicateQueryFieldList, orderQueryFieldList);
+	}
+
+	@Override
+	public List<T> loadPage(List<QueryField> orderQueryFieldList, Integer first, Integer pageSize) {
+		return genericDao.loadPage(orderQueryFieldList, first, pageSize);
+	}
+	
+	@Override
+	public List<T> loadPage(List<QueryField> predicateQueryFieldList, List<QueryField> orderQueryFieldList, Integer first, Integer pageSize) {
+		return genericDao.loadPage(predicateQueryFieldList, orderQueryFieldList, first, pageSize);
+	}
+
+	@Override
+	public <X> List<X> loadPage(Class<X> resultClass, QueryField resultQueryField, List<QueryField> predicateQueryFieldList, List<QueryField> orderQueryFieldList, Integer first, Integer pageSize) {
+		return genericDao.loadPage(resultClass, resultQueryField, predicateQueryFieldList, orderQueryFieldList, first, pageSize);
+	}
+
+	@Override
+	public Long count(List<QueryField> predicateQueryFieldList) {
+		return genericDao.count(predicateQueryFieldList);
+	}
+
+	@Override
+	public Integer max(String attributeName, List<QueryField> predicateQueryFieldList) {
+		return genericDao.max(attributeName, predicateQueryFieldList);
+	}
+	
+	@Override
+	public boolean hasChildren(T t) {
+		try {
+			T nt = genericDao.loadNew(t);
+			BeanInfo beanInfo = Introspector.getBeanInfo(nt.getClass());
+			PropertyDescriptor[] propertyDescriptors = beanInfo.getPropertyDescriptors();
+			for (PropertyDescriptor propertyDescriptor : propertyDescriptors) {
+				if (Collection.class.isAssignableFrom(propertyDescriptor.getPropertyType())) {
+					Collection<?> collection = (Collection<?>) propertyDescriptor.getReadMethod().invoke(nt);
+					if (collection != null && collection.size() > 0) {
+						return true;
+					}
+				}
+			}
+		} catch (Exception e) {
+			return true;
+		}
+		return false;
+	}
+	
+	@Override
+	public K save(T t) {
+		return genericDao.save(t);
+	}
+
+	@Override
+	public void saveAll(Collection<T> ct) {
+		genericDao.saveAll(ct);
+	}
+
+	@Override
+	public T update(T t) {
+		return genericDao.update(t);
+	}
+
+	@Override
+	public void update(T t, String... attributeNames) {
+		genericDao.update(t, attributeNames);
+	}
+	
+	@Override
+	public T saveOrUpdate(T t) {
+		return genericDao.saveOrUpdate(t);
+	}
+
+	@Override
+	public void delete(T t) {
+		genericDao.delete(t);
+	}
+
+	@Override
+	public boolean deleteById(K id) {
+		return genericDao.deleteById(id);
+	}
+
+	@Override
+	public void deleteAll(Collection<T> ct) {
+		genericDao.deleteAll(ct);
+	}
+}

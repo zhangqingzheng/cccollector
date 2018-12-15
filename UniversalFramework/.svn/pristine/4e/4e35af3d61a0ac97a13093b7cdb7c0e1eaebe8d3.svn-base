@@ -1,0 +1,58 @@
+/**
+ * 
+ */
+package com.cccollector.universal.user.service;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+import javax.ws.rs.core.Form;
+
+import com.cccollector.universal.service.GenericService;
+import com.cccollector.universal.user.model.UserApp;
+
+/**
+ * 用户应用服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public interface UserAppService extends GenericService<Integer, UserApp> {
+	
+	/**
+	 * 根据用户应用ID加载用户应用
+	 * 
+	 * @return 用户应用
+	 */
+	public UserApp loadUserAppByUserAppId(int userAppId);
+    
+	/**
+	 * 根据搜索词加载用户应用列表
+	 * 
+	 * @param searchWord 搜索词
+	 * @return 用户应用列表
+	 */
+    public List<UserApp> loadUserAppsBySearchWord(String searchWord);
+	
+    /**
+     * 添加已登录用户应用的消费交易
+     * 
+     * @param userAppId 用户应用ID
+     * @param accessToken 访问令牌
+     * @param title 商品名称
+     * @param price 商品藏币价格
+     * @param orderId 订单ID
+     * @param bookstorePlatformBundleId 书城平台标识符(需要修改)
+     * @return 正确信息
+     */
+    public boolean addConsumeTransaction(int userAppId, String accessToken, String title, BigDecimal price, int orderId, String bookstorePlatformBundleId);
+    
+    /**
+     * 添加取消订单交易信息
+     * 
+     * @param userAppId 用户应用ID
+     * @param orderId 订单ID
+     * @return 正确信息
+     */
+    public boolean addCancelOrderTransaction(int userAppId, Form form);
+}

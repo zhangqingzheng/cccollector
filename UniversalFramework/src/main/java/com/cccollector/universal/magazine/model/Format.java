@@ -1,0 +1,333 @@
+/**
+ * 
+ */
+package com.cccollector.universal.magazine.model;
+
+import java.io.File;
+import java.io.Serializable;
+import java.util.Date;
+
+/**
+ * 版式类
+ *
+ * @author 杨彪
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public class Format implements Serializable {
+
+	private static final long serialVersionUID = -1240076088764886803L;
+
+	private Integer _formatId;
+
+	/**
+	 * 版式ID
+	 */
+	public Integer getFormatId() {
+		return _formatId;
+	}
+
+	public void setFormatId(Integer formatId) {
+		_formatId = formatId;
+	}
+
+	/**
+	 * 版式URL路径
+	 */
+	public String getFormatUrlPath() {
+		return getIssue().getIssueUrlPath() + _formatId + "/";
+	}
+
+	/**
+	 * 版式文件路径
+	 */
+	public String getFormatFilePath() {
+		return getIssue().getIssueFilePath() + _formatId + File.separator;
+	}
+
+	private Integer _type;
+
+	/**
+	 * 类别
+	 */
+	public Integer getType() {
+		return _type;
+	}
+
+	public void setType(Integer type) {
+		_type = type;
+	}
+
+	/**
+	 * 类别从0开始
+	 */
+	public Integer getType0Start() {
+		if (_type != null) {
+			return _type - 1;
+		}
+		return null;
+	}
+
+	public void setType0Start(Integer type0Start) {
+		if (type0Start != null) {
+			_type = type0Start + 1;
+		} else {
+			_type = null;
+		}
+	}
+
+	/**
+	 * 类别枚举
+	 */
+	public static enum TypeEnum {
+		照排, 网页, 前端
+	}
+
+	/**
+	 * 类别枚举数组
+	 */
+	public TypeEnum[] getTypeEnums() {
+		return TypeEnum.values();
+	}
+
+	/**
+	 * 类别的枚举
+	 */
+	public TypeEnum getTypeEnum() {
+		return TypeEnum.values()[getType0Start()];
+	}
+
+	private Integer _mode;
+
+	/**
+	 * 模式
+	 */
+	public Integer getMode() {
+		return _mode;
+	}
+
+	public void setMode(Integer mode) {
+		_mode = mode;
+	}
+
+	/**
+	 * 模式枚举
+	 */
+	public static enum ModeEnum {
+		全刊, 样刊
+	}
+
+	/**
+	 * 模式枚举数组
+	 */
+	public ModeEnum[] getModeEnums() {
+		return ModeEnum.values();
+	}
+
+	/**
+	 * 模式的枚举
+	 */
+	public ModeEnum getModeEnum() {
+		return ModeEnum.values()[_mode];
+	}
+
+	private Integer _paging;
+
+	/**
+	 * 翻页方式
+	 */
+	public Integer getPaging() {
+		return _paging;
+	}
+
+	public void setPaging(Integer paging) {
+		_paging = paging;
+	}
+
+	/**
+	 * 翻页方式枚举
+	 */
+	public static enum PagingEnum {
+		翻书, 滑动, 折页
+	}
+
+	/**
+	 * 翻页方式枚举数组
+	 */
+	public PagingEnum[] getPagingEnums() {
+		return PagingEnum.values();
+	}
+
+	/**
+	 * 翻页方式的枚举
+	 */
+	public PagingEnum getPagingEnum() {
+		return PagingEnum.values()[_paging];
+	}
+
+	private Integer _direction;
+
+	/**
+	 * 阅读方向
+	 */
+	public Integer getDirection() {
+		return _direction;
+	}
+
+	public void setDirection(Integer direction) {
+		_direction = direction;
+	}
+
+	/**
+	 * 阅读方向枚举
+	 */
+	public static enum DirectionEnum {
+		从左至右, 从右至左
+	}
+
+	/**
+	 * 阅读方向枚举数组
+	 */
+	public DirectionEnum[] getDirectionEnums() {
+		return DirectionEnum.values();
+	}
+
+	/**
+	 * 阅读方向的枚举
+	 */
+	public DirectionEnum getDirectionEnum() {
+		return DirectionEnum.values()[_direction];
+	}
+
+	private Boolean _isSample;
+
+	/**
+	 * 是否试读
+	 */
+	public Boolean getIsSample() {
+		return _isSample;
+	}
+
+	public void setIsSample(Boolean isSample) {
+		_isSample = isSample;
+	}
+
+	/**
+	 * 是否试读枚举
+	 */
+	public static enum IsSampleEnum {
+		否, 是
+	}
+
+	/**
+	 * 是否试读枚举数组
+	 */
+	public IsSampleEnum[] getIsSampleEnums() {
+		return IsSampleEnum.values();
+	}
+
+	/**
+	 * 是否试读的枚举
+	 */
+	public IsSampleEnum getIsSampleEnum() {
+		int index = _isSample ? 1 : 0;
+		return IsSampleEnum.values()[index];
+	}
+
+	private String _loaderKey;
+
+	/**
+	 * 加载器密钥
+	 */
+	public String getLoaderKey() {
+		return _loaderKey;
+	}
+
+	public void setLoaderKey(String loaderKey) {
+		_loaderKey = loaderKey;
+	}
+
+	/**
+	 * 加载器密码
+	 */
+	public String getLoaderPassword() {
+		return _loaderKey + (_formatId + _issue.getIssueId());
+	}
+
+	private Integer _status;
+
+	/**
+	 * 状态
+	 */
+	public Integer getStatus() {
+		return _status;
+	}
+
+	public void setStatus(Integer status) {
+		_status = status;
+	}
+
+	/**
+	 * 状态枚举
+	 */
+	public static enum StatusEnum {
+		制作中, 审核中, 已完成, 已废弃
+	}
+
+	/**
+	 * 状态枚举数组
+	 */
+	public StatusEnum[] getStatusEnums() {
+		return StatusEnum.values();
+	}
+
+	/**
+	 * 状态的枚举
+	 */
+	public StatusEnum getStatusEnum() {
+		return StatusEnum.values()[_status];
+	}
+
+	private Integer _reviewTime;
+
+	/**
+	 * 审核时间
+	 */
+	public Integer getReviewTime() {
+		return _reviewTime;
+	}
+
+	public void setReviewTime(Integer reviewTime) {
+		_reviewTime = reviewTime;
+	}
+
+	/**
+	 * Date类型审核时间
+	 */
+	public Date getReviewTimeDate() {
+		if (_reviewTime != null) {
+			return new Date((long) _reviewTime * 1000);
+		}
+		return null;
+	}
+
+	public void setReviewTimeDate(Date reviewTimeDate) {
+		if (reviewTimeDate != null) {
+			_reviewTime = (int) (reviewTimeDate.getTime() / 1000);
+		} else {
+			_reviewTime = (int) (new Date().getTime() / 1000);
+		}
+	}
+
+	private Issue _issue;
+
+	/**
+	 * 所属的期刊
+	 */
+	public Issue getIssue() {
+		return _issue;
+	}
+
+	public void setIssue(Issue issue) {
+		_issue = issue;
+	}
+}

@@ -1,0 +1,198 @@
+<!DOCTYPE html [
+    <!ENTITY nbsp "&#160;">
+    <!ENTITY bull "&#8226;">
+    <!ENTITY copy "&#169;">
+]>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui">
+	<h:head>
+		<f:facet name="first">
+			<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+			<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+			<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+			<meta name="apple-mobile-web-app-capable" content="yes" />
+			<link rel="shortcut icon" type="image/png" href="#{request.contextPath}/main/images/favicon.png" />
+		</f:facet>
+	
+		<title><ui:insert name="appName" /></title>
+		<h:outputStylesheet name="main/css/showcase.css" />
+		<h:outputStylesheet name="main/css/perfect-scrollbar.css" />
+		<h:outputStylesheet name="main/css/sh.css" />
+		<h:outputStylesheet name="main/css/grid.css" />
+		<h:outputScript name="jquery/jquery.js" library="primefaces" />
+		<h:outputScript name="jquery/jquery-plugins.js" library="primefaces" />
+		<h:outputScript name="core.js" library="primefaces" />
+		<h:outputScript name="main/js/perfect-scrollbar.js" />
+		<h:outputScript name="main/js/showcase.js" />
+		<style type="text/css">
+			@media (min-width: 961px) {
+				#TITLESPAN {
+					font-size: 30px;
+				}
+				
+				body:after {
+					display: none;
+					content: 'pcScreen';
+				}
+			}
+			
+			@media (max-width: 960px) {
+				#TITLESPAN {
+					font-size: 24px;
+				}
+				
+				.ContentSideSections {
+					padding:14px 15px;
+				}
+				
+				body:after {
+					display: none;
+					content: 'mobileScreen';
+				}
+			}
+			
+			.disabled {
+				background-color: #dddddd !important;
+				color: #999999 !important;
+			}
+		</style>
+		<ui:insert name="style" />
+		<script type="text/javascript">
+			function refreshScreenType() {
+				var screenTypeHidden = PF('screenTypeHidden');
+				if (screenTypeHidden != null) {
+		            var screenType = window.getComputedStyle(document.body, ":after").getPropertyValue("content");
+					var screenTypeHiddenElement = document.getElementById(screenTypeHidden.id);
+					screenTypeHiddenElement.value = screenType;
+			        screenTypeRemoteCommand();
+				}
+			}
+			
+			$(window).on("load", function() {
+				refreshScreenType();
+			});
+			$(window).on("resize", function() {
+				refreshScreenType();
+			});
+		</script>
+		<ui:insert name="script" />
+		<ui:insert name="head" />
+	</h:head>
+
+	<h:body>
+	
+		<!-- PC CONTENT STARTS HERE-->
+		<div class="PC">
+	
+			<div id="MENUSIDE">
+				<div id="MENUSIDEindent">
+					<span id="LOGO" class="bordersOfMenuSide">
+						<h:graphicImage name="images/logo.svg" />
+						<h:graphicImage id="BlueLogo" styleClass="hiddenLogo" name="images/logoHighlight.svg" />
+					</span>
+					<div class="MenuSideMainLink bordersOfMenuSide">
+						<h:graphicImage name="main/images/zoom.svg" class="zoomIcon" />
+						<input id="menuSearch" type="text" placeholder="在菜单中搜索" class="boldFont fontSize14 mustClose searchInput" />
+					</div>
+					
+					<ui:insert name="menu" />
+				</div>
+			</div>
+	
+			<script type="text/javascript">
+				restoreMenuState();
+			</script>
+	
+			<div id="CONTENTSIDE">
+				<div id="CONTENTSIDEindent">
+	
+					<!-- header bar start-->
+					<div class="ContentSideSections" id="PFTopLinksCover">
+						<a id="LOGOTEXTSIDE" href="#{request.contextPath}/index.xhtml">
+							<span class="dispBlock logoDarkText fontSize24"><ui:insert name="companyName" /></span>
+							<span class="dispBlock logoBlueText fontSize30 regularFont"><ui:insert name="appName" /></span>
+						</a>
+
+						<a id="mobile-menu-btn" href="#">
+							<i class="fa fa-bars"></i>
+						</a>
+						
+						<h:form id="authenticationForm" class="floatRight" rendered="#{templateBean.loginOrAnonymousAuthentication}">
+		 					<p:graphicImage value="#{templateBean.avatarThumbnailUrl}" stream="false" width="50" height="50" style="border-radius:25px;margin-left:20px;margin-right:10px;vertical-align:middle" />
+						    <p:menuButton iconPos="right" value="#{templateBean.loginAuthentication ? templateBean.loginUserDetail.realName : '匿名'}" class="fontSize18">
+						        <p:menuitem icon="fa fa-fw fa-users" value="人员信息表" actionListener="#{templateBean.showPersonnelInfoAction}" rendered="#{templateBean.loginAuthentication and templateBean.hasModuleManage()}" />
+						        <p:menuitem icon="fa fa-fw fa-sitemap" value="组织结构图" actionListener="#{templateBean.showOrganizationChartAction}" rendered="#{templateBean.loginAuthentication and templateBean.hasModuleManage()}" />
+						        <p:menuitem icon="fa fa-fw fa-key" value="修改密码" actionListener="#{templateBean.modifyPasswordAction}" rendered="#{templateBean.loginAuthentication}" />
+						        <p:separator rendered="#{templateBean.loginAuthentication}" />
+						        <p:menuitem icon="fa fa-fw fa-file-code-o" value="客户端接口文档" url="#{templateBean.apiDocs}" target="_blank" rendered="#{templateBean.hasModuleManage()}" />
+						        <p:separator />
+						        <p:menuitem icon="fa fa-fw fa-user-times" value="注销" actionListener="#{templateBean.logoutAction}" rendered="#{templateBean.loginAuthentication}" />
+						    </p:menuButton>
+						</h:form>
+						
+						<a class="mobileLogoCover" href="#{request.contextPath}/index.xhtml">
+							<h:graphicImage name="images/logoHighlight.svg" style="height:40px;" styleClass="floatLeft marginRight10"/>
+							<span class="dispBlock logoDarkText fontSize16 floatLeft"><ui:insert name="companyName" />
+								<span class="dispBlock logoBlueText fontSize18 boldFont"><ui:insert name="appName" /></span>
+							</span>
+						</a>
+						
+					</div>
+					<!-- header bar end-->
+	
+					<div class="content-container">
+						<ui:insert name="content">
+	
+							<ui:insert name="subsubmenu"></ui:insert>
+							
+							<div class="ContentSideSections">
+								<div class="Content100 overHidden TextShadow">
+									<span id="TITLESPAN" class="TextShadow orange regularFont dispBlock"><ui:insert name="title" /><ui:insert name="subtitle" /></span>
+									<span class="defaultText dispTable"><ui:insert name="description" /></span>
+								</div>
+							</div>
+		
+							<div class="ContentSideSections Implementation">
+								<ui:insert name="implementation" />
+							</div>
+	
+						</ui:insert>
+					</div>
+	
+					<!-- footer start-->
+					<div class="ContentSideSections">
+						<span class="floatLeft fontSize14 gray">
+							<a href="http://www.bjhxch.com" target="_blank">北京华星成汇文化发展有限公司</a>, Copyright &copy; 2015-#{templateBean.currentYear}<br />All rights reserved.
+						</span>
+						<div style="clear: both" />
+					</div>
+					<!-- footer end-->
+	
+				</div>
+			</div>
+	
+		</div>
+		<!-- PC CONTENT END-->
+	
+		<ui:insert name="status">
+			<p:ajaxStatus style="width:64px;height:64px;position:fixed;right:5px;bottom:5px">
+				<f:facet name="start">
+					<p:graphicImage name="main/images/loader.gif" />
+				</f:facet>
+	
+				<f:facet name="complete">
+					<h:outputText value="" />
+				</f:facet>
+			</p:ajaxStatus>
+		</ui:insert>
+	
+		<ui:insert name="highlight">
+			<h:outputScript name="main/js/sh.js" target="body" />
+		</ui:insert>
+	
+		<ui:insert name="body"></ui:insert>
+	</h:body>
+</html>

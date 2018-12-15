@@ -1,0 +1,69 @@
+/**
+ * 
+ */
+package com.cccollector.universal.app.service;
+
+import java.util.List;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.apache.cxf.jaxrs.ext.multipart.Attachment;
+import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+
+import com.cccollector.universal.app.model.App;
+import com.cccollector.universal.service.GenericService;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+
+/**
+ * 应用服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Path("/app_apps")
+@Produces({ MediaType.APPLICATION_JSON })
+@Api(value = "应用服务")
+public interface AppService extends GenericService<Integer, App> {
+
+	/**
+	 * 同步证书
+	 * 
+	 * @param caCertificate 证书颁发机构
+	 * @param clientCertificate 客户端证书
+	 * @return 是否成功
+	 */
+    @Path("/syncCertificates")
+    @POST
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @ApiOperation(value = "同步证书")
+    public Response syncCertificates(@ApiParam(value = "证书颁发机构", required = false) @Multipart(value = "caCertificate", type="application/octet-stream", required = false) Attachment caCertificate, @ApiParam(value = "客户端证书", required = false) @Multipart(value = "clientCertificate", type="application/octet-stream", required = false) Attachment clientCertificate);
+	
+	/**
+	 * 根据应用ID加载应用
+	 * 
+	 * @return 应用
+	 */
+	public App loadAppByAppId(int appId);
+	
+	/**
+	 * 根据应用ID加载应用以及包含的版本、发行
+	 * 
+	 * @return 应用
+	 */
+	public App loadAppWithEditionsAndReleasesByAppId(int appId);
+
+	/**
+	 * 加载全部应用列表
+	 * 
+	 * @return 全部应用列表
+	 */
+	public List<App> loadAllApps();
+}
