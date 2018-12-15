@@ -1,0 +1,26 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.LoginDao;
+import com.cccollector.app.model.Login;
+import com.cccollector.app.service.LoginService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 登录服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("loginService")
+public class LoginServiceImpl extends GenericServiceHibernateImpl<Integer, Login> implements LoginService {
+	
+	@SuppressWarnings("unused")
+	@Autowired
+	private LoginDao loginDao;
+}

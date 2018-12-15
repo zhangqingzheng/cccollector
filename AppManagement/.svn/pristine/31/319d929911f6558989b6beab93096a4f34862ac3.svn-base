@@ -1,0 +1,60 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="#{resourceBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="title">
+		#{resourceBean.resource.resourceId == null ? '添加' : '编辑'}资源
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="resourceList.xhtml?multiSelect=true&amp;releaseId=#{resourceBean.modelId1}&amp;editionId=#{resourceBean.modelId2}&amp;appId=#{resourceBean.modelId3}&amp;platformId=#{resourceBean.modelId4 != null ? resourceBean.modelId4 : ''}" class="subitem"><h:outputText id="subtitle" value="#{resourceBean.resource.typeEnum.name() }" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{resourceBean.useDialog}" />
+			<f:viewParam name="releaseId" value="#{resourceBean.modelId1}" />		
+			<f:viewParam name="editionId" value="#{resourceBean.modelId2}" />
+			<f:viewParam name="appId" value="#{resourceBean.modelId3}" />
+			<f:viewParam name="platformId" value="#{resourceBean.modelId4}" />
+			<f:viewParam name="resourceId" value="#{resourceBean.modelId}" />
+		</f:metadata>
+
+		<h:form id="resourceEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="resourceId" value="资源ID:" style="font-weight:bold" rendered="#{resourceBean.resource.resourceId != null}" />
+				<p:outputLabel id="resourceId" value="#{resourceBean.resource.resourceId}" rendered="#{resourceBean.resource.resourceId != null}" />
+
+				<p:outputLabel for="platformId" value="对应平台:" style="font-weight:bold" rendered="#{resourceBean.resource.resourceId == null}" />
+				<p:selectOneMenu id="platformId" value="#{resourceBean.resource.platformId}" required="true" requiredMessage="对应平台为必填项" rendered="#{resourceBean.resource.resourceId == null}">
+					<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+					<f:selectItems value="#{resourceBean.allPlatforms}" var="platform" itemLabel="#{platform.name}" itemValue="#{platform.platformId}"/>
+				</p:selectOneMenu>
+				<p:outputLabel for="platformName" value="对应平台:" style="font-weight:bold" rendered="#{resourceBean.resource.resourceId != null}" />
+				<p:outputLabel id="platformName" value="#{resourceBean.resource.platform.name}" rendered="#{resourceBean.resource.resourceId != null}" />
+
+				<p:outputLabel for="type" value="类别:" style="font-weight:bold" />
+				<p:selectOneRadio id="type" value="#{resourceBean.resource.type}" required="true" requiredMessage="类别为必填项">
+					<f:selectItems value="#{resourceBean.resource.typeEnums}" var="typeEnum" itemLabel="#{typeEnum.name()}" itemValue="#{typeEnum.ordinal()}" />
+					<p:ajax immediate="true" update="subtitle" />
+				</p:selectOneRadio>
+				
+				<p:outputLabel for="address" value="地址:" style="font-weight:bold" />
+				<p:inputText id="address" value="#{resourceBean.resource.address}" required="true" requiredMessage="地址为必填项" size="30">
+					<f:validateLength maximum="200" />
+				</p:inputText>				
+				
+				<p:outputLabel for="releaseName" value="所属发行:" style="font-weight:bold" />
+				<p:outputLabel id="releaseName" value="#{resourceBean.resource.release.showName}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{resourceBean.saveAction}" update="messages" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

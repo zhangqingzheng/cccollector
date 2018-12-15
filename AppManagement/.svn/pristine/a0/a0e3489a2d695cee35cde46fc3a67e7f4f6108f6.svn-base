@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+	<h:head>
+		<title>#{releaseBean.release.releaseId == null ? '添加' : '编辑'}发行</title>
+	    <h:outputStylesheet name="css/showcase.css" />
+	</h:head>
+	 
+	<h:body style="background-color:#ffffff;">
+		<h:form id="releaseEditForm" style="margin:10px">
+			<f:metadata>
+				<f:viewParam name="editionId" value="#{releaseBean.editionId}" />
+				<f:viewParam name="releaseId" value="#{releaseBean.releaseId}" />
+			</f:metadata>
+
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="releaseId" value="发行ID:" style="font-weight:bold" rendered="#{releaseBean.release.releaseId != null}" />
+				<p:outputLabel id="releaseId" value="#{releaseBean.release.releaseId}" rendered="#{releaseBean.release.releaseId != null}" />
+				
+				<p:outputLabel for="releaseDate" value="发行日期:" style="font-weight:bold" />
+				<p:calendar id="releaseDate" value="#{releaseBean.release.releaseDate}" pattern="yyyy年M月d日" locale="cn" effect="fold" required="true" requiredMessage="发行日期为必填项" size="30" />
+				
+				<p:outputLabel for="version" value="版本号:" style="font-weight:bold" />
+				<p:inputText id="version" value="#{releaseBean.release.version}" required="true" requiredMessage="版本号为必填项" size="30">
+					<f:validateLength maximum="10" />
+				</p:inputText>
+				
+				<p:outputLabel for="osVersion" value="系统最小版本号:" style="font-weight:bold" />
+				<p:inputText id="osVersion" value="#{releaseBean.release.osVersion}" required="true" requiredMessage="系统最小版本号为必填项" size="30">
+					<f:validateLength maximum="10" />
+				</p:inputText>
+				
+				<p:outputLabel for="secretKey" value="密钥:" style="font-weight:bold" rendered="#{releaseBean.release.releaseId != null}" />
+				<p:outputLabel id="secretKey" value="#{releaseBean.release.secretKey}" rendered="#{releaseBean.release.releaseId != null}" />
+				
+				<p:outputLabel for="status" value="状态:" style="font-weight:bold" />
+				<p:selectOneMenu id="status" value="#{releaseBean.release.status}" required="true" requiredMessage="状态为必填项" >
+					<f:selectItems value="#{releaseBean.release.statusEnums}" var="statusEnum" itemLabel="#{statusEnum.name()}" itemValue="#{statusEnum.ordinal()}" />
+				</p:selectOneMenu>				
+				
+				<p:outputLabel for="editionName" value="所属版本:" style="font-weight:bold" />
+				<p:outputLabel id="editionName" value="#{releaseBean.release.edition.name}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{releaseBean.saveAction}" update="messages" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</h:body>
+</html>

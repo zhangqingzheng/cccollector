@@ -1,0 +1,131 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="title">
+		资源列表 - 
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		<span><a href="releaseList.xhtml?editionId=#{resourceListBean.modelId2}&amp;appId=#{resourceListBean.modelId3}" class="subitem">#{resourceListBean.release.showName}</a><span class="subitem fontSize18">发行</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="releaseId" value="#{resourceListBean.modelId1}" />		
+			<f:viewParam name="editionId" value="#{resourceListBean.modelId2}" />
+			<f:viewParam name="appId" value="#{resourceListBean.modelId3}" />
+			<f:viewParam name="multiSelect" value="#{resourceListBean.multiSelect}" />
+		</f:metadata>
+
+		<h:form id="resourcesForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:remoteCommand name="screenTypeRemoteCommand" />
+			<p:inputText id="screenType" widgetVar="screenTypeHidden" value="#{resourceListBean.screenType}" style="display:none" />
+			
+			<p:inputSwitch id="multiSelect" value="#{resourceListBean.multiSelect}" onLabel="管理" offLabel="浏览">
+				<p:ajax update="resourcesForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="resourcesSingle" var="resourceVar" value="#{resourceListBean.allModels}" selectionMode="single" rowKey="#{resourceVar.resourceId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{!resourceListBean.multiSelect}">				
+				<p:column headerText="资源ID" priority="1">
+					<h:outputText value="#{resourceVar.resourceId}" />
+				</p:column>
+				
+				<p:column headerText="对应平台" priority="1">
+					<h:outputText value="#{resourceVar.platform.name}" />
+				</p:column>				
+				
+				<p:column headerText="类别" priority="1">
+					<h:outputText value="#{resourceVar.typeEnum.name()}" />
+				</p:column>				
+
+				<p:column headerText="地址" priority="1">
+					<h:outputText value="#{resourceVar.address}" />
+				</p:column>
+			</p:dataTable>
+
+			<p:fieldset legend="从发行复制资源" style="margin:20px 0px" rendered="#{resourceListBean.multiSelect}">
+				<h:panelGrid columns="2" style="background-color:white">
+					<p:outputLabel for="releasesSelect" value="选择发行:" style="font-weight:bold" />
+					<p:selectOneMenu id="releasesSelect" value="#{resourceListBean.selectedModelId}">
+						<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+						<f:selectItems value="#{resourceListBean.allReleases}" var="release" itemLabel="#{release.showName}" itemValue="#{release.releaseId}"/>
+					</p:selectOneMenu>
+				
+					<f:facet name="footer">
+						<p:commandButton id="copyResources" icon="ui-icon-copy" value="复制" actionListener="#{resourceListBean.copyResourcesAction}" update="resourcesForm:messages resourcesForm:resourcesMultiple">
+							<p:confirm header="复制资源" message="是否确定从所选发行复制资源？" icon="ui-icon-alert" />
+						</p:commandButton>
+					</f:facet>
+				</h:panelGrid>
+			</p:fieldset>
+
+			<p:dataTable id="resourcesMultiple" var="resourceVar" value="#{resourceListBean.allModels}" selection="#{resourceListBean.selectedModels}" rowKey="#{resourceVar.resourceId}" draggableRows="true" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{resourceListBean.multiSelect}">
+				<p:ajax event="rowDblselect" listener="#{resourceListBean.selectModelAction}" />
+				<p:ajax event="rowReorder" listener="#{resourceListBean.moveResourceAction}" update="resourcesForm:messages resourcesForm:resourcesMultiple" />
+
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="资源ID" priority="1">
+					<h:outputText value="#{resourceVar.resourceId}" />
+				</p:column>
+				
+				<p:column headerText="对应平台" priority="1">
+					<h:outputText value="#{resourceVar.platform.name}" />
+				</p:column>				
+				
+				<p:column headerText="类别" priority="1">
+					<h:outputText value="#{resourceVar.typeEnum.name()}" />
+				</p:column>				
+
+				<p:column headerText="地址" priority="1">
+					<h:outputText value="#{resourceVar.address}" />
+				</p:column>
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{resourceListBean.editModelAction(resourceVar)}">
+						<p:ajax event="dialogReturn" listener="#{resourceListBean.handleEditModelReturn}" update="resourcesForm:messages resourcesForm:resourcesMultiple" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{resourceListBean.deleteResourceAction(resourceVar)}" update="resourcesForm:messages resourcesForm:resourcesMultiple" style="margin-left:10px">
+						<p:confirm header="删除资源" message="是否确定删除所选资源？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="resourcesMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{resourceListBean.addModelAction}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{resourceListBean.editSelectedModelAction}" update="messages" />
+				<p:menuitem icon="ui-icon-close" value="删除" actionListener="#{resourceListBean.deleteResourcesAction}" update="messages resourcesMultiple">
+					<p:confirm header="删除资源" message="是否确定删除所选资源？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{resourceListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addResource" icon="ui-icon-plus" value="添加" actionListener="#{resourceListBean.addModelAction}">
+						<p:ajax event="dialogReturn" listener="#{resourceListBean.handleAddModelReturn}" update="messages resourcesMultiple" />
+					</p:commandButton>
+					<p:commandButton id="editResource" icon="ui-icon-pencil" value="编辑" actionListener="#{resourceListBean.editSelectedModelAction}" update="messages" style="margin-left:20px">
+						<p:ajax event="dialogReturn" listener="#{resourceListBean.handleEditModelReturn}" update="messages resourcesMultiple" />
+					</p:commandButton>
+					<p:commandButton id="deleteResources" icon="ui-icon-close" value="删除" actionListener="#{resourceListBean.deleteResourcesAction}" update="messages resourcesMultiple" style="margin-left:20px">
+						<p:confirm header="删除资源" message="是否确定删除所选资源？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

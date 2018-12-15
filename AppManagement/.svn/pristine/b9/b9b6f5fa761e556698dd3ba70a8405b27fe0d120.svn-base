@@ -1,0 +1,208 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.hibernate.exception.ConstraintViolationException;
+import org.primefaces.context.RequestContext;
+import org.springframework.dao.DataIntegrityViolationException;
+
+import com.cccollector.app.model.App;
+import com.cccollector.app.model.Edition;
+import com.cccollector.app.service.AppService;
+import com.cccollector.app.service.EditionService;
+
+/**
+ * 版本Bean类
+ *
+ * @author 谢朋 Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class EditionBean {
+
+	/**
+	 * 版本服务
+	 */
+	@ManagedProperty(value = "#{editionService}")
+	private EditionService editionService;
+
+	public void setEditionService(EditionService _editionService) {
+		editionService = _editionService;
+	}
+
+	/**
+	 * 应用服务
+	 */
+	@ManagedProperty(value = "#{appService}")
+	private AppService appService;
+
+	public void setAppService(AppService _appService) {
+		appService = _appService;
+	}
+
+	/**
+	 * 版本ID
+	 */
+	private String editionId;
+
+	public String getEditionId() {
+		return editionId;
+	}
+
+	public void setEditionId(String _editionId) {
+		editionId = _editionId;
+
+		// 新建或加载版本
+		if (edition == null) {
+			Integer id = 0;
+			try {
+				id = Integer.valueOf(editionId);
+			} catch (Exception e) {}
+			if (id == 0) {
+				edition = new Edition();
+				edition.setEnabled(true);
+				if (app == null) {
+					app = new App();
+				}
+				edition.setApp(app);
+			} else {
+				edition = editionService.loadById(id);
+
+				// 处理选中的操作系统
+				selectedOses = new String[8];
+				int count = 0;
+				for (int i = 0; i < 8; i++) {
+					if ((edition.getOs() & (int) Math.pow(2, i)) > 0) {
+						selectedOses[count] = String.valueOf(i);
+						count++;
+					}
+				}
+				// 处理选中的设备
+				selectedDevices = new String[8];
+				count = 0;
+				for (int i = 0; i < 8; i++) {
+					if ((edition.getDevice() & (int) Math.pow(2, i)) > 0) {
+						selectedDevices[count] = String.valueOf(i);
+						count++;
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * 版本
+	 */
+	private Edition edition;
+
+	public Edition getEdition() {
+		return edition;
+	}
+
+	/**
+	 * 所属应用ID
+	 */
+	private String appId;
+
+	public String getAppId() {
+		return appId;
+	}
+
+	public void setAppId(String _appId) {
+		appId = _appId;
+
+		// 加载应用
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(appId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			app = appService.loadById(id);
+		}
+	}
+
+	/**
+	 * 所属应用
+	 */
+	private App app;
+
+	public App getApp() {
+		return app;
+	}
+
+	/**
+	 * 选中的操作系统
+	 */
+	private String[] selectedOses;
+
+	public String[] getSelectedOses() {
+		return selectedOses;
+	}
+
+	public void setSelectedOses(String[] _selectedOses) {
+		selectedOses = _selectedOses;
+	}
+
+	/**
+	 * 选中的设备
+	 */
+	private String[] selectedDevices;
+
+	public String[] getSelectedDevices() {
+		return selectedDevices;
+	}
+
+	public void setSelectedDevices(String[] _selectedDevices) {
+		selectedDevices = _selectedDevices;
+	}
+
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		// 处理操作系统
+		int os = 0;
+		for (String selectedOs : selectedOses) {
+			os += (int) Math.pow(2, Integer.parseInt(selectedOs));
+		}
+		edition.setOs(os);
+		// 处理设备
+		int device = 0;
+		for (String selectedDevice : selectedDevices) {
+			device += (int) Math.pow(2, Integer.parseInt(selectedDevice));
+		}
+		edition.setDevice(device);
+
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (edition.getEditionId() == null) {
+			Integer editionId = null;
+			try {
+				// 添加版本
+				editionId = editionService.save(edition);
+			} catch (ConstraintViolationException e) {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "标识符必须唯一，不能重复！", "标识符必须唯一，不能重复！"));
+				return;
+			}
+			RequestContext.getCurrentInstance().closeDialog(editionId != null ? Boolean.TRUE : Boolean.FALSE);
+		} else {
+			Edition editionUpdated = null;
+			try {
+				// 编辑版本
+				editionUpdated = editionService.update(edition);
+			} catch (DataIntegrityViolationException e) {
+				if (e.contains(ConstraintViolationException.class)) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "标识符必须唯一，不能重复！", "标识符必须唯一，不能重复！"));
+					return;
+				}
+			}
+			RequestContext.getCurrentInstance().closeDialog(editionUpdated != null ? Boolean.TRUE : Boolean.FALSE);
+		}
+	}
+}

@@ -1,0 +1,26 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.PermissionDao;
+import com.cccollector.app.model.Permission;
+import com.cccollector.app.service.PermissionService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 权限服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("permissionService")
+public class PermissionServiceImpl extends GenericServiceHibernateImpl<Integer, Permission> implements PermissionService {
+	
+	@SuppressWarnings("unused")
+	@Autowired
+	private PermissionDao permissionDao;
+}

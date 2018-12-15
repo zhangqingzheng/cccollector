@@ -1,0 +1,156 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import org.primefaces.event.SelectEvent;
+import org.primefaces.model.DualListModel;
+
+import com.cccollector.app.model.Department;
+import com.cccollector.app.model.Job;
+import com.cccollector.app.model.Role;
+import com.cccollector.app.model.User;
+import com.cccollector.universal.dao.QueryField;
+
+/**
+ * 岗位Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class JobBean extends BaseEditBean<Job> {
+
+	public JobBean() {
+		genericEditBeanHandler = new GenericEditBeanHandlerModelRelated<Job>() {
+			
+			@Override
+			public Job loadModel(Integer modelId) {
+				Job job = null;
+				if (modelId == null) {
+					job = new Job();
+					job.setDepartment(getDepartment());
+				} else {
+					job = jobService.loadById(modelId, "roles");
+				}
+				
+				// 处理角色 
+				List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+				predicateQueryFieldList.add(new QueryField("enabled", true));
+				List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+				orderQueryFieldList.add(new QueryField("position", Boolean.TRUE));
+				List<Role> allRoles = roleService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+
+				// 将角色放入角色双列表模型
+				Map<Integer, Role> selectedRoleMap = new HashMap<Integer, Role>();
+				for (Role role : job.getRoles()) {
+					selectedRoleMap.put(role.getRoleId(), role);
+				}
+				roleDualListModel = new DualListModel<Role>(new ArrayList<Role>(), new ArrayList<Role>());
+				for (Role role : allRoles) {
+					if (selectedRoleMap.get(role.getRoleId()) != null) {
+						roleDualListModel.getTarget().add(role);
+					} else {
+						roleDualListModel.getSource().add(role);
+					}
+				}
+				return job;
+			}
+
+			@Override
+			public Object loadRelatedModel(int index, int relatedModelId) {
+				if (index == 1) {
+					return departmentService.loadById(relatedModelId);
+				}
+				return null;
+			}
+		};
+	}
+
+	/**
+	 * 岗位
+	 */
+	public Job getJob() {
+		return getModel();
+	}
+
+	/**
+	 * 所属部门
+	 */
+	public Department getDepartment() {
+		return (Department) relatedModel(1);
+	}
+	
+	/**
+	 * 全部用户
+	 */
+	private List<User> allUsers;
+	
+	/**
+	 * 用户ID
+	 */
+	private Integer userId;
+
+	public Integer getUserId() {
+		return userId;
+	}
+
+	public void setUserId(Integer _userId) {
+		userId = _userId;
+	}
+	
+	/**
+	 * 处理用户自动完成
+	 */
+	public List<User> handleUserIdComplete(String query) {
+		allUsers = userService.loadUsersBySearchWord(query);
+		return allUsers;
+	}
+	
+	/**
+	 * 处理用户选中
+	 */
+	public void handleUserIdSelect(SelectEvent event) {
+		userId = Integer.parseInt(event.getObject().toString());
+	}
+	
+	/**
+	 * 角色双列表模型
+	 */
+	private DualListModel<Role> roleDualListModel;
+
+	public DualListModel<Role> getRoleDualListModel() {
+		return roleDualListModel;
+	}
+
+	public void setRoleListModel(DualListModel<Role> _roleDualListModel) {
+		roleDualListModel = _roleDualListModel;
+	}
+	
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		Job job = getJob();
+		if ( job.getJobId() == null) {
+			// 添加岗位
+			jobService.addJob(job, userId);
+			addInfoMessageToFlash("添加岗位成功！");
+		} else {
+			// 编辑岗位
+			jobService.update(job);
+			addInfoMessageToFlash("编辑岗位成功！");
+		}
+		
+		handleNavigation("jobList.xhtml?multiSelect=true&departmentId=" + getModelId1());	
+	}
+}

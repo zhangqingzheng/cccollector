@@ -1,0 +1,120 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ws.rs.core.Response;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.AppDao;
+import com.cccollector.app.dao.PlatformDao;
+import com.cccollector.app.model.App;
+import com.cccollector.app.model.Edition;
+import com.cccollector.app.model.Platform;
+import com.cccollector.app.service.AppService;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.model.UniversalJsonViews;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+import com.fasterxml.jackson.annotation.JsonView;
+
+/**
+ * 应用服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("appService")
+public class AppServiceImpl extends GenericServiceHibernateImpl<Integer, App> implements AppService {
+	
+	@Autowired
+	private AppDao appDao;
+	
+	@Autowired
+	private PlatformDao platformDao;
+
+	@Override
+	@JsonView(UniversalJsonViews.Back.class)
+	public Response getAppByAppId(int appId) {
+		App app = appDao.loadById(appId);
+		if (app == null) {
+			return null;	
+		}
+		appDao.getEntityManager().detach(app);
+		app.setEditions(null);
+		
+		return Response.ok(app).build();
+	}
+
+	@Override
+	@JsonView(UniversalJsonViews.Back.class)
+	public Response getAppWithEditionsAndReleasesByAppId(int appId) {
+		App app = appDao.loadById(appId);
+		if (app == null) {
+			return null;	
+		}
+		
+		// 获取版本和发行
+		for (Edition edition : app.getEditions()) {
+			edition.getReleases().iterator();
+		}
+		
+		return Response.ok(app).build();
+	}
+	
+	@Override
+	@JsonView(UniversalJsonViews.Back.class)
+	public Response findAppsByPlatformBundleId(String platformBundleId) {
+		// 根据平台标识符获取平台
+		List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("bundleId", platformBundleId));
+		List<Platform> platforms = platformDao.loadAll(predicateQueryFieldList, null);
+		if (platforms.size() == 0) {
+			return null;
+		}
+		Platform platform = platforms.get(0);
+		
+		// 根据平台获取应用列表
+		predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("platforms", new QueryField("platformId", platform.getPlatformId())));
+		List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+		orderQueryFieldList.add(new QueryField("name", Boolean.TRUE));
+		List<App> apps = appDao.loadAll(predicateQueryFieldList, orderQueryFieldList);
+		if (apps.size() == 0) {
+			return null;
+		}
+		
+		for (App app : apps) {
+			appDao.getEntityManager().detach(app);
+			app.setEditions(null);
+		}
+		
+		return Response.ok(apps).build();
+	}
+
+	@Override
+	public Boolean addAppToPlatform(Integer appId, Integer platformId) {
+		App app = appDao.loadById(appId, "platforms");
+		Platform platform = platformDao.loadById(platformId);
+		app.getPlatforms().add(platform);
+		appDao.save(app);
+		return true;
+	}
+
+	@Override
+	public Boolean deleteAppFromPlatform(Integer appId, Integer platformId) {
+		App app = appDao.loadById(appId, "platforms");
+		for (Platform platform : app.getPlatforms()) {
+			if (platform.getPlatformId() == platformId) {
+				app.getPlatforms().remove(platform);
+				appDao.save(app);
+				return true;
+			}
+		}
+		return false;
+	}
+}

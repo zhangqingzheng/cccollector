@@ -1,0 +1,48 @@
+#====================================================================================
+# config\u8bbe\u7f6e
+#   pom.config.companyName           : \u516c\u53f8\u540d\u79f0
+#   pom.config.appName               : \u5e94\u7528\u540d\u79f0
+#   pom.config.platformBundleId      : \u5e73\u53f0\u6807\u8bc6\u7b26
+#   pom.config.imageMagickPath       : ImageMagick\u547d\u4ee4\u8def\u5f84
+#   pom.config.webAppRootKey         : \u5e94\u7528\u6839\u8def\u5f84\u952e
+#   pom.config.tomcatHost            : Tomcat\u4e3b\u673a\u548c\u7aef\u53e3
+#   pom.config.nginxHost             : nginx\u4e3b\u673a\u548c\u7aef\u53e3
+#   pom.config.tomcatDataPath        : Tomcat\u6570\u636e\u76ee\u5f55
+#   pom.config.nginxDataPath         : nginx\u6570\u636e\u76ee\u5f55
+#   pom.config.appManagementTomcatHost : \u5e94\u7528\u7ba1\u7406\u5e73\u53f0Tomcat\u4e3b\u673a\u548c\u7aef\u53e3
+#   pom.config.appManagementNginxHost : \u5e94\u7528\u7ba1\u7406\u5e73\u53f0nginx\u4e3b\u673a\u548c\u7aef\u53e3
+#   pom.config.rootCreateCommand     : \u6839\u8bc1\u4e66\u521b\u5efa\u547d\u4ee4
+#   pom.config.createCommand         : \u8bc1\u4e66\u521b\u5efa\u547d\u4ee4
+#====================================================================================
+pom.config.companyName=\u534e\u661f\u6210\u6c47
+pom.config.appName=\u5e94\u7528\u7ba1\u7406\u5e73\u53f0
+pom.config.platformBundleId=com.cccollector.appmanagement
+pom.config.imageMagickPath=
+pom.config.webAppRootKey=appManagement.webAppRoot
+pom.config.tomcatHost=test.appmanagement.cccollector.com:8443
+pom.config.nginxHost=test.appmanagement.cccollector.com
+pom.config.tomcatDataPath=/export/tomcat/
+pom.config.nginxDataPath=/export/nginx/
+pom.config.appManagementTomcatHost=test.appmanagement.cccollector.com:8443
+pom.config.appManagementNginxHost=test.appmanagement.cccollector.com
+pom.config.rootCreateCommand=mkdir -p @{runtime.certificate.rootCertificatePath} && openssl genrsa -out @{runtime.certificate.rootKeyFile} 4096 && openssl req -new -out @{runtime.certificate.rootRequestFile} -key @{runtime.certificate.rootKeyFile} -subj \"/C=CN/ST=Beijing/L=Beijing/O=Beijing Huaxing Chenghui Cultural Development Co., Ltd./OU=Wen Cang/CN=@{runtime.certificate.rootUser}\" && openssl x509 -req -in @{runtime.certificate.rootRequestFile} -out @{runtime.certificate.rootCertificateFile} -signkey @{runtime.certificate.rootKeyFile} -days @{runtime.certificate.rootValidDays} && openssl pkcs12 -export -clcerts -in @{runtime.certificate.rootCertificateFile} -inkey @{runtime.certificate.rootKeyFile} -passout pass:@{runtime.certificate.rootPassword} -out @{runtime.certificate.rootCertificateWithKeyPKCS12File}
+pom.config.createCommand=mkdir -p @{runtime.certificate.certificatePath} && openssl genrsa -out @{runtime.certificate.keyFile} 4096 && openssl req -new -out @{runtime.certificate.requestFile} -key @{runtime.certificate.keyFile} -subj \"/C=CN/ST=Beijing/L=Beijing/O=Beijing Huaxing Chenghui Cultural Development Co., Ltd./OU=@{runtime.certificate.rootUser}/CN=@{runtime.certificate.user}\" && openssl x509 -req -in @{runtime.certificate.requestFile} -out @{runtime.certificate.certificateFile} -signkey @{runtime.certificate.keyFile} -CA @{runtime.certificate.rootCertificateFile} -CAkey @{runtime.certificate.rootKeyFile} -CAcreateserial -days @{runtime.certificate.validDays} && openssl pkcs8 -topk8 -nocrypt -in @{runtime.certificate.keyFile} -out @{runtime.certificate.keyPKCS8File} && cat @{runtime.certificate.keyPKCS8File} @{runtime.certificate.certificateFile} > @{runtime.certificate.certificateWithKeyPKCS8File} && openssl pkcs12 -export -clcerts -in @{runtime.certificate.certificateFile} -inkey @{runtime.certificate.keyFile} -passout pass:@{runtime.certificate.password} -out @{runtime.certificate.certificateWithKeyPKCS12File}
+#====================================================================================
+# hibernate\u8bbe\u7f6e
+#   pom.hibernate.jdbc.url           : \u6570\u636e\u5e93\u7edf\u4e00\u8d44\u6e90\u63cf\u8ff0\u7b26
+#   pom.hibernate.jdbc.username      : \u6570\u636e\u5e93\u767b\u5f55\u7528\u6237\u540d
+#   pom.hibernate.jdbc.password      : \u6570\u636e\u5e93\u767b\u5f55\u53e3\u4ee4
+#   pom.hibernate.c3p0.minPoolSize   : \u8fde\u63a5\u6c60\u6700\u5c0f\u4fdd\u5b58\u7684\u8fde\u63a5\u6570\u91cf
+#   pom.hibernate.c3p0.maxPoolSize   : \u8fde\u63a5\u6c60\u6700\u5927\u4fdd\u5b58\u7684\u8fde\u63a5\u6570\u91cf
+#   pom.hibernate.c3p0.initialPoolSize : \u8fde\u63a5\u6c60\u88ab\u521b\u5efa\u65f6\u4fdd\u5b58\u7684\u8fde\u63a5\u6570\u91cf
+#   pom.hibernate.show_sql           : \u662f\u5426\u6253\u5370Hibernate\u751f\u6210\u7684SQL\u5230\u63a7\u5236\u53f0
+#   pom.hibernate.format_sql         : \u662f\u5426\u683c\u5f0f\u5316\u6253\u5370\u51fa\u6765\u7684SQL
+#====================================================================================
+pom.hibernate.jdbc.url=jdbc:mysql://10.1.1.100:3306/AppManagement?useUnicode=true&amp;characterEncoding=utf-8&amp;serverTimezone=GMT%2B8&amp;useSSL=false
+pom.hibernate.jdbc.username=AppManagement
+pom.hibernate.jdbc.password=l>8X4o!0Tbu2
+pom.hibernate.c3p0.minPoolSize=5
+pom.hibernate.c3p0.maxPoolSize=30
+pom.hibernate.c3p0.initialPoolSize=10
+pom.hibernate.show_sql=true
+pom.hibernate.format_sql=true

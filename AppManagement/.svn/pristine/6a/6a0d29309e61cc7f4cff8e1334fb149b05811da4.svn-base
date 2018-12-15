@@ -1,0 +1,91 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+
+import org.primefaces.context.RequestContext;
+
+import com.cccollector.app.model.Program;
+import com.cccollector.app.service.ProgramService;
+
+/**
+ * 推广方案Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class ProgramBean {
+
+	/**
+	 * 推广方案服务
+	 */
+	@ManagedProperty(value = "#{programService}")
+	private ProgramService programService;
+
+	public void setProgramService(ProgramService _programService) {
+		programService = _programService;
+	}
+
+	/**
+	 * 推广方案ID
+	 */
+	private String programId;
+
+	public String getProgramId() {
+		return programId;
+	}
+
+	public void setProgramId(String _programId) {
+		programId = _programId;
+
+		// 新建或加载推广方案
+		if (program == null) {
+			Integer id = 0;
+			try {
+				id = Integer.valueOf(programId);
+			} catch (Exception e) {}
+			if (id == 0) {
+				program = new Program();
+				program.setEnabled(true);
+			} else {
+				program = programService.loadById(id);
+			}
+		}
+	}
+
+	/**
+	 * 推广方案
+	 */
+	private Program program;
+
+	public Program getProgram() {
+		return program;
+	}
+
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		// 置空
+		if (program.getRemarks().equals("")) {
+			program.setRemarks(null);
+		}
+		
+		if (program.getProgramId() == null) {
+			// 添加推广方案
+			Integer programId = programService.save(program);
+			RequestContext.getCurrentInstance().closeDialog(programId != null ? Boolean.TRUE : Boolean.FALSE);
+		} else {
+			Program programUpdated = null;
+			// 编辑推广方案
+			programUpdated = programService.update(program);
+			RequestContext.getCurrentInstance().closeDialog(programUpdated != null ? Boolean.TRUE : Boolean.FALSE);
+		}
+	}
+}

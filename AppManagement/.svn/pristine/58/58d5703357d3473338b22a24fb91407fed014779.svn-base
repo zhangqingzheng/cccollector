@@ -1,0 +1,435 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.ReorderEvent;
+import org.primefaces.event.SelectEvent;
+
+import com.cccollector.app.model.Edition;
+import com.cccollector.app.model.Program;
+import com.cccollector.app.service.EditionService;
+import com.cccollector.app.service.ProgramService;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.dao.QueryField.PredicateEnum;
+
+/**
+ * 推广方案列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class ProgramListBean {
+
+	/**
+	 * 推广方案服务
+	 */
+	@ManagedProperty(value = "#{programService}")
+	private ProgramService programService;
+
+	public void setProgramService(ProgramService _programService) {
+		programService = _programService;
+	}
+
+	/**
+	 * 版本服务
+	 */
+	@ManagedProperty(value = "#{editionService}")
+	private EditionService editionService;
+
+	public void setEditionService(EditionService _editionService) {
+		editionService = _editionService;
+	}
+
+	/**
+	 * 关联版本ID
+	 */
+	private String editionId;
+
+	public String getEditionId() {
+		return editionId;
+	}
+
+	public void setEditionId(String _editionId) {
+		editionId = _editionId;
+
+		// 加载版本
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(editionId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			edition = editionService.loadById(id);
+		}
+	}
+
+	/**
+	 * 关联版本
+	 */
+	private Edition edition;
+
+	public Edition getEdition() {
+		return edition;
+	}
+
+	/**
+	 * 推广方案是否多选
+	 */
+	private boolean programsMultiSelect;
+
+	public boolean getProgramsMultiSelect() {
+		return programsMultiSelect;
+	}
+
+	public void setProgramsMultiSelect(boolean _programsMultiSelect) {
+		programsMultiSelect = _programsMultiSelect;
+	}
+
+	/**
+	 * 全部推广方案
+	 */
+	private List<Program> allPrograms;
+
+	public List<Program> getAllPrograms() {
+		if (allPrograms == null) {
+			if (edition == null) {
+				// 排序
+				List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+				orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+				orderQueryFieldList.add(new QueryField("name", Boolean.TRUE));
+
+				allPrograms = programService.loadAll(null, orderQueryFieldList);
+			} else {
+				allPrograms = editionService.loadById(edition.getEditionId(), "programs").getPrograms();
+			}
+		}
+		return allPrograms;
+	}
+
+	/**
+	 * 选中的推广方案
+	 */
+	private List<Program> selectedPrograms;
+
+	public List<Program> getSelectedPrograms() {
+		return selectedPrograms;
+	}
+
+	public void setSelectedPrograms(List<Program> _selectedPrograms) {
+		selectedPrograms = _selectedPrograms;
+	}
+
+	/**
+	 * 选择推广方案
+	 */
+	public void selectProgramAction(SelectEvent event) {
+		try {
+			Program program = (Program) event.getObject();
+			FacesContext.getCurrentInstance().getExternalContext().redirect("promotionList.xhtml?programId=" + program.getProgramId());
+		} catch (Exception e) {}
+	}
+
+	/**
+	 * 管理版本
+	 */
+	public void manageEditionsAction(Program program) {
+		try {
+			FacesContext.getCurrentInstance().getExternalContext().redirect("editionList.xhtml?programId=" + program.getProgramId());
+		} catch (Exception e) {}
+	}
+
+	/**
+	 * 选中的未被版本使用的推广方案ID
+	 */
+	private Integer selectedNotUsedProgramId;
+
+	public Integer getSelectedNotUsedProgramId() {
+		return selectedNotUsedProgramId;
+	}
+
+	public void setSelectedNotUsedProgramId(Integer _selectedNotUsedProgramId) {
+		selectedNotUsedProgramId = _selectedNotUsedProgramId;
+	}
+
+	/**
+	 * 未被版本使用的推广方案
+	 */
+	public List<Program> getNotUsedPrograms() {
+		if (edition == null) {
+			return null;
+		}
+		// 查询条件
+		List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("editions", new QueryField("editionId", edition.getEditionId(), PredicateEnum.NOT_IN)));
+
+		// 排序
+		List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+		orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+		orderQueryFieldList.add(new QueryField("name", Boolean.TRUE));
+
+		return programService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+	}
+
+	/**
+	 * 添加推广方案到版本
+	 */
+	public void addProgramToEditionAction() {
+		// 添加推广方案到版本
+		Boolean success = programService.addProgramToEdition(selectedNotUsedProgramId, edition.getEditionId());
+
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success) {
+			// 清空选中的推广方案
+			selectedPrograms = null;
+			// 清空选中的推广方案ID
+			selectedNotUsedProgramId = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加推广方案到版本成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "添加推广方案到版本失败，请重新尝试！"));
+		}
+
+		// 刷新全部推广方案数据
+		allPrograms = null;
+	}
+
+	/**
+	 * 从版本中删除推广方案
+	 */
+	public void deleteProgramFromEditionAction(Program program) {
+		// 从版本中删除推广方案
+		Boolean success = programService.deleteProgramFromEdition(program.getProgramId(), edition.getEditionId());
+
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success) {
+			// 清空选中的推广方案
+			selectedPrograms = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "从版本中删除推广方案成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "从版本中删除推广方案失败，请重新尝试！"));
+		}
+
+		// 刷新全部推广方案数据
+		allPrograms = null;
+	}
+
+	/**
+	 * 批量从版本中删除推广方案
+	 */
+	public void deleteProgramsFromEditionAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedPrograms != null && selectedPrograms.size() > 0) {
+			// 从版本中删除推广方案
+			for (Program program : selectedPrograms) {
+				programService.deleteProgramFromEdition(program.getProgramId(), edition.getEditionId());
+			}
+
+			// 清空选中的推广方案
+			selectedPrograms = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "从版本中删除推广方案成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个推广方案进行删除！"));
+		}
+
+		// 刷新全部推广方案数据
+		allPrograms = null;
+	}
+
+	/**
+	 * 添加推广方案
+	 */
+	public void addProgramAction() {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add("");
+		params.put("programId", param);
+
+		// 显示编辑推广方案对话框
+		RequestContext.getCurrentInstance().openDialog("programEdit", options, params);
+	}
+
+	/**
+	 * 处理添加推广方案返回
+	 */
+	public void handleAddProgramReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			// 清空选中的推广方案
+			selectedPrograms = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加推广方案成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "添加推广方案失败，请重新尝试！"));
+		}
+
+		// 刷新全部推广方案数据
+		allPrograms = null;
+	}
+
+	/**
+	 * 编辑推广方案
+	 */
+	public void editProgramAction(Program program) {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add(program.getProgramId().toString());
+		params.put("programId", param);
+
+		// 显示编辑推广方案对话框
+		RequestContext.getCurrentInstance().openDialog("programEdit", options, params);
+	}
+
+	/**
+	 * 编辑推广方案
+	 */
+	public void editProgramAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedPrograms != null && selectedPrograms.size() > 0) {
+			if (selectedPrograms.size() == 1) {
+				// 对话框选项
+				Map<String, Object> options = new HashMap<String, Object>();
+				options.put("width", 360);
+				options.put("resizable", false);
+				options.put("modal", true);
+				options.put("includeViewParams", true);
+
+				// 传递的参数
+				Map<String, List<String>> params = new HashMap<String, List<String>>();
+				List<String> param = new ArrayList<String>();
+				param.add(selectedPrograms.get(0).getProgramId().toString());
+				params.put("programId", param);
+
+				// 显示编辑推广方案对话框
+				RequestContext.getCurrentInstance().openDialog("programEdit", options, params);
+			} else {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "只能选择一个推广方案进行编辑！"));
+			}
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个推广方案进行编辑！"));
+		}
+	}
+
+	/**
+	 * 处理编辑推广方案返回
+	 */
+	public void handleEditProgramReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "编辑推广方案成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "编辑推广方案失败，请重新尝试！"));
+		}
+
+		// 刷新全部推广方案数据
+		allPrograms = null;
+	}
+
+	/**
+	 * 批量修改推广方案是否可用
+	 */
+	public void modifyProgramsEnabledAction(boolean enabled) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedPrograms != null && selectedPrograms.size() > 0) {
+			for (Program program : selectedPrograms) {
+				program.setEnabled(enabled);
+				programService.update(program, "enabled");
+			}
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "修改推广方案是否可用成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个推广方案进行修改！"));
+		}
+
+		// 刷新全部推广方案数据
+		allPrograms = null;
+	}
+	
+	/**
+	 * 移动推广方案
+	 */
+	public void moveProgramAction(ReorderEvent event) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (edition != null) {
+			programService.moveProgramsInEdition(allPrograms, edition.getEditionId());
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "移动推广方案成功！"));
+		}
+		
+		// 刷新全部推广方案数据
+		allPrograms = null;
+	}
+
+	/**
+	 * 删除推广方案
+	 */
+	public void deleteProgramAction(Program program) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 推广方案如果否包含子对象，则不能被删除
+		if (programService.hasChildren(program)) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的推广方案中包含子对象，请清空子对象再进行删除！"));
+			return;
+		}
+
+		// 删除推广方案
+		programService.delete(program);
+		selectedPrograms = null;
+		facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除推广方案成功！"));
+
+		// 刷新全部推广方案数据
+		allPrograms = null;
+	}
+
+	/**
+	 * 批量删除推广方案
+	 */
+	public void deleteProgramsAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedPrograms != null && selectedPrograms.size() > 0) {
+			// 推广方案如果否包含子对象，则不能被删除
+			for (Program program : selectedPrograms) {
+				if (programService.hasChildren(program)) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的推广方案中包含子对象，请清空子对象再进行删除！"));
+					return;
+				}
+			}
+
+			// 删除推广方案
+			programService.deleteAll(selectedPrograms);
+			selectedPrograms = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除推广方案成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个推广方案进行删除！"));
+		}
+
+		// 刷新全部推广方案数据
+		allPrograms = null;
+	}
+}

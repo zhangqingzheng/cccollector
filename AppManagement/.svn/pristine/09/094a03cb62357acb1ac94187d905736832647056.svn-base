@@ -1,0 +1,82 @@
+/**
+ * 
+ */
+package com.cccollector.app.service;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import com.cccollector.app.model.App;
+import com.cccollector.universal.service.GenericService;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+
+/**
+ * 应用服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Path("/apps")
+@Produces({ MediaType.APPLICATION_JSON })
+@Api(value = "应用服务")
+public interface AppService extends GenericService<Integer, App> {
+	
+	/**
+	 * 根据应用ID获取应用
+	 * 
+	 * @param appId 应用ID
+	 * @return 应用
+	 */
+    @Path("/{appId}")
+    @GET
+    @ApiOperation(value = "根据应用ID获取应用", response = App.class)
+    public Response getAppByAppId(@ApiParam(value = "应用ID", required = true) @PathParam("appId") int appId);
+	
+	/**
+	 * 根据应用ID获取应用以及包含的版本、发行
+	 * 
+	 * @param appId 应用ID
+	 * @return 应用
+	 */
+    @Path("/{appId}/withEditionsAndReleases")
+    @GET
+    @ApiOperation(value = "根据应用ID获取应用以及包含的版本、发行", response = App.class)
+    public Response getAppWithEditionsAndReleasesByAppId(@ApiParam(value = "应用ID", required = true) @PathParam("appId") int appId);
+    
+	/**
+	 * 根据平台标识符查询应用列表
+	 * 
+	 * @param platformBundleId 平台标识符
+	 * @return 应用列表
+	 */
+    @Path("/findByPlatformBundleId")
+    @GET
+    @ApiOperation(value = "根据平台标识符查询应用列表", response = App.class, responseContainer = "List")
+    public Response findAppsByPlatformBundleId(@ApiParam(value = "平台标识符", required = true) @QueryParam("platformBundleId") String platformBundleId);
+	
+	/**
+	 * 添加应用到平台
+	 * 
+	 * @param appId 应用ID
+	 * @param platformId 平台ID
+	 * @return 是否成功
+	 */
+	public Boolean addAppToPlatform(Integer appId, Integer platformId);
+	
+	/**
+	 * 从平台删除应用
+	 * 
+	 * @param appId 应用ID
+	 * @param platformId 平台ID
+	 * @return 是否成功
+	 */
+	public Boolean deleteAppFromPlatform(Integer appId, Integer platformId);
+}

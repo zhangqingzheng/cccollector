@@ -1,0 +1,212 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import com.cccollector.app.model.Module;
+import com.cccollector.app.model.Permission;
+import com.cccollector.app.model.Role;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.dao.QueryField.PredicateEnum;
+import com.cccollector.universal.view.GenericListBean;
+
+/**
+ * 权限列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class PermissionListBean extends BaseListBean<Permission> implements Serializable {
+
+	private static final long serialVersionUID = 7705765287009677566L;
+
+	public PermissionListBean() {
+		modelDisplayName = "权限";
+		modelAttributeName = "permission";
+		modelIdAttributeName = "permissionId";
+		genericListBeanHandler = new GenericListBean.GenericListBeanHandlerRelatedAll<Permission>() {
+
+			@Override
+			public Object loadRelatedModel(int index, int relatedModelId) {
+				if (index == 1) {
+					return moduleService.loadById(relatedModelId);
+				} else if (index == 4) {
+					return roleService.loadById(relatedModelId);
+				}
+				return null;
+			}
+
+			@Override
+			public List<Permission> loadAllModelList() {
+				List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+				if (getModule() != null) {
+					predicateQueryFieldList.add(new QueryField("module", new QueryField("moduleId", getModule().getModuleId())));
+				} else if (getRole() != null) {
+					predicateQueryFieldList.add(new QueryField("roles", new QueryField("roleId", getRole().getRoleId())));
+				}
+				List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+				orderQueryFieldList.add(new QueryField("module", new QueryField("position", true)));
+				orderQueryFieldList.add(new QueryField("type", true));
+				return permissionService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+			}
+		};
+	}
+
+	/**
+	 * 所属模块
+	 */
+	public Module getModule() {
+		return (Module) relatedModel(1);
+	}
+
+	/**
+	 * 关联角色
+	 */
+	public Role getRole() {
+		return (Role) relatedModel(4);
+	}
+	
+	/**
+	 * 未被角色关联的权限
+	 */
+	public List<Permission> getNotUsedPermissions() {
+		if (getRole() == null) {
+			return null;
+		}
+		
+		List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("roles", new QueryField("roleId", getRole().getRoleId(), PredicateEnum.NOT_IN)));
+		predicateQueryFieldList.add(new QueryField("module", new QueryField("platform", new QueryField("platformId", getRole().getPlatform().getPlatformId()))));
+		List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+		orderQueryFieldList.add(new QueryField("module", new QueryField("position", true)));
+		orderQueryFieldList.add(new QueryField("type", true));
+		return permissionService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+	}
+	
+	/**
+	 * 添加权限到角色
+	 */
+	public void addPermissionToRoleAction() {
+		// 添加权限到角色
+		permissionService.addPermissionToRole(getSelectedModelId(), getRole().getRoleId());
+		addInfoMessage("添加权限到角色成功！");
+		
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 清空选中的模型ID
+		setSelectedModelId(null);
+		// 刷新全部模型
+		allModels = null;
+	}
+
+	/**
+	 * 从角色中删除权限
+	 */
+	public void deletePermissionFromRoleAction(Permission permission) {
+		// 从角色中删除权限
+		permissionService.deletePermissionFromRole(permission.getPermissionId(), getRole().getRoleId());
+		addInfoMessage("从角色中删除权限成功！");
+		
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 刷新全部模型
+		allModels = null;
+	}
+
+	/**
+	 * 批量从角色中删除权限
+	 */
+	public void deletePermissionsFromRoleAction() {
+		if (getSelectedModels() == null || getSelectedModels().size() == 0) {
+			addErrorMessage("请选择一个或多个权限进行删除！");
+			return;
+		}
+		
+		// 从角色中删除权限
+		for (Permission permission : getSelectedModels()) {
+			permissionService.deletePermissionFromRole(permission.getPermissionId(), getRole().getRoleId());
+		}
+		addInfoMessage("从角色中删除权限成功！");
+		
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 刷新全部模型
+		allModels = null;
+	}
+	
+	/**
+	 * 批量修改权限是否可用
+	 */
+	public void modifyPermissionsEnabledAction(boolean enabled) {
+		if (getSelectedModels() == null || getSelectedModels().size() == 0) {
+			addErrorMessage("请选择一个或多个权限进行修改！");
+			return;
+		}
+		
+		// 修改权限是否可用
+		for (Permission permission : getSelectedModels()) {
+			permission.setEnabled(enabled);
+			permissionService.update(permission, "enabled");
+		}
+		addInfoMessage("修改权限是否可用成功！");
+		
+		// 刷新全部模型
+		allModels = null;
+	}
+	
+	/**
+	 * 删除权限
+	 */
+    public void deletePermissionAction(Permission permission) {
+		// 权限如果否包含子对象，则不能被删除
+		if (permissionService.hasChildren(permission)) {
+			addErrorMessage("要删除的权限中包含子对象，请清空子对象再进行删除！");
+			return;
+		}
+	
+		// 删除权限
+		permissionService.delete(permission);
+		addInfoMessage("删除权限成功！");
+		
+		// 清控选中的模型
+		setSelectedModels(null);
+		// 刷新全部模型
+		allModels = null;
+	}
+	
+	/**
+	 * 批量删除权限
+	 */
+	public void deletePermissionsAction() {
+		if (getSelectedModels() == null || getSelectedModels().size() == 0) {
+			addErrorMessage("请选择一个或多个权限进行删除！");
+			return;
+		}
+		
+		// 权限如果否包含子对象，则不能被删除
+		for (Permission permission : getSelectedModels()) {
+			if (permissionService.hasChildren(permission)) {
+				addErrorMessage("要删除的权限中包含子对象，请清空子对象再进行删除！");
+				return;
+			}
+		}
+			
+		// 删除权限
+		permissionService.deleteAll(getSelectedModels());
+		addInfoMessage("删除权限成功！");
+			
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 刷新全部模型
+		allModels = null;
+	}
+}

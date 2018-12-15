@@ -1,0 +1,113 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import java.io.File;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.PromotionDao;
+import com.cccollector.app.model.Promotion;
+import com.cccollector.app.service.PromotionService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 推广服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("promotionService")
+public class PromotionServiceImpl extends GenericServiceHibernateImpl<Integer, Promotion> implements PromotionService {
+
+	@SuppressWarnings("unused")
+	@Autowired
+	private PromotionDao promotionDao;
+
+	/**
+	 * 平台标识符
+	 */
+	@Value("${platformBundleId}")
+	private String platformBundleId;
+	
+	/**
+	 * Tomcat数据目录
+	 */
+	@Value("${paths.tomcatDataPath}")
+	private String tomcatDataPath;
+	
+	/**
+	 * nginx数据目录
+	 */
+	@Value("${paths.nginxDataPath}")
+	private String nginxDataPath;
+	
+	/**
+	 * 应用根路径键
+	 */
+	@Value("${paths.webAppRootKey}")
+	private String webAppRootKey;
+	
+	/**
+	 * 临时路径
+	 */
+	@Value("${paths.webTemp}")
+	private String webTemp;
+	
+	/**
+	 * 图像路径
+	 */
+	@Value("${paths.image}")
+	private String image;
+	
+	/**
+	 * 推广路径
+	 */
+	@Value("${paths.promotions}")
+	private String promotions;
+	
+	/**
+	 * 缩略图URL
+	 */
+	@Value("${paths.thumbnailUrl}")
+	private String thumbnailUrl;
+	
+	/**
+	 * 推广图标缩略图尺寸
+	 */
+	@Value("${paths.promotionIconThumbnailSize}")
+	private String promotionIconThumbnailSize;
+
+	@Override
+	public String getTempPath() {
+		return System.getProperty(webAppRootKey) + webTemp + File.separator;
+	}
+
+	@Override
+	public String getDataPath() {
+		return tomcatDataPath + platformBundleId + File.separator;
+	}
+
+	@Override
+	public String getImagePath() {
+		return nginxDataPath + platformBundleId + File.separator + image + File.separator;
+	}
+
+	@Override
+	public String getPromotionsPath() {
+		return promotions + File.separator;
+	}
+
+	@Override
+	public String getDataPromotionsPath() {
+		return getDataPath() + getPromotionsPath();
+	}
+
+	@Override
+	public String getIconThumbnailPromotionsUrl() {
+		return thumbnailUrl + promotionIconThumbnailSize + "/" + promotions + "/";
+	}
+}

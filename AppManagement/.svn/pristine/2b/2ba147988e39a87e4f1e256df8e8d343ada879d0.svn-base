@@ -1,0 +1,47 @@
+/**
+ * 
+ */
+package com.cccollector.app.service;
+
+import com.cccollector.app.model.Promotion;
+import com.cccollector.universal.service.GenericService;
+
+/**
+ * 推广服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public interface PromotionService extends GenericService<Integer, Promotion> {
+
+	/**
+	 * 获取临时目录
+	 */
+	public String getTempPath();
+
+	/**
+	 * 获取数据目录
+	 */
+	public String getDataPath();
+
+	/**
+	 * 获取图像目录
+	 */
+	public String getImagePath();
+	
+	/**
+	 * 获取推广目录
+	 */
+	public String getPromotionsPath();
+
+	/**
+	 * 获取推广数据目录
+	 */
+	public String getDataPromotionsPath();
+
+	/**
+	 * 获取推广图标缩略图URL
+	 */
+	public String getIconThumbnailPromotionsUrl();	
+
+}

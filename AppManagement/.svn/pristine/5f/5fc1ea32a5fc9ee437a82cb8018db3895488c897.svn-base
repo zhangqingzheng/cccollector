@@ -1,0 +1,342 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+
+import javax.ws.rs.core.Response;
+
+import org.apache.cxf.jaxrs.client.WebClient;
+import org.apache.cxf.jaxrs.ext.multipart.Attachment;
+import org.apache.cxf.jaxrs.ext.multipart.ContentDisposition;
+import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.CertificateDao;
+import com.cccollector.app.dao.PlatformDao;
+import com.cccollector.app.dao.RootCertificateDao;
+import com.cccollector.app.model.Certificate;
+import com.cccollector.app.model.Platform;
+import com.cccollector.app.model.RootCertificate;
+import com.cccollector.app.service.RootCertificateService;
+import com.cccollector.universal.cxf.WebClientUtils;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 根证书服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("rootCertificateService")
+public class RootCertificateServiceImpl extends GenericServiceHibernateImpl<Integer, RootCertificate> implements RootCertificateService {
+	
+	@Autowired
+	private RootCertificateDao rootCertificateDao;
+	
+	@Autowired
+	private CertificateDao certificateDao;
+	
+	@Autowired
+	private PlatformDao platformDao;
+	
+	/**
+	 * 平台标识符
+	 */
+	@Value("${platformBundleId}")
+	private String platformBundleId;
+	
+	/**
+	 * Tomcat数据目录
+	 */
+	@Value("${paths.tomcatDataPath}")
+	private String tomcatDataPath;
+	
+	/**
+	 * 证书颁发机构路径
+	 */
+	@Value("${paths.caCertificates}")
+	private String caCertificates;
+	
+	/**
+	 * 客户端证书路径
+	 */
+	@Value("${paths.clientCertificates}")
+	private String clientCertificates;
+	
+	/**
+	 * 应用根路径键
+	 */
+	@Value("${paths.webAppRootKey}")
+	private String webAppRootKey;
+	
+	/**
+	 * CA根证书
+	 */
+	@Value("${paths.webCaRootCertificate}")
+	private String webCaRootCertificate;
+	
+	/**
+	 * 根证书路径
+	 */
+	@Value("${paths.rootCertificates}")
+	private String rootCertificates;
+	
+	/**
+	 * 证书路径
+	 */
+	@Value("${paths.certificates}")
+	private String certificates;
+	
+	/**
+	 * 根证书有效天数
+	 */
+	@Value("${certificate.rootValidDays}")
+	private Integer rootValidDays;
+	
+	/**
+	 * 根证书创建命令
+	 */
+	@Value("${certificate.rootCreateCommand}")
+	private String rootCreateCommand;
+
+	@Override
+	public String getDataRootCertificatesPath() {
+		return tomcatDataPath + platformBundleId + File.separator + rootCertificates + File.separator;
+	}
+
+	/**
+	 * 随机生成密码
+	 */
+	private String createRandomPassword(int length) {
+        String value = "";  
+        Random random = new Random();  
+           
+        for(int i = 0; i < length; i++) {  
+              
+            String charOrNum = random.nextInt(2) % 2 == 0 ? "char" : "num";  
+            // 输出字母还是数字  
+            if( "char".equalsIgnoreCase(charOrNum) ) {  
+                // 输出大写字母 
+                value += (char)(random.nextInt(26) + 65);  
+            } else if( "num".equalsIgnoreCase(charOrNum) ) {  
+                value += String.valueOf(random.nextInt(10));  
+            }  
+        }  
+        return value;
+	}
+
+	@Override
+	public RootCertificate getEnabledRootCertificate() {
+		List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("enabled", true));
+		List<RootCertificate> rootCertificates = rootCertificateDao.loadPage(predicateQueryFieldList, null, 0, 1);
+		return rootCertificates.size() > 0 ? rootCertificates.get(0) : null;
+	}
+
+	@Override
+	public Integer saveRootCertificate(RootCertificate rootCertificate) {
+		// 设置PKCS密码
+		rootCertificate.setPassword(createRandomPassword(10));
+		
+		// 设置创建时间
+		rootCertificate.setCreateTime(new Date());
+		
+		// 设置过期时间
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(rootCertificate.getCreateTime());
+		calendar.add(Calendar.DAY_OF_MONTH, rootValidDays);
+		rootCertificate.setExpirationTime(calendar.getTime());
+
+		// 保存根证书
+		Integer rootCertificateId = rootCertificateDao.save(rootCertificate);				
+
+		// 创建根证书
+		try {    
+			String dataRootCertificatesPath = getDataRootCertificatesPath();
+			String command = rootCreateCommand
+					.replace("@{runtime.certificate.rootCertificatePath}", dataRootCertificatesPath + rootCertificate.getRootCertificatePath())
+					.replace("@{runtime.certificate.rootKeyFile}", dataRootCertificatesPath + rootCertificate.rootKeyFilePath())
+					.replace("@{runtime.certificate.rootRequestFile}", dataRootCertificatesPath + rootCertificate.rootRequestFilePath())
+					.replace("@{runtime.certificate.rootCertificateFile}", dataRootCertificatesPath + rootCertificate.rootCertificateFilePath())
+					.replace("@{runtime.certificate.rootUser}", platformBundleId + "~" + rootCertificateId)
+					.replace("@{runtime.certificate.rootValidDays}", rootValidDays.toString())
+					.replace("@{runtime.certificate.rootPassword}", rootCertificate.getPassword())
+					.replace("@{runtime.certificate.rootCertificateWithKeyPKCS12File}", dataRootCertificatesPath + rootCertificate.rootCertificateWithKeyPKCS12FilePath());
+		    Process process = null;
+		    if (File.separator.equals("/")) {
+			    process = Runtime.getRuntime().exec(new String[] { "/bin/sh", "-c", command });
+		    } else {
+			    process = Runtime.getRuntime().exec("cmd /c C:" + command);
+		    }
+		    process.waitFor();
+		    return rootCertificateId;
+		} catch(Exception e) {
+		    e.printStackTrace();
+		    return null;
+		}
+	}
+
+	@Override
+	public boolean enableRootCertificate(RootCertificate rootCertificate) {
+		try {
+			// 证书颁发机构路径和证书文件
+			File caCertificatesFile = new File(tomcatDataPath + platformBundleId + File.separator + caCertificates);
+			File caCertificateFile = new File(caCertificatesFile, rootCertificate.caRootCertificateFileName());
+			// 客户端证书路径和证书文件
+			File clientCertificatesFile = new File(tomcatDataPath + platformBundleId + File.separator + clientCertificates);
+			clientCertificatesFile.mkdirs();
+			File clientCertificateFile = new File(clientCertificatesFile, rootCertificate.clientRootCertificateFileName());
+			
+			// 获取已启用的根证书
+			List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+			predicateQueryFieldList.add(new QueryField("enabled", true));
+			List<RootCertificate> rootCertificateList = rootCertificateDao.loadAll(predicateQueryFieldList, null);
+			RootCertificate rootCertificateEnabled = rootCertificateList != null && rootCertificateList.size() > 0 ? rootCertificateList.get(0) : null;
+			// 如果存在已启用的根证书，则停用
+			if (rootCertificateEnabled != null) {
+				// 从证书颁发机构路径删除根证书
+				caCertificateFile.delete();
+				
+				// 从客户端证书路径删除根证书
+				File clientCertificateEnabledFile = new File(clientCertificatesFile, rootCertificateEnabled.clientRootCertificateFileName());
+				clientCertificateEnabledFile.delete();
+
+				// 更新是否可用
+				rootCertificateEnabled.setEnabled(false);
+				rootCertificateDao.update(rootCertificateEnabled, "enabled");
+			}
+			
+			// 拷贝根证书文件到证书颁发机构路径
+			File rootCertificateFile = new File(getDataRootCertificatesPath() + rootCertificate.rootCertificateFilePath());
+			Files.copy(rootCertificateFile.toPath(), caCertificateFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+			// 拷贝根证书文件到客户端证书路径
+			File rootCertificateWithKeyPKCS12File = new File(getDataRootCertificatesPath() + rootCertificate.rootCertificateWithKeyPKCS12FilePath());
+			Files.copy(rootCertificateWithKeyPKCS12File.toPath(), clientCertificateFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+			// 更新是否可用
+			rootCertificate.setEnabled(true);
+			rootCertificateDao.update(rootCertificate, "enabled");
+			
+			// 获取之前的客户端证书及密码，用于创建WebClient
+			File clientCertificateFileOld = null;
+			String clientCertificatePasswordOld = null;
+			if (rootCertificateEnabled == null) {
+				clientCertificateFileOld = new File(System.getProperty(webAppRootKey) + webCaRootCertificate + ".p12");
+				clientCertificatePasswordOld = clientCertificateFileOld.getName().substring(0, clientCertificateFileOld.getName().indexOf("."));
+			} else {
+				clientCertificateFileOld = new File(getDataRootCertificatesPath() + rootCertificateEnabled.rootCertificateWithKeyPKCS12FilePath());
+				clientCertificatePasswordOld = rootCertificateEnabled.getPassword();
+			}
+			// 与所有可用的平台同步证书
+			predicateQueryFieldList = new ArrayList<QueryField>();
+			predicateQueryFieldList.add(new QueryField("enabled", true));
+			List<Platform> platforms = platformDao.loadAll(predicateQueryFieldList, null);
+			for (Platform platform : platforms) {
+				List<Attachment> attachments = new ArrayList<Attachment>();
+				
+				// 构造证书颁发机构附件
+				ContentDisposition caCertificateContentDisposition = new ContentDisposition("attachment;filename=" + caCertificateFile.getName());
+				FileInputStream caCertificateFileInputStream = new FileInputStream(caCertificateFile);
+				attachments.add(new Attachment("caCertificate", caCertificateFileInputStream, caCertificateContentDisposition));
+
+				// 查询平台可用的证书
+				predicateQueryFieldList = new ArrayList<QueryField>();
+				predicateQueryFieldList.add(new QueryField("rootCertificate", new QueryField("rootCertificateId", rootCertificate.getRootCertificateId())));
+				predicateQueryFieldList.add(new QueryField("ownerType", Certificate.OwnerTypeEnum.平台.ordinal()));
+				predicateQueryFieldList.add(new QueryField("ownerId", platform.getPlatformId()));
+				predicateQueryFieldList.add(new QueryField("enabled", true));
+				List<Certificate> certificateList = certificateDao.loadPage(predicateQueryFieldList, null, 0, 1);
+				Certificate certificate = certificateList != null && certificateList.size() > 0 ? certificateList.get(0) : null;
+				// 如果平台有可用的证书，则构造客户端证书附件
+				if (certificate != null) {
+					clientCertificateFile = new File(getDataRootCertificatesPath() + rootCertificate.getRootCertificatePath() + certificates + File.separator + certificate.certificateWithKeyPKCS12FilePath());
+					ContentDisposition clientCertificateContentDisposition = new ContentDisposition("attachment;filename=" + certificate.clientCertificateFileName());
+					FileInputStream clientCertificateFileInputStream = new FileInputStream(clientCertificateFile);
+					attachments.add(new Attachment("clientCertificate", clientCertificateFileInputStream, clientCertificateContentDisposition));
+				}
+
+				// 创建WebClient并调用
+				String webServiceAddress = platform.getTomcatServer() + "/services/webService";
+				WebClient webClient = WebClientUtils.getMultipartWebClientWithCertificate(webServiceAddress, clientCertificateFileOld, clientCertificatePasswordOld);
+				Response response = webClient.path("/app_apps/syncCertificates").post(new MultipartBody(attachments));
+				if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+					System.out.println(response.getStatus());
+				}
+			}
+
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	@Override
+	public boolean disableRootCertificate(RootCertificate rootCertificate) {
+		try {
+			// 证书颁发机构路径和证书文件
+			File caCertificatesFile = new File(tomcatDataPath + platformBundleId + File.separator + caCertificates);
+			File caCertificateFile = new File(caCertificatesFile, rootCertificate.caRootCertificateFileName());
+			// 客户端证书路径和证书文件
+			File clientCertificatesFile = new File(tomcatDataPath + platformBundleId + File.separator + clientCertificates);
+			File clientCertificateFile = new File(clientCertificatesFile, rootCertificate.clientRootCertificateFileName());
+
+			// 从证书颁发机构路径删除根证书
+			caCertificateFile.delete();
+			
+			// 从客户端证书路径删除根证书
+			clientCertificateFile.delete();
+
+			// 拷贝默认CA根证书到证书颁发机构路径
+			File webCaRootCertificateFile = new File(System.getProperty(webAppRootKey) + webCaRootCertificate + ".pem");
+			Files.copy(webCaRootCertificateFile.toPath(), caCertificateFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+			// 更新是否可用
+			rootCertificate.setEnabled(false);
+			rootCertificateDao.update(rootCertificate, "enabled");
+			
+			// 获取之前的客户端证书及密码，用于创建WebClient
+			File clientCertificateFileOld = new File(getDataRootCertificatesPath() + rootCertificate.rootCertificateWithKeyPKCS12FilePath());
+			String clientCertificatePasswordOld = rootCertificate.getPassword();
+			// 与所有可用的平台同步证书
+			List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+			predicateQueryFieldList.add(new QueryField("enabled", true));
+			List<Platform> platforms = platformDao.loadAll(predicateQueryFieldList, null);
+			for (Platform platform : platforms) {
+				List<Attachment> attachments = new ArrayList<Attachment>();
+				
+				// 构造证书颁发机构附件
+				ContentDisposition caCertificateContentDisposition = new ContentDisposition("attachment;filename=" + caCertificateFile.getName());
+				FileInputStream caCertificateFileInputStream = new FileInputStream(caCertificateFile);
+				attachments.add(new Attachment("caCertificate", caCertificateFileInputStream, caCertificateContentDisposition));
+
+				// 创建WebClient并调用
+				String webServiceAddress = platform.getTomcatServer() + "/services/webService";
+				WebClient webClient = WebClientUtils.getMultipartWebClientWithCertificate(webServiceAddress, clientCertificateFileOld, clientCertificatePasswordOld);
+				Response response = webClient.path("/app_apps/syncCertificates").post(new MultipartBody(attachments));
+				if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+					System.out.println(response.getStatus());
+				}
+			}
+
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+}

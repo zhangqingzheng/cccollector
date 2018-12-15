@@ -1,0 +1,119 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="title">
+		部门列表 - 
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		<span class="subitem">全部</span>
+	</ui:define>
+
+	<ui:define name="implementation">
+	    <f:metadata>
+			<f:viewParam name="multiSelect" value="#{departmentListBean.multiSelect}" />
+		</f:metadata>
+		
+		<h:form id="departmentsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:inputSwitch id="multiSelect" value="#{departmentListBean.multiSelect}" onLabel="管理" offLabel="浏览">
+				<p:ajax update="departmentsForm" />
+			</p:inputSwitch>
+			
+			<p:treeTable id="departmentsSingle" value="#{departmentListBean.rootDepartmentTreeNode}" var="department" resizabledepartments="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{!departmentListBean.multiSelect}">
+				<p:column headerText="名称" priority="1">
+					<h:outputText id="name" value="#{department.name}" />
+				</p:column>
+				
+				<p:column headerText="部门ID" priority="1">
+					<h:outputText value="#{department.departmentId}" />
+				</p:column>
+				
+				<p:column headerText="徽章" priority="1">
+					<p:graphicImage value="#{departmentListBean.loadBadgeThumbnail(department)}" stream="false" height="50" rendered="#{department.hasBadge}" />
+					<h:outputText value="无" rendered="#{!department.hasBadge}" />
+				</p:column>	
+				
+				<p:column headerText="是否独立机构" priority="1">
+					<h:outputText value="#{department.isIndependentEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="备注" priority="2">
+					<h:outputText id="remarks" value="#{department.remarks}" />
+				</p:column>
+				
+				<p:column headerText="排序代码" priority="2">
+					<h:outputText value="#{department.code}" />
+				</p:column>
+	
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="fa fa-fw fa-list" value="管理岗位" actionListener="#{departmentListBean.manageJobsAction(department)}" />
+					<p:commandButton icon="fa fa-fw fa-list" value="管理角色和权限" actionListener="#{departmentListBean.manageRolesAndPermissionsAction(department)}" style="margin-left:10px" />
+				</p:column>
+ 			</p:treeTable>
+			
+			<p:treeTable id="departmentsMultiple" value="#{departmentListBean.rootDepartmentTreeNode}" var="department" selectionMode="single" selection="#{departmentListBean.selectedDepartmentTreeNode}" editable="true" editMode="cell" resizabledepartments="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{departmentListBean.multiSelect}">
+				<p:column headerText="名称" priority="1">
+					<h:outputText id="name" value="#{department.name}" />
+				</p:column>
+				
+				<p:column headerText="部门ID" priority="1">
+					<h:outputText value="#{department.departmentId}" />
+				</p:column>
+				
+				<p:column headerText="徽章" priority="1">
+					<p:graphicImage value="#{departmentListBean.loadBadgeThumbnail(department)}" stream="false" height="50" rendered="#{department.hasBadge}" />
+					<h:outputText value="无" rendered="#{!department.hasBadge}" />
+				</p:column>	
+				
+				<p:column headerText="是否独立机构" priority="1">
+					<h:outputText value="#{department.isIndependentEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="备注" priority="2">
+					<h:outputText id="remarks" value="#{department.remarks}" />
+				</p:column>
+				
+				<p:column headerText="排序代码" priority="2">
+					<h:outputText value="#{department.code}" />
+				</p:column>
+
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{departmentListBean.editModelAction(department)}">
+						<p:ajax event="dialogReturn" listener="#{departmentListBean.handleEditDepartmentReturn}" update="departmentsForm:messages departmentsForm:departmentsMultiple" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{departmentListBean.deleteDepartmentAction(department)}" update="departmentsForm:messages departmentsForm:departmentsMultiple">
+						<p:confirm header="删除部门" message="是否确定删除所选部门？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+ 			</p:treeTable>
+ 			
+			<h:panelGrid departments="1" rendered="#{departmentListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addDepartment" icon="ui-icon-plus" value="添加" actionListener="#{departmentListBean.addDepartmentAction}">
+						<p:ajax event="dialogReturn" listener="#{departmentListBean.handleAddDepartmentReturn}" update="messages departmentsMultiple" />
+					</p:commandButton>
+					<p:commandButton id="editDepartment" icon="ui-icon-pencil" value="编辑" actionListener="#{departmentListBean.editSelectedDepartmentAction}" update="messages" style="margin-left:20px">
+						<p:ajax event="dialogReturn" listener="#{departmentListBean.handleEditDepartmentReturn}" update="messages departmentsMultiple" />
+					</p:commandButton>
+					<p:commandButton id="deletedepartment" icon="ui-icon-close" value="删除" actionListener="#{departmentListBean.deleteDepartmentAction}" update="messages departmentsMultiple" style="margin-left:20px">
+						<p:confirm header="删除部门" message="是否确定删除所选部门？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid departments="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

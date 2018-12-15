@@ -1,0 +1,477 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.SelectEvent;
+
+import com.cccollector.app.model.App;
+import com.cccollector.app.model.Certificate;
+import com.cccollector.app.model.Platform;
+import com.cccollector.app.model.RootCertificate;
+import com.cccollector.app.service.AppService;
+import com.cccollector.app.service.PlatformService;
+import com.cccollector.app.service.RootCertificateService;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.dao.QueryField.PredicateEnum;
+
+/**
+ * 平台列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class PlatformListBean {
+
+	/**
+	 * 平台服务
+	 */
+	@ManagedProperty(value = "#{platformService}")
+	private PlatformService platformService;
+
+	public void setPlatformService(PlatformService _platformService) {
+		platformService = _platformService;
+	}
+
+	/**
+	 * 应用服务
+	 */
+	@ManagedProperty(value = "#{appService}")
+	private AppService appService;
+
+	public void setAppService(AppService _appService) {
+		appService = _appService;
+	}
+
+	/**
+	 * 根证书服务
+	 */
+	@ManagedProperty(value = "#{rootCertificateService}")
+	private RootCertificateService rootCertificateService;
+
+	public void setRootCertificateService(RootCertificateService _rootCertificateService) {
+		rootCertificateService = _rootCertificateService;
+	}
+
+	/**
+	 * 关联应用ID
+	 */
+	private String appId;
+
+	public String getAppId() {
+		return appId;
+	}
+
+	public void setAppId(String _appId) {
+		appId = _appId;
+		
+		// 加载应用
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(appId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			app = appService.loadById(id);
+		}
+	}
+
+	/**
+	 * 关联应用
+	 */
+	private App app;
+
+	public App getApp() {
+		return app;
+	}
+
+	/**
+	 * 平台是否多选
+	 */
+	private boolean platformsMultiSelect;
+
+	public boolean getPlatformsMultiSelect() {
+		return platformsMultiSelect;
+	}
+
+	public void setPlatformsMultiSelect(boolean _platformsMultiSelect) {
+		platformsMultiSelect = _platformsMultiSelect;
+	}
+
+	/**
+	 * 全部平台
+	 */
+	private List<Platform> allPlatforms;
+
+	public List<Platform> getAllPlatforms() {
+		if (allPlatforms == null) {
+			// 查询条件
+			List<QueryField> predicateQueryFieldList = null;
+			if (app != null) {
+				predicateQueryFieldList = new ArrayList<QueryField>();
+				predicateQueryFieldList.add(new QueryField("apps", new QueryField("appId", app.getAppId())));
+			}
+
+			// 排序
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+			orderQueryFieldList.add(new QueryField("name", Boolean.TRUE));
+			
+			allPlatforms = platformService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+		}
+		return allPlatforms;
+	}
+
+	/**
+	 * 选中的平台
+	 */
+	private List<Platform> selectedPlatforms;
+
+	public List<Platform> getSelectedPlatforms() {
+		return selectedPlatforms;
+	}
+
+	public void setSelectedPlatforms(List<Platform> _selectedPlatforms) {
+		selectedPlatforms = _selectedPlatforms;
+	}
+
+	/**
+	 * 选择平台
+	 */
+	public void selectPlatformAction(SelectEvent event) {
+		try {
+			Platform platform = (Platform) event.getObject();
+			FacesContext.getCurrentInstance().getExternalContext().redirect("moduleList.xhtml?platformId=" + platform.getPlatformId());
+		} catch (Exception e) {}
+	}	
+	
+	/**
+	 * 管理证书
+	 */
+	public void manageCertificatesAction(Platform platform) {
+		try {
+			// 查询可用的根证书
+			List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+			predicateQueryFieldList.add(new QueryField("enabled", true));
+			List<RootCertificate> rootCertificates = rootCertificateService.loadPage(predicateQueryFieldList, null, 0, 1);
+			RootCertificate rootCertificate = rootCertificates != null && rootCertificates.size() > 0 ? rootCertificates.get(0) : null;
+			// 如果查询到
+			if (rootCertificate != null) {
+				FacesContext.getCurrentInstance().getExternalContext().redirect("certificateList.xhtml?rootCertificateId=" + rootCertificate.getRootCertificateId() + "&ownerType=" + Certificate.OwnerTypeEnum.平台.ordinal() + "&ownerId=" + platform.getPlatformId());
+			}
+		} catch (Exception e) {}
+	}		
+	
+	/**
+	 * 同步证书
+	 */
+	public void syncCertificatesAction(Platform platform) {
+		// 向平台同步证书
+		Boolean success = platformService.syncCertificatesToPlatform(platform);
+		
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "同步证书成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "同步证书失败，请重新尝试！"));
+		}
+	}		
+	
+	/**
+	 * 管理应用
+	 */
+	public void manageAppsAction(Platform platform) {
+		try {
+			FacesContext.getCurrentInstance().getExternalContext().redirect("appList.xhtml?platformId=" + platform.getPlatformId());
+		} catch (Exception e) {}
+	}
+
+	/**
+	 * 管理角色
+	 */
+	public void manageRolesAction(Platform platform) {
+		try {
+			FacesContext.getCurrentInstance().getExternalContext().redirect("roleList.xhtml?platformId=" + platform.getPlatformId());
+		} catch (Exception e) {}
+	}
+	
+	/**
+	 * 选中的未被应用使用的平台ID
+	 */
+	private Integer selectedNotUsedPlatformId;
+
+	public Integer getSelectedNotUsedPlatformId() {
+		return selectedNotUsedPlatformId;
+	}
+
+	public void setSelectedNotUsedPlatformId(Integer _selectedNotUsedPlatformId) {
+		selectedNotUsedPlatformId = _selectedNotUsedPlatformId;
+	}
+
+	/**
+	 * 未被应用使用的平台
+	 */
+	public List<Platform> getNotUsedPlatforms() {
+		if (app == null) {
+			return null;
+		}
+		// 查询条件
+		List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("apps", new QueryField("appId", app.getAppId(), PredicateEnum.NOT_IN)));
+
+		// 排序
+		List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+		orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+		orderQueryFieldList.add(new QueryField("name", Boolean.TRUE));
+		
+		return platformService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+	}
+	
+	/**
+	 * 添加平台到应用
+	 */
+	public void addPlatformToAppAction() {
+		// 添加平台到应用
+		Boolean success = platformService.addPlatformToApp(selectedNotUsedPlatformId, app.getAppId());
+		
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success) {
+			// 清空选中的平台
+			selectedPlatforms = null;
+			// 清空选中的平台ID
+			selectedNotUsedPlatformId = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加平台到应用成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "添加平台到应用失败，请重新尝试！"));
+		}
+		
+		// 刷新全部平台数据
+		allPlatforms = null;
+	}
+	
+	/**
+	 * 从应用中删除平台
+	 */
+	public void deletePlatformFromAppAction(Platform platform) {
+		// 从应用中删除平台
+		Boolean success = platformService.deletePlatformFromApp(platform.getPlatformId(), app.getAppId());
+		
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success) {
+			// 清空选中的平台
+			selectedPlatforms = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "从应用中删除平台成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "从应用中删除平台失败，请重新尝试！"));
+		}
+		
+		// 刷新全部平台数据
+		allPlatforms = null;
+	}
+	
+	/**
+	 * 批量从应用中删除平台
+	 */
+	public void deletePlatformsFromAppAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedPlatforms != null && selectedPlatforms.size() > 0) {
+			// 从应用中删除平台
+			for (Platform platform : selectedPlatforms) {
+				platformService.deletePlatformFromApp(platform.getPlatformId(), app.getAppId());
+			}
+			
+			// 清空选中的平台
+			selectedPlatforms = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "从应用中删除平台成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个平台进行删除！"));
+		}
+		
+		// 刷新全部平台数据
+		allPlatforms = null;
+	}
+	
+	/**
+	 * 添加平台
+	 */
+	public void addPlatformAction() {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add("");
+		params.put("platformId", param);
+		
+		// 显示编辑平台对话框
+		RequestContext.getCurrentInstance().openDialog("platformEdit", options, params);
+	}
+	
+	/**
+	 * 处理添加平台返回
+	 */
+	public void handleAddPlatformReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			// 清空选中的平台
+			selectedPlatforms = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加平台成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "添加平台失败，请重新尝试！"));
+		}
+		
+		// 刷新全部平台数据
+		allPlatforms = null;
+	}
+	
+	/**
+	 * 编辑平台
+	 */
+	public void editPlatformAction(Platform platform) {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add(platform.getPlatformId().toString());
+		params.put("platformId", param);
+		
+		// 显示编辑平台对话框
+		RequestContext.getCurrentInstance().openDialog("platformEdit", options, params);
+	}
+	
+	/**
+	 * 编辑平台
+	 */
+	public void editPlatformAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedPlatforms != null && selectedPlatforms.size() > 0) {
+			if (selectedPlatforms.size() == 1) {
+				// 对话框选项
+				Map<String, Object> options = new HashMap<String, Object>();
+				options.put("width", 360);
+				options.put("resizable", false);
+				options.put("modal", true);
+				options.put("includeViewParams", true);
+				
+				// 传递的参数
+				Map<String, List<String>> params = new HashMap<String, List<String>>();
+				List<String> param = new ArrayList<String>();
+				param.add(selectedPlatforms.get(0).getPlatformId().toString());
+				params.put("platformId", param);
+				
+				// 显示编辑平台对话框
+				RequestContext.getCurrentInstance().openDialog("platformEdit", options, params);
+			} else {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "只能选择一个平台进行编辑！"));
+			}
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个平台进行编辑！"));
+		}
+	}
+	
+	/**
+	 * 处理编辑平台返回
+	 */
+	public void handleEditPlatformReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "编辑平台成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "编辑平台失败，请重新尝试！"));
+		}
+		
+		// 刷新全部平台数据
+		allPlatforms = null;
+	}
+	
+	/**
+	 * 批量修改平台是否可用
+	 */
+	public void modifyPlatformsEnabledAction(boolean enabled) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedPlatforms != null && selectedPlatforms.size() > 0) {
+			for (Platform platform : selectedPlatforms) {
+				platform.setEnabled(enabled);
+				platformService.update(platform, "enabled");
+			}
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "修改平台是否可用成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个平台进行修改！"));
+		}
+		
+		// 刷新全部平台数据
+		allPlatforms = null;
+	}
+	
+	/**
+	 * 删除平台
+	 */
+	public void deletePlatformAction(Platform platform) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 平台如果否包含子对象，则不能被删除
+		if (platformService.hasChildren(platform)) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的平台中包含子对象，请清空子对象再进行删除！"));
+			return;
+		}
+		
+		// 删除平台
+		platformService.delete(platform);
+		selectedPlatforms = null;
+		facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除平台成功！"));
+		
+		// 刷新全部平台数据
+		allPlatforms = null;
+	}
+	
+	/**
+	 * 批量删除平台
+	 */
+	public void deletePlatformsAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedPlatforms != null && selectedPlatforms.size() > 0) {
+			// 平台如果否包含子对象，则不能被删除
+			for (Platform platform : selectedPlatforms) {
+				if (platformService.hasChildren(platform)) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的平台中包含子对象，请清空子对象再进行删除！"));
+					return;
+				}
+			}
+			
+			// 删除平台
+			platformService.deleteAll(selectedPlatforms);
+			selectedPlatforms = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除平台成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个平台进行删除！"));
+		}
+		
+		// 刷新全部平台数据
+		allPlatforms = null;
+	}
+}

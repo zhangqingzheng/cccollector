@@ -1,0 +1,202 @@
+/**
+ * 
+ */
+package com.cccollector.app.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+/**
+ * 推广类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+*/
+@Entity
+@Table(name = "app_promotions")
+public class Promotion implements Serializable {
+
+	private static final long serialVersionUID = 2779298199850005629L;
+
+	private Integer _promotionId;
+
+	/**
+	 * 推广ID
+	 */
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public Integer getPromotionId() {
+		return _promotionId;
+	}
+
+	public void setPromotionId(Integer promotionId) {
+		_promotionId = promotionId;
+	}
+
+	private String _title;
+
+	/**
+	 * 标题
+	 */
+	@Column(nullable = false, length = 100)
+	public String getTitle() {
+		return _title;
+	}
+
+	public void setTitle(String title) {
+		_title = title;
+	}
+
+	private String _intro;
+
+	/**
+	 * 简介
+	 */
+	@Column(nullable = true, length = 200)
+	public String getIntro() {
+		return _intro;
+	}
+	
+	public void setIntro(String intro) {
+		_intro = intro;
+	}
+
+	private String _downloadAddress;
+
+	/**
+	 * 下载地址
+	 */
+	@Column(nullable = false, length = 100)
+	public String getDownloadAddress() {
+		return _downloadAddress;
+	}
+	
+	public void setDownloadAddress(String downloadAddress) {
+		_downloadAddress = downloadAddress;
+	}
+
+	private String _openAddress;
+
+	/**
+	 * 打开地址
+	 */
+	@Column(nullable = false, length = 100)
+	public String getOpenAddress() {
+		return _openAddress;
+	}
+	
+	public void setOpenAddress(String openAddress) {
+		_openAddress = openAddress;
+	}
+
+	private Date _iconUpdateTime;
+
+	/**
+	 * 图标更新时间
+	 */
+	@Column(nullable = true)
+	public Date getIconUpdateTime() {
+		return _iconUpdateTime;
+	}
+
+	public void setIconUpdateTime(Date iconUpdateTime) {
+		_iconUpdateTime = iconUpdateTime;
+	}
+	
+	/**
+	 * 图标文件名称
+	 */
+	public String iconFilePath() {
+		return _promotionId + "_icon.png";
+	}
+	
+	private String _relativeBundleId;
+
+	/**
+	 * 关联标识符
+	 */
+	@Column(nullable = true, length = 100)
+	
+	public String getRelativeBundleId() {
+		return _relativeBundleId;
+	}
+	
+	public void setRelativeBundleId(String relativeBundleId) {
+		_relativeBundleId = relativeBundleId;
+	}
+	
+	private Boolean _visible;
+
+	/**
+	 * 是否可见
+	 */
+	@Column(nullable = false)
+	public Boolean getVisible() {
+		return _visible;
+	}
+	
+	public void setVisible(Boolean visible) {
+		_visible = visible;
+	}
+
+	/**
+	 * 是否可见枚举
+	 */
+	public static enum VisibleEnum {
+		否,
+		是
+	}
+
+	/**
+	 * 是否可见的枚举
+	 */
+	@JsonIgnore
+	@Transient
+	public VisibleEnum getVisibleEnum() {
+		int index = _visible ? 1 : 0;
+		return VisibleEnum.values()[index];
+	}
+	
+	private Integer _position;
+
+	/**
+	 * 排序位置
+	 */
+	@JsonIgnore
+	@Column(nullable = false)
+	public Integer getPosition() {
+		return _position;
+	}
+
+	public void setPosition(Integer position) {
+		_position = position;
+	}
+
+	private Program _program;
+
+	/**
+	 * 所属推广方案
+	 */
+	@JsonIgnore
+	@ManyToOne
+	@JoinColumn(name = "programId", nullable = false)
+	public Program getProgram() {
+		return _program;
+	}
+
+	public void setProgram(Program program) {
+		_program = program;
+	}
+}

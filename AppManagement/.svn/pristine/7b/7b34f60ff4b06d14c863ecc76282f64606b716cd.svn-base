@@ -1,0 +1,318 @@
+/**
+ * 
+ */
+package com.cccollector.app.model;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+/**
+ * 部门类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Entity
+@Table(name = "user_departments")
+public class Department implements Serializable {
+
+	private static final long serialVersionUID = 3369490936932996669L;
+	
+	private Integer _departmentId;
+
+	/**
+	 * 部门ID
+	 */
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public Integer getDepartmentId() {
+		return _departmentId;
+	}
+
+	public void setDepartmentId(Integer departmentId) {
+		_departmentId = departmentId;
+	}
+
+	private String _name;
+
+	/**
+	 * 名称
+	 */
+	@Column(nullable = false, length = 100)
+	public String getName() {
+		return _name;
+	}
+
+	public void setName(String name) {
+		_name = name;
+	}
+
+	/**
+	 * 带级别名称
+	 */
+	@JsonIgnore
+	@Transient
+	public String getNameWithLevel() {
+		String nameWithLevel = _name;
+		if (_code != null) {
+			int level = _code.split(":").length;
+			for (int i = 0; i < level - 1; i++) {
+				nameWithLevel = " " + nameWithLevel;
+			}
+		}
+		return nameWithLevel;
+	}
+
+	/**
+	 * 带父部门名称
+	 */
+	@JsonIgnore
+	@Transient
+	public String getNameWithParents() {
+		String nameWithParents = _name;
+		Department parentDepartment = _parentDepartment;
+		while (parentDepartment != null) {
+			nameWithParents = parentDepartment.getName() + ":" + nameWithParents;
+			parentDepartment = parentDepartment.getParentDepartment();
+		}
+		return nameWithParents;
+	}
+
+	private Boolean _hasBadge;
+
+	/**
+	 * 是否有徽章
+	 */
+	@Column(nullable = false)
+	public Boolean getHasBadge() {
+		return _hasBadge;
+	}
+
+	public void setHasBadge(Boolean hasBadge) {
+		_hasBadge = hasBadge;
+	}
+
+	/**
+	 * 是否有徽章枚举
+	 */
+	public static enum HasBadgeEnum {
+		否,
+		是
+	}
+	
+	/**
+	 * 是否有徽章枚举数组
+	 */
+	@JsonIgnore
+	@Transient
+	public HasBadgeEnum[] getHasBadgeEnums() {
+		return HasBadgeEnum.values();
+	}
+
+	/**
+	 * 是否有徽章的枚举
+	 */
+	@JsonIgnore
+	@Transient
+	public HasBadgeEnum getHasBadgeEnum() {
+		int index = _hasBadge ? 1 : 0;
+		return HasBadgeEnum.values()[index];
+	}
+	
+	private Boolean _isIndependent;
+	
+	/**
+	 * 是否独立机构
+	 */
+	@Column(nullable = false)
+	public Boolean getIsIndependent() {
+		return _isIndependent;
+	}
+	
+	public void setIsIndependent(Boolean isIndependent) {
+		_isIndependent = isIndependent;
+	}
+	
+	/**
+	 * 是否独立机构枚举
+	 */
+	public static enum IsIndependentEnum {
+		否,
+		是
+	}
+	
+	/**
+	 * 是否独立机构枚举数组
+	 */
+	@JsonIgnore
+	@Transient
+	public IsIndependentEnum[] getIsIndependentEnums() {
+		return IsIndependentEnum.values();
+	}
+	
+	/**
+	 * 是否独立机构的枚举
+	 */
+	@JsonIgnore
+	@Transient
+	public IsIndependentEnum getIsIndependentEnum() {
+		int index = _isIndependent ? 1 : 0;
+		return IsIndependentEnum.values()[index];
+	}
+	
+	private String _remarks;
+
+	/**
+	 * 备注
+	 */
+	@Column(length = 1000)
+	public String getRemarks() {
+		return _remarks;
+	}
+
+	public void setRemarks(String remarks) {
+		_remarks = remarks;
+	}
+	
+	private Department _parentDepartment;
+
+	/**
+	 * 所属的父部门
+	 */
+	@JsonIgnore
+	@ManyToOne
+	@JoinColumn(name = "parentDepartmentId", nullable = true)
+	public Department getParentDepartment() {
+		return _parentDepartment;
+	}
+
+	public void setParentDepartment(Department parentDepartment) {
+		_parentDepartment = parentDepartment;
+	}
+
+	private Integer _parentDepartmentId;
+
+	/**
+	 * 所属的父部门ID
+	 */	
+	@Transient
+	public Integer getParentDepartmentId() {
+		return _parentDepartmentId;
+	}
+
+	public void setParentDepartmentId(Integer parentDepartmentId) {
+		_parentDepartmentId = parentDepartmentId;
+	}
+
+	private Integer _position;
+
+	/**
+	 * 排序位置
+	 */
+	@JsonIgnore
+	@Column(nullable = false)
+	public Integer getPosition() {
+		return _position;
+	}
+
+	public void setPosition(Integer position) {
+		_position = position;
+	}
+
+	private String _code;
+
+	/**
+	 * 排序代码
+	 */
+	@Column(nullable = false, length = 100)
+	public String getCode() {
+		return _code;
+	}
+
+	public void setCode(String code) {
+		_code = code;
+	}
+
+	private List<Department> _childDepartments = new ArrayList<Department>();
+
+	/**
+	 * 包含的子部门
+	 */
+	@JsonIgnore
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "parentDepartment")
+	@OrderBy("position")
+	public List<Department> getChildDepartments() {
+		return _childDepartments;
+	}
+	
+	public void setChildDepartments(List<Department> childDepartments) {
+		_childDepartments = childDepartments;
+	}
+	
+	private List<Role> _roles = new ArrayList<Role>();
+
+	/**
+	 * 关联的角色
+	 */
+	@JsonIgnore
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "user_departmentRoles", joinColumns = @JoinColumn(name = "departmentId", nullable = false), inverseJoinColumns = @JoinColumn(name = "roleId", nullable = false))
+	@OrderBy("position")
+	public List<Role> getRoles() {
+		return _roles;
+	}
+
+	public void setRoles(List<Role> roles) {
+		_roles = roles;
+	}
+	
+	private List<Permission> _permissions = new ArrayList<Permission>();
+
+	/**
+	 * 关联的权限
+	 */
+	@JsonIgnore
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "user_departmentPermissions", joinColumns = @JoinColumn(name = "departmentId", nullable = false), inverseJoinColumns = @JoinColumn(name = "permissionId", nullable = false))
+	@OrderBy("name")
+	public List<Permission> getPermissions() {
+		return _permissions;
+	}
+
+	public void setPermissions(List<Permission> permissions) {
+		_permissions = permissions;
+	}	
+	
+	private List<Job> _jobs = new ArrayList<Job>();
+
+	/**
+	 * 包含的岗位
+	 */
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "department")
+	@OrderBy("position")
+	public List<Job> getJobs() {
+		return _jobs;
+	}
+
+	public void setJobs(List<Job> jobs) {
+		_jobs = jobs;
+	}
+}

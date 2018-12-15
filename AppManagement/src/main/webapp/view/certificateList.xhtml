@@ -1,0 +1,198 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="title">
+		证书列表 - 
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		<span style="display:#{certificateListBean.modelId2 == null || certificateListBean.modelId2 == '' ? '' : 'none'}"><a href="rootCertificateList.xhtml" class="subitem">#{certificateListBean.rootCertificate.name}</a><span class="subitem fontSize18">根证书</span></span>
+		<span style="display:#{certificateListBean.modelId2 == '0' ? '' : 'none'}"><a href="platformList.xhtml" class="subitem">#{certificateListBean.modelId2 == '0' ? certificateListBean.owner.name : ''}</a><span class="subitem fontSize18">平台</span></span>
+		<span style="display:#{certificateListBean.modelId2 == '1' ? '' : 'none'}"><a href="userList.xhtml" class="subitem">#{certificateListBean.modelId2 == '1' ? certificateListBean.owner.realName : ''}</a><span class="subitem fontSize18">用户</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="rootCertificateId" value="#{certificateListBean.modelId1}" />
+			<f:viewParam name="ownerType" value="#{certificateListBean.modelId2}" />
+			<f:viewParam name="ownerId" value="#{certificateListBean.modelId3}" />
+			<f:viewParam name="multiSelect" value="#{certificateListBean.multiSelect}" />
+		</f:metadata>
+
+		<h:form id="certificatesForm">
+			<p:growl id="messages" showDetail="true" />
+
+			<p:inputSwitch id="multiSelect" value="#{certificateListBean.multiSelect}" onLabel="管理" offLabel="浏览">
+				<p:ajax update="certificatesForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="certificatesSingle" widgetVar="certificatesSingleTable" var="certificate" value="#{certificateListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selectionMode="single" rowKey="#{certificate.certificateId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!certificate.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{!certificateListBean.multiSelect}">
+				<p:column headerText="证书ID" priority="1">
+					<h:outputText value="#{certificate.certificateId}" />
+				</p:column>
+				
+				<p:column headerText="所有者类别" priority="1" filterBy="#{certificate.ownerType}" filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu value="#{certificateListBean.selectedOwnerType}" onchange="PF('certificatesSingleTable').filter()" rendered="#{certificateListBean.modelId2 == null || certificateListBean.modelId2 == ''}">
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{certificateListBean.ownerTypeEnums}" var="ownerTypeEnum" itemLabel="#{ownerTypeEnum.name()}" itemValue="#{ownerTypeEnum.ordinal()}" />
+							<p:ajax update="ownerSelecter" />
+						</p:selectOneMenu>
+					</f:facet>
+					<h:outputText value="#{certificate.ownerTypeEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="所有者" priority="1" filterBy="#{certificate.ownerId}" filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu id="ownerSelecter" value="#{certificateListBean.selectedOwnerId}" onchange="PF('certificatesSingleTable').filter()" rendered="#{certificateListBean.modelId2 == null || certificateListBean.modelId2 == ''}">
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{certificateListBean.allOwners}" var="owner" itemLabel="#{certificateListBean.selectedOwnerType == null ? '' : (certificateListBean.selectedOwnerType == 0 ? owner.bundleId : owner.username)}" itemValue="#{certificateListBean.selectedOwnerType == null ? null : (certificateListBean.selectedOwnerType == 0 ? owner.platformId : owner.userId)}" />
+						</p:selectOneMenu>
+					</f:facet>
+					<h:outputText value="#{certificate.ownerName} (ID:#{certificate.ownerId})" />
+				</p:column>
+
+				<p:column headerText="PKCS密码" priority="1">
+					<h:outputText value="#{certificate.password}" />
+				</p:column>
+
+				<p:column headerText="签发时间" priority="1">
+					<h:outputText value="#{certificate.issueTime}">
+					    <f:convertDateTime  pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai"/>
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="过期时间" priority="1">
+					<h:outputText value="#{certificate.expirationTime}">
+					    <f:convertDateTime  pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai"/>
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{certificate.enabledEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="使用" priority="1">
+					<p:commandButton icon="fa fa-fw fa-cloud-download" value="PKCS8" ajax="false">
+						<p:fileDownload value="#{certificateListBean.getCertificateWithKeyPKCS8File(certificate)}" ajax="false" />
+					</p:commandButton>
+					<p:commandButton icon="fa fa-fw fa-cloud-download" value="PKCS12" ajax="false" style="margin-left:10px">
+						<p:fileDownload value="#{certificateListBean.getCertificateWithKeyPKCS12File(certificate)}" ajax="false" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+
+			<p:dataTable id="certificatesMultiple" widgetVar="certificatesMultipleTable" var="certificate" value="#{certificateListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selection="#{certificateListBean.selectedModels}" rowKey="#{certificate.certificateId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!certificate.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{certificateListBean.multiSelect}">
+				<p:ajax event="rowDblselect" listener="#{certificateListBean.selectModelAction}" />
+
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+
+				<p:column headerText="证书ID" priority="1">
+					<h:outputText value="#{certificate.certificateId}" />
+				</p:column>
+				
+				<p:column headerText="所有者类别" priority="1" filterBy="#{certificate.ownerType}" filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu value="#{certificateListBean.selectedOwnerType}" onchange="PF('certificatesMultipleTable').filter()" rendered="#{certificateListBean.modelId2 == null || certificateListBean.modelId2 == ''}">
+				    		<p:ajax update="ownerSelecter" />
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{certificateListBean.ownerTypeEnums}" var="ownerTypeEnum" itemLabel="#{ownerTypeEnum.name()}" itemValue="#{ownerTypeEnum.ordinal()}" />
+						</p:selectOneMenu>
+					</f:facet>
+					<h:outputText value="#{certificate.ownerTypeEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="所有者" priority="1" filterBy="#{certificate.ownerId}" filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu id="ownerSelecter" value="#{certificateListBean.selectedOwnerId}" onchange="PF('certificatesMultipleTable').filter()" rendered="#{certificateListBean.modelId2 == null || certificateListBean.modelId2 == ''}">
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{certificateListBean.allOwners}" var="owner" itemLabel="#{certificateListBean.selectedOwnerType == null ? '' : (certificateListBean.selectedOwnerType == 0 ? owner.bundleId : owner.username)}" itemValue="#{certificateListBean.selectedOwnerType == null ? null : (certificateListBean.selectedOwnerType == 0 ? owner.platformId : owner.userId)}" />
+						</p:selectOneMenu>
+					</f:facet>
+					<h:outputText value="#{certificate.ownerName} (ID:#{certificate.ownerId})" />
+				</p:column>
+
+				<p:column headerText="PKCS密码" priority="1">
+					<h:outputText value="#{certificate.password}" />
+				</p:column>
+
+				<p:column headerText="签发时间" priority="1">
+					<h:outputText value="#{certificate.issueTime}">
+					    <f:convertDateTime  pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai"/>
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="过期时间" priority="1">
+					<h:outputText value="#{certificate.expirationTime}">
+					    <f:convertDateTime  pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai"/>
+					</h:outputText>
+				</p:column>	
+
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{certificate.enabledEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="使用" priority="1">
+					<p:commandButton icon="fa fa-fw fa-cloud-download" value="PKCS8" ajax="false">
+						<p:fileDownload value="#{certificateListBean.getCertificateWithKeyPKCS8File(certificate)}" ajax="false" />
+					</p:commandButton>
+					<p:commandButton icon="fa fa-fw fa-cloud-download" value="PKCS12" ajax="false" style="margin-left:10px">
+						<p:fileDownload value="#{certificateListBean.getCertificateWithKeyPKCS12File(certificate)}" ajax="false" />
+					</p:commandButton>
+				</p:column>
+
+				<p:column headerText="启用停用" priority="2">
+					<p:commandButton icon="fa fa-fw fa-toggle-on" value="启用" actionListener="#{certificateListBean.enableAction(certificate)}" update="certificatesForm:messages certificatesForm:certificatesMultiple" rendered="#{!certificate.enabled}">
+						<p:confirm header="启用证书" message="是否确定启用所选证书？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton icon="fa fa-fw fa-toggle-off" value="停用" actionListener="#{certificateListBean.disableAction(certificate)}" update="certificatesForm:messages certificatesForm:certificatesMultiple" style="margin-left:10px" rendered="#{certificate.enabled}">
+						<p:confirm header="停用证书" message="是否确定停用所选证书？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+	
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{certificateListBean.editModelAction(certificate)}">
+						<p:ajax event="dialogReturn" listener="#{certificateListBean.handleEditModelReturn}" update="certificatesForm:messages certificatesForm:certificatesMultiple" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{certificateListBean.deleteCertificateAction(certificate)}" update="certificatesForm:messages certificatesForm:certificatesMultiple" style="margin-left:10px">
+						<p:confirm header="删除证书" message="是否确定删除所选证书？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+
+			<p:contextMenu for="certificatesMultiple" rendered="#{certificateListBean.multiSelect}">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{certificateListBean.addCertificateAction}" update="messages" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{certificateListBean.editSelectedModelAction}" update="messages" />
+				<p:menuitem icon="ui-icon-close" value="批量删除" actionListener="#{certificateListBean.deleteCertificatesAction}" update="messages certificatesMultiple">
+					<p:confirm header="删除证书" message="是否确定删除所选证书？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{certificateListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addCertificate" icon="ui-icon-plus" value="添加" actionListener="#{certificateListBean.addCertificateAction}" update="messages">
+						<p:ajax event="dialogReturn" listener="#{certificateListBean.handleAddModelReturn}" update="messages certificatesMultiple" />
+					</p:commandButton>
+					<p:commandButton id="editCertificate" icon="ui-icon-pencil" value="编辑" actionListener="#{certificateListBean.editSelectedModelAction}" update="messages" style="margin-left:20px">
+						<p:ajax event="dialogReturn" listener="#{certificateListBean.handleEditModelReturn}" update="messages certificatesMultiple" />
+					</p:commandButton>
+					<p:commandButton id="deleteCertificates" icon="ui-icon-close" value="批量删除" actionListener="#{certificateListBean.deleteCertificatesAction}" update="messages certificatesMultiple" style="margin-left:20px">
+						<p:confirm header="删除证书" message="是否确定删除所选证书？" icon="ui-icon-alert" />
+					</p:commandButton>					
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

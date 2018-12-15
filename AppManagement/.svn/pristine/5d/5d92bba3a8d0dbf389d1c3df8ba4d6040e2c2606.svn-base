@@ -1,0 +1,104 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.io.Serializable;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import org.hibernate.exception.ConstraintViolationException;
+import org.primefaces.PrimeFaces;
+import org.springframework.core.NestedRuntimeException;
+
+import com.cccollector.app.model.Module;
+import com.cccollector.app.model.Platform;
+
+/**
+ * 模块Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class ModuleBean extends BaseEditBean<Module> implements Serializable {
+
+	private static final long serialVersionUID = 3547712716235306388L;
+
+	public ModuleBean () {
+		genericEditBeanHandler = new GenericEditBeanHandlerModelRelated<Module>() {
+
+			@Override
+			public Module loadModel(Integer modelId) {
+				Module module = null;
+				if (modelId == null) {
+					module = new Module();
+					module.setEnabled(true);
+				} else {
+					module = moduleService.loadById(modelId);
+				}
+				return module;
+			}
+
+			@Override
+			public Object loadRelatedModel(int index, int relatedModelId) {
+				if (index == 1) {
+					return platformService.loadById(relatedModelId);
+				}
+				return null;
+			}
+		};
+	}
+	
+	/**
+	 * 模板
+	 */
+	public Module getModule() {
+		return getModel();
+	}
+
+	/**
+	 * 所属平台
+	 */
+	public Platform getPlatform() {
+		return (Platform) relatedModel(1);
+	}
+	
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		Module module = getModule();
+		// 置空
+		if (module.getRemarks().equals("")) {
+			module.setRemarks(null);
+		}
+		
+		try {
+			if (module.getModuleId() == null) {
+				// 添加模板
+				moduleService.addModule(module, Integer.parseInt(getModelId1()));
+				addInfoMessageToFlash("添加模板成功！");
+			} else {
+				// 编辑模板
+				moduleService.update(module);
+				addInfoMessageToFlash("编辑模板成功！");
+			}
+		} catch (Exception e) {
+			if (e instanceof ConstraintViolationException || (e instanceof NestedRuntimeException && ((NestedRuntimeException) e).contains(ConstraintViolationException.class))) {
+				addValidatingMessage("标识符必须唯一，不能重复！");
+				return;
+			} else {
+				throw e;
+			}
+		}
+		
+		if (getUsingDialog()) {
+			PrimeFaces.current().dialog().closeDynamic(null);
+		} else {
+			handleNavigation("moduleList.xhtml?multiSelect=true");
+		}
+	}
+}

@@ -1,0 +1,42 @@
+package com.cccollector.app.service;
+
+import java.util.List;
+
+import com.cccollector.app.model.Program;
+import com.cccollector.universal.service.GenericService;
+
+/**
+ * 推广方案服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public interface ProgramService extends GenericService<Integer, Program> {
+	
+	/**
+	 * 添加推广方案到版本
+	 * 
+	 * @param programId 推广方案ID
+	 * @param editionId 版本ID
+	 * @return 是否成功
+	 */
+	public Boolean addProgramToEdition(Integer programId, Integer editionId);
+	
+	/**
+	 * 在版本中移动推广方案
+	 * 
+	 * @param programs 移动后的推广方案
+	 * @param editionId 版本ID
+	 * @return 是否成功
+	 */
+	public Boolean moveProgramsInEdition(List<Program> programs, Integer editionId);
+	
+	/**
+	 * 从版本删除推广方案
+	 * 
+	 * @param programId 推广方案ID
+	 * @param editionId 版本ID
+	 * @return 是否成功
+	 */
+	public Boolean deleteProgramFromEdition(Integer programId, Integer editionId);
+}

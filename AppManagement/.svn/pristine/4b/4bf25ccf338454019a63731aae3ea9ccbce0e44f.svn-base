@@ -1,0 +1,66 @@
+/**
+ * 
+ */
+package com.cccollector.app.api;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import com.cccollector.app.model.Release;
+import com.cccollector.universal.service.GenericService;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+
+/**
+ * 发行API接口
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Path("/releases")
+@Produces({ MediaType.APPLICATION_JSON })
+@Api(value = "发行API")
+public interface ReleaseApi extends GenericService<Integer, Release> {
+    
+	/**
+	 * 根据版本标识符和发行版本号查询发行对象
+	 * 
+	 * @param editionBundleId 版本标识符
+	 * @param version 发行版本号
+	 * @return 发行对象
+	 */
+    @Path("/findByEditionBundleId")
+    @GET
+    @ApiOperation(value = "根据版本标识符和发行版本号查询发行对象", response = Release.class)
+    public Response findReleaseByEditionBundleId(@ApiParam(value = "版本标识符", required = true) @QueryParam("editionBundleId") String editionBundleId, @ApiParam(value = "发行版本号", required = true) @QueryParam("version") String version);
+    
+    /**
+     * 根据版本标识符和发行版本号查询发行对象2
+     * 
+     * @param editionBundleId 版本标识符
+     * @param version 发行版本号
+     * @return 发行对象
+     */
+    @Path("/findByEditionBundleId2")
+    @GET
+    @ApiOperation(value = "根据版本标识符和发行版本号查询发行对象2", response = Release.class)
+    public Response findReleaseByEditionBundleId2(@ApiParam(value = "版本标识符", required = true) @QueryParam("editionBundleId") String editionBundleId, @ApiParam(value = "发行版本号", required = true) @QueryParam("version") String version);
+    
+	/**
+	 * 根据版本标识符和发行版本号查询未发布的发行对象
+	 * 
+	 * @param editionBundleId 版本标识符
+	 * @param version 发行版本号
+	 * @return 发行对象
+	 */
+    @Path("/findUnpublishedByEditionBundleId")
+    @GET
+    @ApiOperation(value = "根据版本标识符和发行版本号查询未发布的发行对象", response = Release.class)
+    public Response findUnpublishedReleaseByEditionBundleId(@ApiParam(value = "版本标识符", required = true) @QueryParam("editionBundleId") String editionBundleId, @ApiParam(value = "发行版本号", required = true) @QueryParam("version") String version);
+}

@@ -1,0 +1,271 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.event.ReorderEvent;
+import org.primefaces.event.SelectEvent;
+
+import com.cccollector.app.model.Program;
+import com.cccollector.app.model.Promotion;
+import com.cccollector.app.service.ProgramService;
+import com.cccollector.app.service.PromotionService;
+import com.cccollector.universal.dao.QueryField;
+
+/**
+ * 推广列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class PromotionListBean {
+
+	/**
+	 * 推广服务
+	 */
+	@ManagedProperty(value = "#{promotionService}")
+	private PromotionService promotionService;
+
+	public void setPromotionService(PromotionService _promotionService) {
+		promotionService = _promotionService;
+	}
+
+	/**
+	 * 推广方案服务
+	 */
+	@ManagedProperty(value = "#{programService}")
+	private ProgramService programService;
+
+	public void setProgramService(ProgramService _programService) {
+		programService = _programService;
+	}
+
+	/**
+	 * 推广方案ID
+	 */
+	private String programId;
+
+	public String getProgramId() {
+		return programId;
+	}
+
+	public void setProgramId(String _programId) {
+		programId = _programId;
+
+		// 加载推广方案
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(programId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			program = programService.loadById(id);
+		}
+	}
+
+	/**
+	 * 推广方案
+	 */
+	private Program program;
+
+	public Program getProgram() {
+		return program;
+	}
+
+	/**
+	 * 推广是否多选
+	 */
+	private boolean promotionsMultiSelect;
+
+	public boolean getPromotionsMultiSelect() {
+		return promotionsMultiSelect;
+	}
+
+	public void setPromotionsMultiSelect(boolean _promotionsMultiSelect) {
+		promotionsMultiSelect = _promotionsMultiSelect;
+	}
+
+	/**
+	 * 全部推广
+	 */
+	private List<Promotion> allPromotions;
+
+	public List<Promotion> getAllPromotions() {
+		if (allPromotions == null) {
+			// 查询条件
+			List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+			predicateQueryFieldList.add(new QueryField("program", new QueryField("programId", program.getProgramId())));
+
+			// 排序
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("position", Boolean.TRUE));
+			allPromotions = promotionService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+		}
+		return allPromotions;
+	}
+
+	/**
+	 * 选中的推广
+	 */
+	private List<Promotion> selectedPromotions;
+
+	public List<Promotion> getSelectedPromotions() {
+		return selectedPromotions;
+	}
+
+	public void setSelectedPromotions(List<Promotion> _selectedPromotions) {
+		selectedPromotions = _selectedPromotions;
+	}
+
+	/**
+	 * 加载推广图标缩略图
+	 */
+	public String loadIconThumbnail(Promotion promotion) {
+		if (promotion.getIconUpdateTime() != null) {
+			String iconFilePath = promotion.iconFilePath();
+			return promotionService.getIconThumbnailPromotionsUrl() + iconFilePath;
+		}
+		return null;
+	}
+	
+	/**
+	 * 选择推广
+	 */
+	public void selectPromotionAction(SelectEvent event) {
+		try {
+			Promotion promotion = (Promotion) event.getObject();
+			if (promotionsMultiSelect) {
+				FacesContext.getCurrentInstance().getExternalContext().redirect("promotionEdit.xhtml?promotionId=" + promotion.getPromotionId() + "&programId=" + programId);
+			}
+		} catch (Exception e) {}
+	}
+
+	/**
+	 * 添加推广
+	 */
+	public void addPromotionAction() {
+		try {
+			FacesContext.getCurrentInstance().getExternalContext().redirect("promotionEdit.xhtml?promotionId=&programId=" + programId);
+		} catch (Exception e) {}
+	}
+
+	/**
+	 * 编辑推广
+	 */
+	public void editPromotionAction(Promotion promotion) {
+		try {
+			FacesContext.getCurrentInstance().getExternalContext().redirect("promotionEdit.xhtml?promotionId=" + promotion.getPromotionId() + "&programId=" + programId);
+		} catch (Exception e) {}
+	}
+
+	/**
+	 * 编辑推广
+	 */
+	public void editPromotionAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedPromotions != null && selectedPromotions.size() > 0) {
+			if (selectedPromotions.size() == 1) {
+				try {
+					FacesContext.getCurrentInstance().getExternalContext().redirect("promotionEdit.xhtml?promotionId=" + selectedPromotions.get(0).getPromotionId() + "&programId=" + programId);
+				} catch (Exception e) {}
+			} else {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "只能选择一个推广进行编辑！"));
+			}
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个推广进行编辑！"));
+		}
+	}
+
+	/**
+	 * 移动推广
+	 */
+	public void moveMediaAction(ReorderEvent event) {
+		// 更新全部推广的排序位置
+		int position = 0;
+		for (Promotion promotion : allPromotions) {
+			promotion.setPosition(position);
+			promotionService.update(promotion, "position");
+			position++;
+		}
+		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "移动推广成功！"));
+
+		// 刷新全部推广数据
+		allPromotions = null;
+	}
+
+	/**
+	 * 删除推广
+	 */
+	public void deletePromotionAction(Promotion promotion) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 删除图片文件
+		File pictureFile = new File(promotionService.getDataPromotionsPath() + promotion.iconFilePath());
+		if (pictureFile.exists()) {
+			pictureFile.delete();
+		}
+
+		// 清除nginx缓存文件
+		File[] sizeFiles = new File(promotionService.getImagePath()).listFiles();
+		if (sizeFiles != null) {
+			for (File sizeFile : sizeFiles) {
+				File pictureImageFile = new File(sizeFile, promotionService.getPromotionsPath() + promotion.iconFilePath());
+				pictureImageFile.delete();
+			}
+		}
+		
+		// 删除推广
+		promotionService.delete(promotion);
+		selectedPromotions = null;
+		facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除推广成功！"));
+
+		// 刷新全部推广数据
+		allPromotions = null;
+	}
+
+	/**
+	 * 批量删除推广
+	 */
+	public void deletePromotionsAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedPromotions != null && selectedPromotions.size() > 0) {
+			// 删除推广图片文件和目录
+			for (Promotion promotion : selectedPromotions) {
+				// 删除图片文件
+				File pictureFile = new File(promotionService.getDataPromotionsPath() + promotion.iconFilePath());
+				if (pictureFile.exists()) {
+					pictureFile.delete();
+				}
+
+				// 清除nginx缓存文件
+				File[] sizeFiles = new File(promotionService.getImagePath()).listFiles();
+				if (sizeFiles != null) {
+					for (File sizeFile : sizeFiles) {
+						File pictureImageFile = new File(sizeFile, promotionService.getPromotionsPath() + promotion.iconFilePath());
+						pictureImageFile.delete();
+					}
+				}
+			}
+			
+			// 删除推广
+			promotionService.deleteAll(selectedPromotions);
+			selectedPromotions = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除推广成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个推广进行删除！"));
+		}
+
+		// 刷新全部推广数据
+		allPromotions = null;
+	}
+}

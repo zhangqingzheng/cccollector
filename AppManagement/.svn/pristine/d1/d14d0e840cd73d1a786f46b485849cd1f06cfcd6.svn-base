@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<b:beans xmlns:b="http://www.springframework.org/schema/beans"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+		http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.2.xsd">
+	
+	<security:http pattern="/authenticationFailure.xhtml*" security="none" />
+	<security:http pattern="/javax.faces.resource/**" security="none" />
+	<security:http entry-point-ref="casAuthenticationEntryPoint">
+		<security:intercept-url pattern="/**" access="hasRole('ROLE_USER')" />
+	    <security:x509 subject-principal-regex="CN=(.*?)," user-service-ref="userDetailService" />
+		<security:custom-filter ref="requestSingleLogoutFilter" before="LOGOUT_FILTER"/>
+		<security:custom-filter ref="casSingleSignOutFilter" before="CAS_FILTER"/>
+		<security:custom-filter ref="casAuthenticationFilter" position="CAS_FILTER" />
+		<security:logout logout-url="/logout/cas" logout-success-url="/index.xhtml"/>
+		<security:csrf disabled="true" />
+		<security:headers>
+			<security:frame-options policy="SAMEORIGIN" />
+		</security:headers>
+	</security:http>
+
+	<security:authentication-manager alias="authenticationManager">
+		<security:authentication-provider ref="casAuthenticationProvider" />
+	</security:authentication-manager>
+
+	<b:bean id="serviceProperties" class="org.springframework.security.cas.ServiceProperties" p:service="https://${pom.config.tomcatHost}/AppManagement/login/cas" p:authenticateAllArtifacts="true"/>
+	<b:bean id="casAuthenticationEntryPoint" class="org.springframework.security.cas.web.CasAuthenticationEntryPoint" p:serviceProperties-ref="serviceProperties" p:loginUrl="https://${pom.config.tomcatHost}/CAS/login" />
+	
+	<b:bean id="casSingleSignOutFilter" class="org.jasig.cas.client.session.SingleSignOutFilter"/>
+	<b:bean id="requestSingleLogoutFilter" class="org.springframework.security.web.authentication.logout.LogoutFilter" p:filterProcessesUrl="/logout/cas">
+		<b:constructor-arg value="https://${pom.config.tomcatHost}/CAS/logout"/>
+		<b:constructor-arg>
+			<b:bean class="org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler"/>
+		</b:constructor-arg>
+	</b:bean>
+
+	<b:bean id="casAuthenticationFilter" class="org.springframework.security.cas.web.CasAuthenticationFilter" p:authenticationManager-ref="authenticationManager" p:serviceProperties-ref="serviceProperties"
+		p:proxyGrantingTicketStorage-ref="proxyGrantingTicketStorage" p:proxyReceptorUrl="/login/cas/proxyreceptor">
+		<b:property name="authenticationDetailsSource">
+			<b:bean class="org.springframework.security.cas.web.authentication.ServiceAuthenticationDetailsSource">
+				<b:constructor-arg ref="serviceProperties"/>
+			</b:bean>
+		</b:property>
+		<b:property name="authenticationFailureHandler">
+			<b:bean class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler" p:defaultFailureUrl="/authenticationFailure.xhtml"/>
+		</b:property>
+	</b:bean>
+	
+	<b:bean id="proxyGrantingTicketStorage" class="org.jasig.cas.client.proxy.ProxyGrantingTicketStorageImpl"/>
+	<b:bean id="casAuthenticationProvider" class="org.springframework.security.cas.authentication.CasAuthenticationProvider" p:serviceProperties-ref="serviceProperties" p:key="casAuthenticationProviderKey">
+		<b:property name="authenticationUserDetailsService">
+			<b:bean class="org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper">
+				<b:constructor-arg ref="userDetailService" />
+			</b:bean>
+		</b:property>
+		<b:property name="ticketValidator">
+			<b:bean class="org.jasig.cas.client.validation.Cas20ProxyTicketValidator" p:acceptAnyProxy="true"
+				p:proxyGrantingTicketStorage-ref="proxyGrantingTicketStorage" p:proxyCallbackUrl="https://${pom.config.tomcatHost}/AppManagement/login/cas/proxyreceptor">
+				<b:constructor-arg value="https://${pom.config.tomcatHost}/CAS" />
+			</b:bean>
+		</b:property>
+		<b:property name="statelessTicketCache">
+			<b:bean class="org.springframework.security.cas.authentication.EhCacheBasedTicketCache">
+				<b:property name="cache">
+					<b:bean id="ticketEhcache" class="net.sf.ehcache.Cache" init-method="initialise" destroy-method="dispose">
+						<b:constructor-arg value="casTickets"/>
+						<b:constructor-arg value="50"/>
+						<b:constructor-arg value="true"/>
+						<b:constructor-arg value="false"/>
+						<b:constructor-arg value="3600"/>
+						<b:constructor-arg value="900"/>
+						<b:property name="cacheManager">
+							<b:bean id="ticketCacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+								<b:property name="cacheManagerName" value="ticketCacheManager" />
+							</b:bean>
+						</b:property>
+					</b:bean>
+				</b:property>
+			</b:bean>
+		</b:property>
+	</b:bean>
+</b:beans>

@@ -1,0 +1,161 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import org.hibernate.exception.ConstraintViolationException;
+import org.primefaces.PrimeFaces;
+import org.springframework.core.NestedRuntimeException;
+
+import com.cccollector.app.model.App;
+import com.cccollector.app.model.Edition;
+
+/**
+ * 版本Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class EditionBean extends BaseEditBean<Edition> {
+
+	public EditionBean () {
+		genericEditBeanHandler = new GenericEditBeanHandlerModelRelated<Edition>() {
+
+			@Override
+			public Edition loadModel(Integer modelId) {
+				Edition edition = null;
+				if (modelId == null) {
+					edition = new Edition();
+					edition.setEnabled(true);
+					edition.setApp(getApp());
+				} else {
+					edition = editionService.loadById(modelId);
+
+					// 处理选中的操作系统
+					selectedOses = new String[8];
+					int count = 0;
+					for (int i = 0; i < 8; i++) {
+						if ((edition.getOs() & (int) Math.pow(2, i)) > 0) {
+							selectedOses[count] = String.valueOf(i);
+							count++;
+						}
+					}
+					
+					// 处理选中的设备
+					selectedDevices = new String[8];
+					count = 0;
+					for (int i = 0; i < 8; i++) {
+						if ((edition.getDevice() & (int) Math.pow(2, i)) > 0) {
+							selectedDevices[count] = String.valueOf(i);
+							count++;
+						}
+					}
+				}
+				return edition;
+			}
+
+			@Override
+			public Object loadRelatedModel(int index, int relatedModelId) {
+				if (index == 1) {
+					return appService.loadById(relatedModelId);
+				}
+				return null;
+			}
+		};
+	}
+
+	/**
+	 * 版本
+	 */
+	public Edition getEdition() {
+		return getModel();
+	}
+
+	/**
+	 * 所属应用
+	 */
+	public App getApp() {
+		return (App) relatedModel(1);
+	}
+
+	/**
+	 * 选中的操作系统
+	 */
+	private String[] selectedOses;
+
+	public String[] getSelectedOses() {
+		return selectedOses;
+	}
+
+	public void setSelectedOses(String[] _selectedOses) {
+		selectedOses = _selectedOses;
+	}
+
+	/**
+	 * 选中的设备
+	 */
+	private String[] selectedDevices;
+
+	public String[] getSelectedDevices() {
+		return selectedDevices;
+	}
+
+	public void setSelectedDevices(String[] _selectedDevices) {
+		selectedDevices = _selectedDevices;
+	}
+
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		Edition edition = getEdition();
+		// 置空
+		if (edition.getRemarks().equals("")) {
+			edition.setRemarks(null);
+		}
+		
+		// 处理操作系统
+		int os = 0;
+		for (String selectedOs : selectedOses) {
+			os += (int) Math.pow(2, Integer.parseInt(selectedOs));
+		}
+		edition.setOs(os);
+		
+		// 处理设备
+		int device = 0;
+		for (String selectedDevice : selectedDevices) {
+			device += (int) Math.pow(2, Integer.parseInt(selectedDevice));
+		}
+		edition.setDevice(device);
+		
+		try {
+			if (edition.getEditionId() == null) {
+				// 添加版本
+				editionService.save(edition);
+				addInfoMessageToFlash("添加版本成功！");
+			} else {
+				// 编辑版本
+				editionService.update(edition);
+				addInfoMessageToFlash("编辑版本成功！");
+			}
+		} catch (Exception e) {
+			if (e instanceof ConstraintViolationException || (e instanceof NestedRuntimeException && ((NestedRuntimeException) e).contains(ConstraintViolationException.class))) {
+				addValidatingMessage("标识符必须唯一，不能重复！");
+				return;
+			} else {
+				throw e;
+			}
+		}
+		
+		if (getUsingDialog()) {
+			PrimeFaces.current().dialog().closeDynamic(null);
+		} else {
+			handleNavigation("editionList.xhtml?multiSelect=true");
+		}
+	}
+}

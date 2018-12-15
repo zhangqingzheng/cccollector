@@ -1,0 +1,183 @@
+<!DOCTYPE html [
+    <!ENTITY nbsp "&#160;">
+    <!ENTITY bull "&#8226;">
+    <!ENTITY copy "&#169;">
+]>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"	
+	xmlns:p="http://primefaces.org/ui">
+<h:head>
+	<f:facet name="first">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<meta name="viewport" content="user-scalable=no, width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+	</f:facet>
+
+	<title>${pom.config.appName}</title>
+	<h:outputStylesheet name="css/showcase.css" />
+	<h:outputStylesheet name="css/hxch.css" />
+	<h:outputStylesheet name="css/perfect-scrollbar.css" />
+	<h:outputStylesheet name="css/sh.css" />
+	<h:outputScript name="jquery/jquery.js" library="primefaces" />
+	<h:outputScript name="jquery/jquery-plugins.js" library="primefaces" />
+	<h:outputScript name="js/perfect-scrollbar.js" />
+	<h:outputScript name="js/showcase.js" />
+	<ui:insert name="head" />
+</h:head>
+
+<h:body>
+
+	<!-- PC CONTENT STARTS HERE-->
+	<div class="PC">
+
+		<div id="MENUSIDE">
+			<div id="MENUSIDEindent">
+				<span id="LOGO" class="bordersOfMenuSide">
+					<h:graphicImage name="images/logo.svg" />
+					<h:graphicImage id="BlueLogo" styleClass="hiddenLogo" name="images/logoHighlight.svg" />
+				</span>
+				<div class="MenuSideMainLink bordersOfMenuSide">
+					<h:graphicImage name="images/zoom.svg" class="zoomIcon" />
+					<input id="menuSearch" type="text" placeholder="在菜单中搜索" class="boldFont fontSize14 mustClose searchInput" />
+				</div>
+
+				<c:if test="#{templateBean.authentication != null}">
+					<span id="SubMenu-App" class="MenuSideMainLink bordersOfMenuSide" onclick="Showcase.openSubMenu(this);">
+						<h:graphicImage name="images/menu1.svg" />
+						<h:graphicImage styleClass="hiddenIcons" name="images/menu1Highlight.svg" />
+						<span class="MainLinkText">平台应用管理</span>
+					</span>
+					<div class="SubMenuLinkContainer">
+						<a class="SubMenuLink" href="#{request.contextPath}/view/platformList.xhtml">&bull; 平台管理</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/appList.xhtml">&bull; 应用管理</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/programList.xhtml">&bull; 推广方案管理</a>
+					</div>
+					
+					<span id="SubMenu-UserLogin" class="MenuSideMainLink bordersOfMenuSide" onclick="Showcase.openSubMenu(this);">
+						<h:graphicImage name="images/menu2.svg" />
+						<h:graphicImage styleClass="hiddenIcons" name="images/menu2Highlight.svg" />
+						<span class="MainLinkText">用户管理</span>
+					</span>
+					<div class="SubMenuLinkContainer">
+						<a class="SubMenuLink" href="#{request.contextPath}/view/userList.xhtml">&bull; 用户管理</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/loginList.xhtml">&bull; 登录管理</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/failedLoginList.xhtml">&bull; 失败登录管理</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/blockIpList.xhtml">&bull; 禁用IP管理</a>
+					</div>
+	
+					<span id="SubMenu-Certificate" class="MenuSideMainLink bordersOfMenuSide" onclick="Showcase.openSubMenu(this);">
+						<h:graphicImage name="images/menu2.svg" />
+						<h:graphicImage styleClass="hiddenIcons" name="images/menu2Highlight.svg" />
+						<span class="MainLinkText">证书管理</span>
+					</span>
+					<div class="SubMenuLinkContainer">
+						<a class="SubMenuLink" href="#{request.contextPath}/view/rootCertificateList.xhtml">&bull; 根证书管理</a>
+					</div>
+				</c:if>
+			</div>
+		</div>
+
+		<script type="text/javascript">
+			restoreMenuState();
+		</script>
+
+		<div id="CONTENTSIDE">
+			<div id="CONTENTSIDEindent">
+
+				<!-- header bar start-->
+				<div id="PFTopLinksCover" class="ContentSideSections" style="height: 60px;">
+					<a id="LOGOTEXTSIDE" href="#{request.contextPath}/index.xhtml">
+						<span class="dispBlock logoDarkText fontSize24">#{configBundle.companyName}</span>
+						<span class="dispBlock logoBlueText fontSize30 regularFont">${pom.config.appName}</span>
+					</a>
+					
+					<a class="mobileLogoCover" href="#{request.contextPath}/index.xhtml">
+						<h:graphicImage name="images/logoHighlight.svg" style="height:40px;" styleClass="floatLeft marginRight10" />
+						<span class="dispBlock logoDarkText fontSize16 floatLeft">#{configBundle.companyName}
+							<span class="dispBlock logoBlueText fontSize18 boldFont">${pom.config.appName}</span>
+						</span>
+					</a>
+					<c:if test="#{templateBean.authenticationUserDetail != null}">
+						<h:form id="authenticationForm" class="floatRight">
+							<p:graphicImage value="#{templateBean.loadAvatarThumbnail()}" stream="false" width="36" height="36" style="border-radius:18px;margin-left:20px;vertical-align:middle" />
+							<p:outputLabel value="#{templateBean.authenticationUserDetail.realName}" style="font-size:20px;margin-left:5px;vertical-align:middle" />
+							<p:commandLink value="注销" actionListener="#{templateBean.logoutAction}" ajax="false" style="font-size:18px;color:#ff553f;margin-left:10px;vertical-align:middle" />
+						</h:form>
+					</c:if>
+					<c:if test="#{templateBean.authentication != null}">
+						<select id="mobilemenu" class="selectmenu regularFont">
+							<option value="">菜单</option>
+							<optgroup label="平台应用管理" class="LEVEL1">
+								<option value="#{request.contextPath}/view/platformList.xhtml">平台管理</option>
+								<option value="#{request.contextPath}/view/appList.xhtml">应用管理</option>
+								<option value="#{request.contextPath}/view/programList.xhtml">推广方案管理</option>
+							</optgroup>
+							
+							<optgroup label="用户管理" class="LEVEL1">
+								<option value="#{request.contextPath}/view/userList.xhtml">用户管理</option>
+								<option value="#{request.contextPath}/view/loginList.xhtml">登录管理</option>
+								<option value="#{request.contextPath}/view/failedFoginList.xhtml">失败登录管理</option>
+								<option value="#{request.contextPath}/view/blockIpList.xhtml">禁用IP管理</option>
+							</optgroup>
+							
+							<optgroup label="证书管理" class="LEVEL1">
+								<option value="#{request.contextPath}/view/rootCertificateList.xhtml">根证书管理</option>
+							</optgroup>
+						</select>
+					</c:if>
+				</div>
+				<!-- header bar end-->
+
+				<ui:insert name="content">
+
+					<div class="ContentSideSections">
+						<div class="Content100 overHidden TextShadow">
+							<span id="TITLESPAN" class="TextShadow orange regularFont dispBlock"><ui:insert name="title" /></span>
+							<span class="defaultText dispTable"><ui:insert name="description" /></span>
+						</div>
+					</div>
+
+					<div class="ContentSideSections Implementation">
+						<ui:insert name="implementation" />
+					</div>
+
+				</ui:insert>
+
+				<!-- footer start-->
+				<div class="ContentSideSections">
+					<span class="floatLeft fontSize14 gray">
+						<a href="http://www.bjhxch.com" target="_blank">北京华星成汇文化发展有限公司</a>, Copyright &copy; 2016-#{templateBean.currentYear}<br />All rights reserved.
+					</span>
+					<div style="clear: both" />
+				</div>
+				<!-- footer end-->
+
+			</div>
+		</div>
+
+	</div>
+	<!-- PC CONTENT END-->
+
+	<ui:insert name="status">
+		<p:ajaxStatus style="width:64px;height:64px;position:fixed;right:5px;bottom:5px">
+			<f:facet name="start">
+				<p:graphicImage name="images/loader.gif" />
+			</f:facet>
+
+			<f:facet name="complete">
+				<h:outputText value="" />
+			</f:facet>
+		</p:ajaxStatus>
+	</ui:insert>
+
+	<ui:insert name="highlight">
+		<h:outputScript name="js/sh.js" target="body" />
+	</ui:insert>
+
+	<ui:insert name="body"></ui:insert>
+</h:body>
+</html>

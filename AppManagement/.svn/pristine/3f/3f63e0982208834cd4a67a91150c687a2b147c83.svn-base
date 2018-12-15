@@ -1,0 +1,104 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.hibernate.exception.ConstraintViolationException;
+import org.primefaces.context.RequestContext;
+import org.springframework.dao.DataIntegrityViolationException;
+
+import com.cccollector.app.model.App;
+import com.cccollector.app.service.AppService;
+
+/**
+ * 应用Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class AppBean {
+
+	/**
+	 * 应用服务
+	 */
+	@ManagedProperty(value = "#{appService}")
+	private AppService appService;
+
+	public void setAppService(AppService _appService) {
+		appService = _appService;
+	}
+
+	/**
+	 * 应用ID
+	 */
+	private String appId;
+
+	public String getAppId() {
+		return appId;
+	}
+
+	public void setAppId(String _appId) {
+		appId = _appId;
+		
+		// 新建或加载应用
+		if (app == null) {
+			Integer id = 0;
+			try {
+				id = Integer.valueOf(appId);
+			} catch (Exception e) {}
+			if (id == 0) {
+				app = new App();
+				app.setEnabled(true);
+			} else {
+				app = appService.loadById(id);
+			}
+		}
+	}
+
+	/**
+	 * 应用
+	 */
+	private App app;
+
+	public App getApp() {
+		return app;
+	}
+	
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (app.getAppId() == null) {
+			Integer appId = null;
+			try {
+				// 添加应用
+				appId = appService.save(app);
+			} catch (ConstraintViolationException e) {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "标识符必须唯一，不能重复！", "标识符必须唯一，不能重复！"));
+				return;
+			}
+			RequestContext.getCurrentInstance().closeDialog(appId != null ? Boolean.TRUE : Boolean.FALSE);
+		} else {
+			App appUpdated = null;
+			try {
+				// 编辑应用
+				appUpdated = appService.update(app);
+			} catch (DataIntegrityViolationException e) {
+				if (e.contains(ConstraintViolationException.class)) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "标识符必须唯一，不能重复！", "标识符必须唯一，不能重复！"));
+					return;
+				}
+			}
+			RequestContext.getCurrentInstance().closeDialog(appUpdated != null ? Boolean.TRUE : Boolean.FALSE);
+		}
+	}
+}

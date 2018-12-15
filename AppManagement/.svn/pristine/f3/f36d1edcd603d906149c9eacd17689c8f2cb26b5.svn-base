@@ -1,0 +1,109 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.Calendar;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.WebAttributes;
+
+import com.cccollector.app.model.UserDetail;
+import com.cccollector.app.service.UserService;
+
+/**
+ * 模板Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class TemplateBean {
+
+	/**
+	 * 用户服务
+	 */
+	@ManagedProperty(value = "#{userService}")
+	private UserService userService;
+
+	public void setUserService(UserService _userService) {
+		userService = _userService;
+	}
+	
+	/**
+	 * 获取认证
+	 */
+	public Object getAuthentication() {
+		try {
+			SecurityContext securityContext = SecurityContextHolder.getContext();
+			return securityContext.getAuthentication().getPrincipal();
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	/**
+	 * 获取认证用户详情
+	 */
+	public UserDetail getAuthenticationUserDetail() {
+		try {
+			SecurityContext securityContext = SecurityContextHolder.getContext();
+			return (UserDetail) securityContext.getAuthentication().getPrincipal();
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	/**
+	 * 加载头像缩略图
+	 */
+	public String loadAvatarThumbnail() {
+		UserDetail userDetail = getAuthenticationUserDetail();
+		if (userDetail.getHasAvatar()) {
+			String avatarFilePath = userDetail.avatarFilePath();	
+			return userService.getAvatarThumbnailUsersUrl() + avatarFilePath;
+		} else {
+			HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+			int count = Math.max(StringUtils.countMatches(request.getServletPath(), "/") - 1, 0);
+			return StringUtils.repeat("../", count) + "resources/images/noAvatar.png";
+		}
+	}
+	
+	/**
+	 * 获取认证失败消息
+	 */
+	public String getAuthenticationFailureMessage() {
+		try {
+			HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
+			Exception exception = (Exception) request.getSession().getAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
+			return exception.getMessage();
+		} catch (Exception e) {
+			return null;
+		}
+    }
+    
+	/**
+	 * 注销账户
+	 */
+	public void logoutAction() {
+		try {
+			FacesContext.getCurrentInstance().getExternalContext().redirect("logout/cas");
+		} catch (Exception e) {}
+	}
+
+	/**
+	 * 获取当前年份
+	 */
+	public String getCurrentYear() {
+		return Calendar.getInstance().get(Calendar.YEAR) + "";
+	}	
+}

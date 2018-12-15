@@ -1,0 +1,53 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.DepartmentDao;
+import com.cccollector.app.model.Department;
+import com.cccollector.app.service.DepartmentService;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.dao.QueryField.PredicateEnum;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 部门服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("departmentService")
+public class DepartmentServiceImpl extends GenericServiceHibernateImpl<Integer, Department> implements DepartmentService {
+	
+	@Autowired
+	private DepartmentDao departmentDao;
+
+	@Override
+	public void addDepartment(Department department) {
+		department.setHasBadge(false);
+		department.setIsIndependent(true);
+		department.setName("[部门]");
+		
+		// 设置排序位置
+		List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(department.getParentDepartment() == null ? new QueryField("parentDepartment", null, PredicateEnum.IS_NULL) : new QueryField("parentDepartment", new QueryField("departmentId", department.getParentDepartment().getDepartmentId())));
+		Integer position = departmentDao.max("position", predicateQueryFieldList);
+		department.setPosition(position == null ? 0 : position.intValue() + 1);
+		
+		//设置排序代码
+		String code = String.format("%02d", department.getPosition());
+		if (department.getParentDepartment() != null) {
+			code = department.getParentDepartment().getCode() + ":" + code;
+		}
+		department.setCode(code);
+		
+		//添加部门
+		departmentDao.save(department);
+	}
+}

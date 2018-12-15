@@ -1,0 +1,52 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="#{roleBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="title">
+		#{roleBean.role.roleId == null ? '添加' : '编辑'}角色
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="roleList.xhtml?multiSelect=true&amp;platformId=#{roleBean.modelId1}" class="subitem"><h:outputText id="subtitle" value="#{roleBean.role.name}" /></a></span>
+	</ui:define>
+	 
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{roleBean.useDialog}" />
+			<f:viewParam name="platformId" value="#{roleBean.modelId1}" />
+			<f:viewParam name="roleId" value="#{roleBean.modelId}" />
+		</f:metadata>
+
+		<h:form id="roleEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="roleId" value="角色ID:" style="font-weight:bold" rendered="#{roleBean.role.roleId != null}" />
+				<p:outputLabel id="roleId" value="#{roleBean.role.roleId}" rendered="#{roleBean.role.roleId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" />
+				<p:inputText id="name" value="#{roleBean.role.name}" required="true" requiredMessage="名称为必填项" size="50">
+					<f:validateLength maximum="100" />
+					<p:ajax immediate="true" update="subtitle" />
+				</p:inputText>
+
+				<p:outputLabel for="remarks" value="备注:" style="font-weight:bold" />
+				<p:inputTextarea id="remarks" value="#{roleBean.role.remarks}" autoResize="false" rows="5" cols="50">
+					<f:validateLength maximum="1000" />
+				</p:inputTextarea>
+				
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+				<p:inputSwitch id="enabled" value="#{roleBean.role.enabled}" onLabel="是" offLabel="否" />
+				
+				<p:outputLabel for="platformName" value="所属平台:" style="font-weight:bold" />
+				<p:outputLabel id="platformName" value="#{roleBean.role.platform.name}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{roleBean.saveAction}" update="messages" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

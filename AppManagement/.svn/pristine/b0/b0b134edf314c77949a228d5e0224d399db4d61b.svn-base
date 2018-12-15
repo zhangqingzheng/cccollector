@@ -1,0 +1,17 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.bean.ManagedProperty;
+
+import com.cccollector.universal.view.GenericListBean;
+
+/**
+ * 基础列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public abstract class BaseListBean<T> extends GenericListBean<T> {
+}

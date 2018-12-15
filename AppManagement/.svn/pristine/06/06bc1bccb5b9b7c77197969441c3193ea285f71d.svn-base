@@ -1,0 +1,170 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="title">
+		平台列表 - 
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		<span class="subitem" style="display:#{platformListBean.app == null ? '' : 'none'}">全部</span>
+		<span style="display:#{platformListBean.app != null ? '' : 'none'}"><a href="appList.xhtml" class="subitem">#{platformListBean.app.name}</a><span class="subitem fontSize18">应用</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="appId" value="#{platformListBean.modelId1}" />
+			<f:viewParam name="multiSelect" value="#{platformListBean.multiSelect}" />
+		</f:metadata>
+
+		<h:form id="platformsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:remoteCommand name="screenTypeRemoteCommand" />
+			<p:inputText id="screenType" widgetVar="screenTypeHidden" value="#{platformListBean.screenType}" style="display:none" />
+			
+			<p:inputSwitch id="multiSelect" value="#{platformListBean.multiSelect}" onLabel="管理" offLabel="浏览">
+				<p:ajax update="platformsForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="platformsSingle" var="platform" value="#{platformListBean.allModels}" selectionMode="single" rowKey="#{platform.platformId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!platform.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{!platformListBean.multiSelect}">
+				<p:ajax event="rowSelect" listener="#{platformListBean.selectModelAction}" />
+							
+				<p:column headerText="平台ID" priority="1">
+					<h:outputText value="#{platform.platformId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{platform.name}" />
+				</p:column>
+	
+				<p:column headerText="标识符" priority="1">
+					<h:outputText value="#{platform.bundleId}" />
+				</p:column>
+	
+				<p:column headerText="Tomcat服务器" priority="1">
+					<h:outputText value="#{platform.tomcatServer}" />
+				</p:column>
+	
+				<p:column headerText="备注" priority="2">
+					<h:outputText value="#{platform.remarks}" />
+				</p:column>
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{platform.enabledEnum.name()}" />
+				</p:column>
+	
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="fa fa-fw fa-list" value="管理应用" actionListener="#{platformListBean.manageAppsAction(platform)}" rendered="#{platformListBean.app == null}" />
+					<p:commandButton icon="fa fa-fw fa-list" value="管理角色" actionListener="#{platformListBean.manageRolesAction(platform)}" />
+				</p:column>
+	
+				<p:column headerText="证书" priority="1" rendered="#{platformListBean.app == null}">
+					<p:commandButton icon="fa fa-fw fa-list" value="管理证书" actionListener="#{platformListBean.manageCertificatesAction(platform)}" />
+					<p:commandButton icon="ui-icon-refresh" value="同步证书" actionListener="#{platformListBean.syncCertificatesAction(platform)}" update="platformsForm:messages" />
+				</p:column>
+			</p:dataTable>
+
+			<p:fieldset legend="添加平台到应用" style="margin:20px 0px" rendered="#{platformListBean.multiSelect and platformListBean.app != null}">
+				<h:panelGrid columns="2" style="background-color:white">
+					<p:outputLabel for="platformsSelect" value="选择平台:" style="font-weight:bold" />
+					<p:selectOneMenu id="platformsSelect" value="#{platformListBean.selectedModelId}">
+						<p:ajax listener="#{platformListBean.addPlatformToAppAction}" partialSubmit="true" update="platformsForm:messages platformsSelect platformsForm:platformsMultiple" />
+						<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+						<f:selectItems value="#{platformListBean.notUsedPlatforms}" var="platform" itemLabel="#{platform.name}" itemValue="#{platform.platformId}"/>
+					</p:selectOneMenu>
+				</h:panelGrid>
+			</p:fieldset>
+
+			<p:dataTable id="platformsMultiple" var="platform" value="#{platformListBean.allModels}" selection="#{platformListBean.selectedModels}" rowKey="#{platform.platformId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!platform.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{platformListBean.multiSelect}">
+				<p:ajax event="rowDblselect" listener="#{platformListBean.selectModelAction}" />
+
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="平台ID" priority="1">
+					<h:outputText value="#{platform.platformId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{platform.name}" />
+				</p:column>
+	
+				<p:column headerText="标识符" priority="1">
+					<h:outputText value="#{platform.bundleId}" />
+				</p:column>
+	
+				<p:column headerText="Tomcat服务器" priority="1">
+					<h:outputText value="#{platform.tomcatServer}" />
+				</p:column>
+	
+				<p:column headerText="备注" priority="2">
+					<h:outputText value="#{platform.remarks}" />
+				</p:column>
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{platform.enabledEnum.name()}" />
+				</p:column>
+	
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{platformListBean.editModelAction(platform)}" rendered="#{platformListBean.app == null}">
+						<p:ajax event="dialogReturn" listener="#{platformListBean.handleEditModelReturn}" update="platformsForm:messages platformsForm:platformsMultiple" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{platformListBean.deletePlatformAction(platform)}" update="platformsForm:messages platformsForm:platformsMultiple" style="margin-left:10px" rendered="#{platformListBean.app == null}">
+						<p:confirm header="删除平台" message="是否确定删除所选平台？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="从应用中删除" actionListener="#{platformListBean.deletePlatformFromAppAction(platform)}" update="platformsForm:messages platformsForm:platformsSelect platformsForm:platformsMultiple" rendered="#{platformListBean.app != null}">
+						<p:confirm header="从应用中删除平台" message="是否确定从应用中删除所选平台？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="platformsMultiple" rendered="#{platformListBean.multiSelect and platformListBean.app == null}">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{platformListBean.addModelAction}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{platformListBean.editSelectedModelAction}" update="messages" />
+				<p:menuitem icon="ui-icon-unlocked" value="可用" actionListener="#{platformListBean.modifyPlatformsEnabledAction(true)}" update="messages platformsMultiple">
+					<p:confirm header="修改平台" message="是否确定修改所选平台为可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-locked" value="不可用" actionListener="#{platformListBean.modifyPlatformsEnabledAction(false)}" update="messages platformsMultiple">
+					<p:confirm header="修改平台" message="是否确定修改所选平台为不可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-close" value="批量删除" actionListener="#{platformListBean.deletePlatformsAction}" update="messages platformsMultiple">
+					<p:confirm header="删除平台" message="是否确定删除所选平台？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+			
+			<p:contextMenu for="platformsMultiple" rendered="#{platformListBean.multiSelect and platformListBean.app != null}">
+				<p:menuitem icon="ui-icon-close" value="批量从应用中删除" actionListener="#{platformListBean.deletePlatformsFromAppAction}" update="messages platformsSelect platformsMultiple">
+					<p:confirm header="从应用中删除平台" message="是否确定从应用中删除所选平台？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{platformListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addPlatform" icon="ui-icon-plus" value="添加" actionListener="#{platformListBean.addModelAction}" rendered="#{platformListBean.app == null}">
+						<p:ajax event="dialogReturn" listener="#{platformListBean.handleAddModelReturn}" update="messages platformsMultiple" />
+					</p:commandButton>
+					<p:commandButton id="editPlatform" icon="ui-icon-pencil" value="编辑" actionListener="#{platformListBean.editSelectedModelAction}" update="messages" style="margin-left:20px" rendered="#{platformListBean.app == null}">
+						<p:ajax event="dialogReturn" listener="#{platformListBean.handleEditModelReturn}" update="messages platformsMultiple" />
+					</p:commandButton>
+					<p:commandButton id="deletePlatforms" icon="ui-icon-close" value="批量删除" actionListener="#{platformListBean.deletePlatformsAction}" update="messages platformsMultiple" style="margin-left:20px" rendered="#{platformListBean.app == null}">
+						<p:confirm header="删除平台" message="是否确定删除所选平台？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton id="deletePlatformsFromApp" icon="ui-icon-close" value="批量从应用中删除" actionListener="#{platformListBean.deletePlatformsFromAppAction}" update="messages platformsSelect platformsMultiple" rendered="#{platformListBean.app != null}">
+						<p:confirm header="从应用中删除平台" message="是否确定从应用中删除所选平台？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

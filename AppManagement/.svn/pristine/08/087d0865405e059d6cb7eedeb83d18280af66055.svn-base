@@ -1,0 +1,26 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.BlockIpDao;
+import com.cccollector.app.model.BlockIp;
+import com.cccollector.app.service.BlockIpService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 禁用IP服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("blockIpService")
+public class BlockIpServiceImpl extends GenericServiceHibernateImpl<Integer, BlockIp> implements BlockIpService {
+	
+	@SuppressWarnings("unused")
+	@Autowired
+	private BlockIpDao blockIpDao;
+}

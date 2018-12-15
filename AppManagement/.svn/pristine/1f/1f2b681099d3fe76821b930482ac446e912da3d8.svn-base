@@ -1,0 +1,75 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:pe="http://primefaces.org/ui/extensions"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/template.xhtml">
+	<ui:define name="title">
+		#{promotionBean.promotion.promotionId == null ? '添加' : '编辑'}推广
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="programId" value="#{promotionBean.programId}" />
+			<f:viewParam name="promotionId" value="#{promotionBean.promotionId}" />
+		</f:metadata>
+
+		<h:form id="promotionEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="promotionId" value="推广ID:" style="font-weight:bold" rendered="#{promotionBean.promotion.promotionId != null}" />
+				<p:outputLabel id="promotionId" value="#{promotionBean.promotion.promotionId}" rendered="#{promotionBean.promotion.promotionId != null}" />
+				
+				<p:outputLabel for="title" value="标题:" style="font-weight:bold" />
+				<p:inputText id="title" value="#{promotionBean.promotion.title}" required="true" requiredMessage="标题为必填项" size="80">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="intro" value="简介:" style="font-weight:bold" />
+				<p:inputText id="intro" value="#{promotionBean.promotion.intro}" size="80">
+					<f:validateLength maximum="200" />
+				</p:inputText>
+				
+				<p:outputLabel for="downloadAddress" value="下载地址:" style="font-weight:bold" />
+				<p:inputText id="downloadAddress" value="#{promotionBean.promotion.downloadAddress}" required="true" requiredMessage="下载地址为必填项" size="80">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="openAddress" value="打开地址:" style="font-weight:bold" />
+				<p:inputText id="openAddress" value="#{promotionBean.promotion.openAddress}" required="true" requiredMessage="打开地址为必填项" size="80">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="icon" value="图标:" style="font-weight:bold" />
+				<h:panelGroup id="icon">
+					<p:fileUpload id="iconFileUpload" fileUploadListener="#{promotionBean.handleIconFileUpload}" mode="advanced" auto="true" dragDropSupport="false" allowTypes="/(\.|\/)(png)$/" label="选择图标" invalidFileMessage="图片格式错误，只接受PNG格式！" update="icon" />
+					<p:graphicImage id="iconGraphicImage" value="#{promotionBean.iconImage}" stream="false" cache="false" width="100" />
+					<p:commandButton id="iconDeleteButton" icon="ui-icon-close" value="删除" actionListener="#{promotionBean.handleIconDelete}" update="icon" immediate="true" style="margin-left:20px" rendered="#{promotionBean.iconFilePath != null}" />
+				</h:panelGroup>
+				
+				<p:outputLabel for="iconUpdateTime" value="图标更新时间:" style="font-weight:bold" rendered="#{promotionBean.promotion.promotionId != null}" />
+				<p:outputLabel id="iconUpdateTime" value="#{promotionBean.promotion.iconUpdateTime}" rendered="#{promotionBean.promotion.promotionId != null}">
+					<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<p:outputLabel for="relativeBundleId" value="关联标识符:" style="font-weight:bold" />
+				<p:inputText id="relativeBundleId" value="#{promotionBean.promotion.relativeBundleId}" size="80">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="visible" value="是否可见:" style="font-weight:bold" />
+				<p:inputSwitch id="visible" value="#{promotionBean.promotion.visible}" onLabel="是" offLabel="否" />				
+				
+				<p:outputLabel for="program" value="所属推广方案:" style="font-weight:bold" />
+				<p:outputLabel id="program" value="#{promotionBean.promotion.program.name}" />
+
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{promotionBean.saveAction}" update="messages" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

@@ -1,0 +1,127 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.bean.ManagedProperty;
+
+import com.cccollector.app.service.AppService;
+import com.cccollector.app.service.DepartmentService;
+import com.cccollector.app.service.EditionService;
+import com.cccollector.app.service.JobService;
+import com.cccollector.app.service.ModuleService;
+import com.cccollector.app.service.PermissionService;
+import com.cccollector.app.service.PlatformService;
+import com.cccollector.app.service.RoleService;
+import com.cccollector.app.service.RootCertificateService;
+import com.cccollector.app.service.UserService;
+import com.cccollector.universal.view.GenericListBean;
+
+/**
+ * 基础列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public abstract class BaseListBean<T> extends GenericListBean<T> {
+	
+	/**
+	 * 平台服务
+	 */
+	@ManagedProperty(value = "#{platformService}")
+	protected PlatformService platformService;
+
+	public void setPlatformService(PlatformService _platformService) {
+		platformService = _platformService;
+	}
+
+	/**
+	 * 应用服务
+	 */
+	@ManagedProperty(value = "#{appService}")
+	protected AppService appService;
+
+	public void setAppService(AppService _appService) {
+		appService = _appService;
+	}
+
+	/**
+	 * 版本服务
+	 */
+	@ManagedProperty(value = "#{editionService}")
+	protected EditionService editionService;
+
+	public void setEditionService(EditionService _editionService) {
+		editionService = _editionService;
+	}
+	
+	/**
+	 * 角色服务
+	 */
+	@ManagedProperty(value = "#{roleService}")
+	protected RoleService roleService;
+	
+	public void setRoleService(RoleService _roleService) {
+		roleService = _roleService;
+	}
+	
+	/**
+	 * 部门服务
+	 */
+	@ManagedProperty(value = "#{departmentService}")
+	protected DepartmentService departmentService;
+
+	public void setDepartmentService(DepartmentService _departmentService) {
+		departmentService = _departmentService;
+	}
+	
+	/**
+	 * 岗位服务
+	 */
+	@ManagedProperty(value = "#{jobService}")
+	protected JobService jobService;
+	
+	public void setJobService(JobService _jobService) {
+		jobService = _jobService;
+	}
+	
+	/**
+	 * 用户服务 
+	 */
+	@ManagedProperty(value = "#{userService}")
+	protected UserService userService;
+	
+	public void setUserService(UserService _userService) {
+		userService = _userService;
+	}
+	
+	/**
+	 * 权限服务
+	 */
+	@ManagedProperty(value = "#{permissionService}")
+	protected PermissionService permissionService;
+
+	public void setPermissionService(PermissionService _permissionService) {
+		permissionService = _permissionService;
+	}
+
+	/**
+	 * 模块服务
+	 */
+	@ManagedProperty(value = "#{moduleService}")
+	protected ModuleService moduleService;
+
+	public void setModuleService(ModuleService _moduleService) {
+		moduleService = _moduleService;
+	}
+
+	/**
+	 * 根证书服务
+	 */
+	@ManagedProperty(value = "#{rootCertificateService}")
+	protected RootCertificateService rootCertificateService;
+
+	public void setRootCertificateService(RootCertificateService _rootCertificateService) {
+		rootCertificateService = _rootCertificateService;
+	}
+}

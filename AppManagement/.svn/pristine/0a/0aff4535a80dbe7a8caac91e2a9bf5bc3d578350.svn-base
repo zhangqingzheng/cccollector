@@ -1,0 +1,319 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.SelectEvent;
+
+import com.cccollector.app.model.Module;
+import com.cccollector.app.model.Permission;
+import com.cccollector.app.service.ModuleService;
+import com.cccollector.app.service.PermissionService;
+import com.cccollector.universal.dao.QueryField;
+
+/**
+ * 权限列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class PermissionListBean {
+
+	/**
+	 * 权限服务
+	 */
+	@ManagedProperty(value = "#{permissionService}")
+	private PermissionService permissionService;
+
+	public void setPermissionService(PermissionService _permissionService) {
+		permissionService = _permissionService;
+	}
+
+	/**
+	 * 模块服务
+	 */
+	@ManagedProperty(value = "#{moduleService}")
+	private ModuleService moduleService;
+
+	public void setModuleService(ModuleService _moduleService) {
+		moduleService = _moduleService;
+	}
+
+	/**
+	 * 所属模块ID
+	 */
+	private String moduleId;
+
+	public String getModuleId() {
+		return moduleId;
+	}
+
+	public void setModuleId(String _moduleId) {
+		moduleId = _moduleId;
+		
+		// 加载模块
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(moduleId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			module = moduleService.loadById(id);
+		}
+	}
+
+	/**
+	 * 所属平台ID
+	 */
+	private String platformId;
+
+	public String getPlatformId() {
+		return platformId;
+	}
+
+	public void setPlatformId(String _platformId) {
+		platformId = _platformId;
+	}
+	
+	/**
+	 * 所属模块
+	 */
+	private Module module;
+
+	public Module getModule() {
+		return module;
+	}
+	
+	/**
+	 * 权限是否多选
+	 */
+	private boolean permissionsMultiSelect;
+
+	public boolean getPermissionsMultiSelect() {
+		return permissionsMultiSelect;
+	}
+
+	public void setPermissionsMultiSelect(boolean _permissionsMultiSelect) {
+		permissionsMultiSelect = _permissionsMultiSelect;
+	}
+
+	/**
+	 * 全部权限
+	 */
+	private List<Permission> allPermissions;
+
+	public List<Permission> getAllPermissions() {
+		if (allPermissions == null) {
+			// 查询条件
+			List<QueryField> predicateQueryFieldList = null;
+			if (module != null) {
+				predicateQueryFieldList = new ArrayList<QueryField>();
+				predicateQueryFieldList.add(new QueryField("module", new QueryField("moduleId", module.getModuleId())));
+			}
+
+			// 排序
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("type", Boolean.TRUE));
+			
+			allPermissions = permissionService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+		}
+		return allPermissions;
+	}
+
+	/**
+	 * 选中的权限
+	 */
+	private List<Permission> selectedPermissions;
+
+	public List<Permission> getSelectedPermissions() {
+		return selectedPermissions;
+	}
+
+	public void setSelectedPermissions(List<Permission> _selectedPermissions) {
+		selectedPermissions = _selectedPermissions;
+	}
+	
+	/**
+	 * 添加权限
+	 */
+	public void addPermissionAction() {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add("");
+		params.put("permissionId", param);
+		
+		// 显示编辑权限对话框
+		RequestContext.getCurrentInstance().openDialog("permissionEdit", options, params);
+	}
+	
+	/**
+	 * 处理添加权限返回
+	 */
+	public void handleAddPermissionReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			// 清空选中的权限
+			selectedPermissions = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加权限成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "添加权限失败，请重新尝试！"));
+		}
+		
+		// 刷新全部权限数据
+		allPermissions = null;
+	}
+	
+	/**
+	 * 编辑权限
+	 */
+	public void editPermissionAction(Permission permission) {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add(permission.getPermissionId().toString());
+		params.put("permissionId", param);
+		
+		// 显示编辑权限对话框
+		RequestContext.getCurrentInstance().openDialog("permissionEdit", options, params);
+	}
+	
+	/**
+	 * 编辑权限
+	 */
+	public void editPermissionAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedPermissions != null && selectedPermissions.size() > 0) {
+			if (selectedPermissions.size() == 1) {
+				// 对话框选项
+				Map<String, Object> options = new HashMap<String, Object>();
+				options.put("width", 360);
+				options.put("resizable", false);
+				options.put("modal", true);
+				options.put("includeViewParams", true);
+				
+				// 传递的参数
+				Map<String, List<String>> params = new HashMap<String, List<String>>();
+				List<String> param = new ArrayList<String>();
+				param.add(selectedPermissions.get(0).getPermissionId().toString());
+				params.put("permissionId", param);
+				
+				// 显示编辑权限对话框
+				RequestContext.getCurrentInstance().openDialog("permissionEdit", options, params);
+			} else {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "只能选择一个权限进行编辑！"));
+			}
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个权限进行编辑！"));
+		}
+	}
+	
+	/**
+	 * 处理编辑权限返回
+	 */
+	public void handleEditPermissionReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "编辑权限成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "编辑权限失败，请重新尝试！"));
+		}
+		
+		// 刷新全部权限数据
+		allPermissions = null;
+	}
+	
+	/**
+	 * 修改权限是否可用
+	 */
+	public void modifyPermissionsEnabledAction(boolean enabled) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedPermissions != null && selectedPermissions.size() > 0) {
+			for (Permission permission : selectedPermissions) {
+				permission.setEnabled(enabled);
+				permissionService.update(permission, "enabled");
+			}
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "修改权限是否可用成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个权限进行修改！"));
+		}
+		
+		// 刷新全部权限数据
+		allPermissions = null;
+	}
+	
+	/**
+	 * 删除权限
+	 */
+    public void deletePermissionAction(Permission permission) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 权限如果否包含子对象，则不能被删除
+		if (permissionService.hasChildren(permission)) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的权限中包含子对象，请清空子对象再进行删除！"));
+			return;
+		}
+	
+		// 删除权限
+		permissionService.delete(permission);
+		selectedPermissions = null;
+		facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除权限成功！"));
+
+		// 刷新全部权限数据
+		allPermissions = null;
+	}
+	
+	/**
+	 * 批量删除权限
+	 */
+	public void deletePermissionsAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedPermissions != null && selectedPermissions.size() > 0) {
+			// 权限如果否包含子对象，则不能被删除
+			for (Permission permission : selectedPermissions) {
+				if (permissionService.hasChildren(permission)) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的权限中包含子对象，请清空子对象再进行删除！"));
+					return;
+				}
+			}
+			
+			// 删除权限
+			permissionService.deleteAll(selectedPermissions);
+			selectedPermissions = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除权限成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个权限进行删除！"));
+		}
+		
+		// 刷新全部权限数据
+		allPermissions = null;
+	}
+}

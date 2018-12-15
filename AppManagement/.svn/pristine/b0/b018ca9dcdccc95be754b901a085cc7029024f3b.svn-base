@@ -1,0 +1,415 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.SelectEvent;
+
+import com.cccollector.app.model.App;
+import com.cccollector.app.model.Platform;
+import com.cccollector.app.service.AppService;
+import com.cccollector.app.service.PlatformService;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.dao.QueryField.PredicateEnum;
+
+/**
+ * 应用列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class AppListBean {
+
+	/**
+	 * 应用服务
+	 */
+	@ManagedProperty(value = "#{appService}")
+	private AppService appService;
+
+	public void setAppService(AppService _appService) {
+		appService = _appService;
+	}
+
+	/**
+	 * 平台服务
+	 */
+	@ManagedProperty(value = "#{platformService}")
+	private PlatformService platformService;
+
+	public void setPlatformService(PlatformService _platformService) {
+		platformService = _platformService;
+	}
+
+	/**
+	 * 关联平台ID
+	 */
+	private String platformId;
+
+	public String getPlatformId() {
+		return platformId;
+	}
+
+	public void setPlatformId(String _platformId) {
+		platformId = _platformId;
+		
+		// 加载平台
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(platformId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			platform = platformService.loadById(id);
+		}
+	}
+
+	/**
+	 * 关联平台
+	 */
+	private Platform platform;
+
+	public Platform getPlatform() {
+		return platform;
+	}
+
+	/**
+	 * 应用是否多选
+	 */
+	private boolean appsMultiSelect;
+
+	public boolean getAppsMultiSelect() {
+		return appsMultiSelect;
+	}
+
+	public void setAppsMultiSelect(boolean _appsMultiSelect) {
+		appsMultiSelect = _appsMultiSelect;
+	}
+
+	/**
+	 * 全部应用
+	 */
+	private List<App> allApps;
+
+	public List<App> getAllApps() {
+		if (allApps == null) {
+			// 查询条件
+			List<QueryField> predicateQueryFieldList = null;
+			if (platform != null) {
+				predicateQueryFieldList = new ArrayList<QueryField>();
+				predicateQueryFieldList.add(new QueryField("platforms", new QueryField("platformId", platform.getPlatformId())));
+			}
+
+			// 排序
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+			orderQueryFieldList.add(new QueryField("name", Boolean.TRUE));
+			
+			allApps = appService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+		}
+		return allApps;
+	}
+
+	/**
+	 * 选中的应用
+	 */
+	private List<App> selectedApps;
+
+	public List<App> getSelectedApps() {
+		return selectedApps;
+	}
+
+	public void setSelectedApps(List<App> _selectedApps) {
+		selectedApps = _selectedApps;
+	}
+	
+	/**
+	 * 选择应用
+	 */
+	public void selectAppAction(SelectEvent event) {
+		try {
+			App app = (App) event.getObject();
+			FacesContext.getCurrentInstance().getExternalContext().redirect("editionList.xhtml?appId=" + app.getAppId() + "&platformId=" + platformId);
+		} catch (Exception e) {}
+	}
+	
+	/**
+	 * 管理平台
+	 */
+	public void managePlatformsAction(App app) {
+		try {
+			FacesContext.getCurrentInstance().getExternalContext().redirect("platformList.xhtml?appId=" + app.getAppId());
+		} catch (Exception e) {}
+	}
+
+	/**
+	 * 选中的未被平台使用的应用ID
+	 */
+	private Integer selectedNotUsedAppId;
+
+	public Integer getSelectedNotUsedAppId() {
+		return selectedNotUsedAppId;
+	}
+
+	public void setSelectedNotUsedAppId(Integer _selectedNotUsedAppId) {
+		selectedNotUsedAppId = _selectedNotUsedAppId;
+	}
+
+	/**
+	 * 未被平台使用的应用
+	 */
+	public List<App> getNotUsedApps() {
+		if (platform == null) {
+			return null;
+		}
+		// 查询条件
+		List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("platforms", new QueryField("platformId", platform.getPlatformId(), PredicateEnum.NOT_IN)));
+
+		// 排序
+		List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+		orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+		orderQueryFieldList.add(new QueryField("name", Boolean.TRUE));
+		
+		return appService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+	}
+	
+	/**
+	 * 添加应用到平台
+	 */
+	public void addAppToPlatformAction() {
+		// 添加应用到平台
+		appService.addAppToPlatform(selectedNotUsedAppId, platform.getPlatformId());
+		
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 清空选中的应用
+		selectedApps = null;
+		// 清空选中的应用ID
+		selectedNotUsedAppId = null;
+		facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加应用到平台成功！"));
+		
+		// 刷新全部应用数据
+		allApps = null;
+	}
+	
+	/**
+	 * 从平台中删除应用
+	 */
+	public void deleteAppFromPlatformAction(App app) {
+		// 从平台中删除应用
+		appService.deleteAppFromPlatform(app.getAppId(), platform.getPlatformId());
+		
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 清空选中的应用
+		selectedApps = null;
+		facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "从平台中删除应用成功！"));
+		
+		// 刷新全部应用数据
+		allApps = null;
+	}
+	
+	/**
+	 * 批量从平台中删除应用
+	 */
+	public void deleteAppsFromPlatformAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedApps != null && selectedApps.size() > 0) {
+			// 从平台中删除应用
+			for (App app : selectedApps) {
+				appService.deleteAppFromPlatform(app.getAppId(), platform.getPlatformId());
+			}
+			
+			// 清空选中的应用
+			selectedApps = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "从平台中删除应用成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个应用进行删除！"));
+		}
+		
+		// 刷新全部应用数据
+		allApps = null;
+	}
+	
+	/**
+	 * 添加应用
+	 */
+	public void addAppAction() {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add("");
+		params.put("appId", param);
+		
+		// 显示编辑应用对话框
+		RequestContext.getCurrentInstance().openDialog("appEdit", options, params);
+	}
+	
+	/**
+	 * 处理添加应用返回
+	 */
+	public void handleAddAppReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			// 清空选中的应用
+			selectedApps = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加应用成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "添加应用失败，请重新尝试！"));
+		}
+		
+		// 刷新全部应用数据
+		allApps = null;
+	}
+	
+	/**
+	 * 编辑应用
+	 */
+	public void editAppAction(App app) {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add(app.getAppId().toString());
+		params.put("appId", param);
+		
+		// 显示编辑应用对话框
+		RequestContext.getCurrentInstance().openDialog("appEdit", options, params);
+	}
+	
+	/**
+	 * 编辑应用
+	 */
+	public void editAppAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedApps != null && selectedApps.size() > 0) {
+			if (selectedApps.size() == 1) {
+				// 对话框选项
+				Map<String, Object> options = new HashMap<String, Object>();
+				options.put("width", 360);
+				options.put("resizable", false);
+				options.put("modal", true);
+				options.put("includeViewParams", true);
+				
+				// 传递的参数
+				Map<String, List<String>> params = new HashMap<String, List<String>>();
+				List<String> param = new ArrayList<String>();
+				param.add(selectedApps.get(0).getAppId().toString());
+				params.put("appId", param);
+				
+				// 显示编辑应用对话框
+				RequestContext.getCurrentInstance().openDialog("appEdit", options, params);
+			} else {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "只能选择一个应用进行编辑！"));
+			}
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个应用进行编辑！"));
+		}
+	}
+	
+	/**
+	 * 处理编辑应用返回
+	 */
+	public void handleEditAppReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "编辑应用成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "编辑应用失败，请重新尝试！"));
+		}
+		
+		// 刷新全部应用数据
+		allApps = null;
+	}
+	
+	/**
+	 * 批量修改应用是否可用
+	 */
+	public void modifyAppsEnabledAction(boolean enabled) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedApps != null && selectedApps.size() > 0) {
+			for (App app : selectedApps) {
+				app.setEnabled(enabled);
+				appService.update(app, "enabled");
+			}
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "修改应用是否可用成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个应用进行修改！"));
+		}
+		
+		// 刷新全部应用数据
+		allApps = null;
+	}
+	
+	/**
+	 * 删除应用
+	 */
+	public void deleteAppAction(App app) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 应用如果否包含子对象，则不能被删除
+		if (appService.hasChildren(app)) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的应用中包含子对象，请清空子对象再进行删除！"));
+			return;
+		}
+		
+		// 删除应用
+		appService.delete(app);
+		selectedApps = null;
+		facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除应用成功！"));
+		
+		// 刷新全部应用数据
+		allApps = null;
+	}
+	
+	/**
+	 * 批量删除应用
+	 */
+	public void deleteAppsAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedApps != null && selectedApps.size() > 0) {
+			// 应用如果否包含子对象，则不能被删除
+			for (App app : selectedApps) {
+				if (appService.hasChildren(app)) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的应用中包含子对象，请清空子对象再进行删除！"));
+					return;
+				}
+			}
+			
+			// 删除应用
+			appService.deleteAll(selectedApps);
+			selectedApps = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除应用成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个应用进行删除！"));
+		}
+		
+		// 刷新全部应用数据
+		allApps = null;
+	}
+}

@@ -1,0 +1,321 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.event.SelectEvent;
+import org.primefaces.model.SortMeta;
+import org.primefaces.model.SortOrder;
+
+import com.cccollector.app.model.Certificate;
+import com.cccollector.app.model.RootCertificate;
+import com.cccollector.app.model.User;
+import com.cccollector.app.service.RootCertificateService;
+import com.cccollector.app.service.UserService;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.dao.QueryField.PredicateEnum;
+import com.cccollector.universal.model.GenericLazyDataHandler;
+import com.cccollector.universal.model.GenericLazyDataModel;
+
+/**
+ * 用户列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class UserListBean {
+
+	/**
+	 * 用户服务
+	 */
+	@ManagedProperty(value = "#{userService}")
+	private UserService userService;
+
+	public void setUserService(UserService _userService) {
+		userService = _userService;
+	}
+
+	/**
+	 * 根证书服务
+	 */
+	@ManagedProperty(value = "#{rootCertificateService}")
+	private RootCertificateService rootCertificateService;
+
+	public void setRootCertificateService(RootCertificateService _rootCertificateService) {
+		rootCertificateService = _rootCertificateService;
+	}
+
+	/**
+	 * 用户是否多选
+	 */
+	private boolean usersMultiSelect;
+
+	public boolean getUsersMultiSelect() {
+		return usersMultiSelect;
+	}
+
+	public void setUsersMultiSelect(boolean _usersMultiSelect) {
+		usersMultiSelect = _usersMultiSelect;
+	}
+	
+	/**
+	 * 用户数据模型
+	 */
+	private GenericLazyDataModel<Integer, User> userDataModel;
+	
+	public GenericLazyDataModel<Integer, User> getUserDataModel() {
+		if (userDataModel == null) {
+			userDataModel = new GenericLazyDataModel<Integer, User>(new GenericLazyDataHandler<Integer, User>() {
+
+				@Override
+				public List<User> load(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String, Object> filters) {
+					// 过滤条件
+					List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+					for (String key : filters.keySet()) {
+						Object value = filters.get(key);
+						switch (key) {
+						case "username":
+							predicateQueryFieldList.add(new QueryField("username", value, PredicateEnum.LIKE));
+							break;
+						case "realName":
+							predicateQueryFieldList.add(new QueryField("realName", value, PredicateEnum.LIKE));
+							break;
+						case "email":
+							predicateQueryFieldList.add(new QueryField("email", value, PredicateEnum.LIKE));
+							break;
+						case "cellphone":
+							predicateQueryFieldList.add(new QueryField("cellphone", value, PredicateEnum.LIKE));
+							break;
+						case "type":
+							predicateQueryFieldList.add(new QueryField("type", value));
+							break;
+						}
+					}
+					
+					predicateQueryFieldList = predicateQueryFieldList.size() == 0 ? null : predicateQueryFieldList;
+
+					// 排序
+					List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+					orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+					orderQueryFieldList.add(new QueryField("username", Boolean.TRUE));
+					
+					// 总行数
+					userDataModel.setRowCount(userService.count(predicateQueryFieldList).intValue());
+					
+					return userService.loadPage(predicateQueryFieldList, orderQueryFieldList, first, pageSize);
+				}
+
+				@Override
+				public List<User> load(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters) {
+					return null;
+				}
+
+				@Override
+				public User getById(Integer id, List<User> glossaries) {
+					for (User user : glossaries) {
+						if (id.equals(user.getUserId())) {
+							return user;
+						}
+					}
+					return null;
+				}
+
+				@Override
+				public Integer getId(User user) {
+					return user.getUserId();
+				}
+			});
+		}
+		return userDataModel;
+	}
+	
+	/**
+	 * 加载用户头像缩略图
+	 */
+	public String loadAvatarThumbnail(User user) {
+		if (user.getHasAvatar()) {
+			String avatarFilePath = user.avatarFilePath();	
+			return userService.getAvatarThumbnailUsersUrl() + avatarFilePath;
+		}
+		return null;
+	}
+
+	/**
+	 * 用户类别枚举数组
+	 */
+	public User.TypeEnum[] getTypeEnums() {
+		return User.TypeEnum.values();
+	}
+
+	/**
+	 * 选中的用户
+	 */
+	private List<User> selectedUsers;
+
+	public List<User> getSelectedUsers() {
+		return selectedUsers;
+	}
+
+	public void setSelectedUsers(List<User> _selectedUsers) {
+		selectedUsers = _selectedUsers;
+	}
+	
+	/**
+	 * 选择用户
+	 */
+	public void selectUserAction(SelectEvent event) {
+		try {
+			FacesContext facesContext = FacesContext.getCurrentInstance();
+			User user = (User) event.getObject();
+			if (!usersMultiSelect) {
+				facesContext.getExternalContext().redirect("xxxxList.xhtml?userId=" + user.getUserId());
+			} else {
+				facesContext.getExternalContext().redirect("userEdit.xhtml?userId=" + user.getUserId());
+			}
+		} catch (Exception e) {}
+	}
+
+	/**
+	 * 管理证书
+	 */
+	public void manageCertificatesAction(User user) {
+		try {
+			// 查询可用的根证书
+			List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+			predicateQueryFieldList.add(new QueryField("enabled", true));
+			List<RootCertificate> rootCertificates = rootCertificateService.loadPage(predicateQueryFieldList, null, 0, 1);
+			RootCertificate rootCertificate = rootCertificates != null && rootCertificates.size() > 0 ? rootCertificates.get(0) : null;
+			// 如果查询到
+			if (rootCertificate != null) {
+				FacesContext.getCurrentInstance().getExternalContext().redirect("certificateList.xhtml?rootCertificateId=" + rootCertificate.getRootCertificateId() + "&ownerType=" + Certificate.OwnerTypeEnum.用户.ordinal() + "&ownerId=" + user.getUserId());
+			}
+		} catch (Exception e) {}
+	}	
+	
+	/**
+	 * 添加用户
+	 */
+	public void addUserAction() {
+		try {
+			FacesContext.getCurrentInstance().getExternalContext().redirect("userEdit.xhtml?userId=");
+		} catch (Exception e) {}
+	}
+	
+	/**
+	 * 编辑用户
+	 */
+	public void editUserAction(User user) {
+		try {
+			FacesContext.getCurrentInstance().getExternalContext().redirect("userEdit.xhtml?userId=" + user.getUserId());
+		} catch (Exception e) {}
+	}
+	
+	/**
+	 * 编辑用户
+	 */
+	public void editUserAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedUsers != null && selectedUsers.size() > 0) {
+			if (selectedUsers.size() == 1) {
+				try {
+					FacesContext.getCurrentInstance().getExternalContext().redirect("userEdit.xhtml?userId=" + selectedUsers.get(0).getUserId());
+				} catch (Exception e) {}
+			} else {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "只能选择一个用户进行编辑！"));
+			}
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个用户进行编辑！"));
+		}
+	}
+	
+	/**
+	 * 删除用户
+	 */
+	public void deleteUserAction(User user) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 用户如果否包含子对象，则不能被删除
+		if (userService.hasChildren(user)) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的用户中包含子对象，请清空子对象再进行删除！"));
+			return;
+		}
+		
+		// 删除头像文件
+		File avatarFile = new File(userService.getDataUsersPath() + user.avatarFilePath());
+		if (avatarFile.exists()) {
+			avatarFile.delete();
+		}
+		
+		// 清除nginx缓存文件
+		File[] sizeFiles = new File(userService.getImagePath()).listFiles();
+		if (sizeFiles != null) {
+			for (File sizeFile : sizeFiles) {
+				File avatarImageFile = new File(sizeFile, userService.getUsersPath() + user.avatarFilePath());
+				avatarImageFile.delete();
+			}
+		}
+
+		// 删除用户
+		userService.delete(user);
+		selectedUsers = null;
+		facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除用户成功！"));
+		
+		// 刷新用户数据模型
+		userDataModel = null;
+	}
+	
+	/**
+	 * 批量删除用户
+	 */
+	public void deleteUsersAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedUsers != null && selectedUsers.size() > 0) {
+			// 用户如果否包含子对象，则不能被删除
+			for (User user : selectedUsers) {
+				if (userService.hasChildren(user)) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的用户中包含子对象，请清空子对象再进行删除！"));
+					return;
+				}
+			}
+			
+			for (User user : selectedUsers) {
+				// 删除头像文件
+				File avatarFile = new File(userService.getDataUsersPath() + user.avatarFilePath());
+				if (avatarFile.exists()) {
+					avatarFile.delete();
+				}
+				
+				// 清除nginx缓存文件
+				File[] sizeFiles = new File(userService.getImagePath()).listFiles();
+				if (sizeFiles != null) {
+					for (File sizeFile : sizeFiles) {
+						File avatarImageFile = new File(sizeFile, userService.getUsersPath() + user.avatarFilePath());
+						avatarImageFile.delete();
+					}
+				}
+			}
+			
+			// 删除用户
+			userService.deleteAll(selectedUsers);
+			selectedUsers = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除用户成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个用户进行删除！"));
+		}
+		
+		// 刷新用户数据模型
+		userDataModel = null;
+	}
+}

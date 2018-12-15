@@ -1,0 +1,48 @@
+/**
+ * 
+ */
+package com.cccollector.app.service;
+
+import com.cccollector.app.model.Permission;
+import com.cccollector.universal.service.GenericService;
+
+/**
+ * 权限服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public interface PermissionService extends GenericService<Integer, Permission> {
+	
+	/**
+	 * 添加权限到岗位
+	 * 
+	 * @param permissionId 权限ID
+	 * @param jobId 岗位ID
+	 */
+	public void addPermissionToJob(Integer permissionId, Integer jobId);
+	
+	/**
+	 * 从岗位删除权限
+	 * 
+	 * @param permissionId 权限ID
+	 * @param jobId 岗位ID
+	 */
+	public void deletePermissionFromJob(Integer permissionId, Integer jobId);
+	
+	/**
+	 * 添加权限到部门
+	 * 
+	 * @param permissionId 权限ID
+	 * @param departmentId 部门ID
+	 */
+	public void addPermissionToDepartment(Integer permissionId, Integer departmentId);
+	
+	/**
+	 * 从部门删除权限
+	 * 
+	 * @param permissionId 权限ID
+	 * @param departmentId 部门ID
+	 */
+	public void deletePermissionFromDepartment(Integer permissionId, Integer departmentId);
+}

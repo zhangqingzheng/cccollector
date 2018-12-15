@@ -1,0 +1,85 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+
+import org.primefaces.context.RequestContext;
+
+import com.cccollector.app.model.RootCertificate;
+import com.cccollector.app.service.RootCertificateService;
+
+/**
+ * 根证书Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class RootCertificateBean {
+
+	/**
+	 * 根证书服务
+	 */
+	@ManagedProperty(value = "#{rootCertificateService}")
+	private RootCertificateService rootCertificateService;
+
+	public void setRootCertificateService(RootCertificateService _rootCertificateService) {
+		rootCertificateService = _rootCertificateService;
+	}
+
+	/**
+	 * 根证书ID
+	 */
+	private String rootCertificateId;
+
+	public String getRootCertificateId() {
+		return rootCertificateId;
+	}
+
+	public void setRootCertificateId(String _rootCertificateId) {
+		rootCertificateId = _rootCertificateId;
+		
+		// 新建或加载根证书
+		if (rootCertificate == null) {
+			Integer id = 0;
+			try {
+				id = Integer.valueOf(rootCertificateId);
+			} catch (Exception e) {}
+			if (id == 0) {
+				rootCertificate = new RootCertificate();
+				rootCertificate.setEnabled(false);
+			} else {
+				rootCertificate = rootCertificateService.loadById(id);
+			}
+		}
+	}
+
+	/**
+	 * 根证书
+	 */
+	private RootCertificate rootCertificate;
+
+	public RootCertificate getRootCertificate() {
+		return rootCertificate;
+	}
+	
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		if (rootCertificate.getRootCertificateId() == null) {
+			// 添加根证书
+			Integer rootCertificateId = rootCertificateService.saveRootCertificate(rootCertificate);		
+			RequestContext.getCurrentInstance().closeDialog(rootCertificateId != null ? Boolean.TRUE : Boolean.FALSE);
+		} else {
+			// 编辑根证书
+			RootCertificate rootCertificateUpdated = rootCertificateService.update(rootCertificate);
+			RequestContext.getCurrentInstance().closeDialog(rootCertificateUpdated != null ? Boolean.TRUE : Boolean.FALSE);
+		}
+	}
+}

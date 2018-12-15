@@ -1,0 +1,117 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.ws.rs.core.Response;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.CertificateDao;
+import com.cccollector.app.dao.PlatformDao;
+import com.cccollector.app.dao.UserDao;
+import com.cccollector.app.dao.UserDetailDao;
+import com.cccollector.app.model.Certificate;
+import com.cccollector.app.model.Platform;
+import com.cccollector.app.model.User;
+import com.cccollector.app.model.UserDetail;
+import com.cccollector.app.service.UserDetailService;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 用户详情服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("userDetailService")
+public class UserDetailServiceImpl extends GenericServiceHibernateImpl<Integer, UserDetail> implements UserDetailService, UserDetailsService {
+	
+	@SuppressWarnings("unused")
+	@Autowired
+	private UserDetailDao userDetailDao;	
+	
+	@Autowired
+	private CertificateDao certificateDao;
+	
+	@Autowired
+	private PlatformDao platformDao;
+
+	@Autowired
+	private UserDao userDao;
+
+	@Override
+	public Response getUserDetailByUsername(String username) throws UsernameNotFoundException {
+		UserDetail userDetail = (UserDetail) loadUserByUsername(username);
+		return Response.ok(userDetail).build();
+	}
+	
+	@Override
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		if (username == null || username.isEmpty()) {
+			throw new UsernameNotFoundException("用户名为空");
+		}
+		
+		// 处理用户名
+		String[] usernames = username.split("~");
+		UserDetail userDetail = new UserDetail();
+		userDetail.setUsername(usernames[0]);
+		
+		// 处理证书
+		Certificate certificate = null;
+		if (usernames.length > 1) {
+			Integer certificateId = 0;
+			try {
+				certificateId = Integer.valueOf(usernames[2]);
+			} catch (Exception e) {}
+			certificate = certificateDao.loadById(certificateId);
+			if (certificate == null) {
+				throw new UsernameNotFoundException("证书不存在");
+			} else {
+				userDetail.setCertificateEnabled(certificate.getEnabled() && certificate.getRootCertificate().getEnabled());
+			}
+		}
+		
+		// 处理平台证书，并返回用户详情
+		if (certificate != null && certificate.getOwnerTypeEnum() == Certificate.OwnerTypeEnum.平台) {
+			Platform platform = platformDao.loadById(certificate.getOwnerId());
+			userDetail.setEnabled(platform != null && platform.getEnabled());
+			return userDetail;
+		}
+		
+		// 查询用户
+		User user = null;
+		if (certificate == null) {
+			List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+			predicateQueryFieldList.add(new QueryField("username", userDetail.getUsername()));
+			List<User> users = userDao.loadAll(predicateQueryFieldList, null);
+			user = users.size() == 0 ? null : users.get(0);
+		} else {
+			user = userDao.loadById(certificate.getOwnerId());
+		}
+		if (user == null) {
+			throw new UsernameNotFoundException("用户不存在");
+		}
+
+		// 设置用户详情
+		userDetail.setUserId(user.getUserId());
+		userDetail.setRealName(user.getRealName());
+		userDetail.setHasAvatar(user.getHasAvatar());
+		userDetail.setEmail(user.getEmail());
+		userDetail.setCellphone(user.getCellphone());
+		userDetail.setType(user.getType());
+		userDetail.setEnabled(user.getEnabled());
+		userDetail.setExpiresDate(user.getExpiresDate());
+		userDetail.setLastLoginTime(user.getLastLoginTime());
+		
+		return userDetail;
+	}
+}

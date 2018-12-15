@@ -1,0 +1,171 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+
+import org.primefaces.context.RequestContext;
+
+import com.cccollector.app.model.Platform;
+import com.cccollector.app.model.Release;
+import com.cccollector.app.model.Resource;
+import com.cccollector.app.service.PlatformService;
+import com.cccollector.app.service.ReleaseService;
+import com.cccollector.app.service.ResourceService;
+import com.cccollector.universal.dao.QueryField;
+
+/**
+ * 资源Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class ResourceBean {
+
+	/**
+	 * 资源服务
+	 */
+	@ManagedProperty(value = "#{resourceService}")
+	private ResourceService resourceService;
+
+	public void setResourceService(ResourceService _resourceService) {
+		resourceService = _resourceService;
+	}
+
+	/**
+	 * 发行服务
+	 */
+	@ManagedProperty(value = "#{releaseService}")
+	private ReleaseService releaseService;
+
+	public void setReleaseService(ReleaseService _releaseService) {
+		releaseService = _releaseService;
+	}
+
+	/**
+	 * 平台服务
+	 */
+	@ManagedProperty(value = "#{platformService}")
+	private PlatformService platformService;
+
+	public void setPlatformService(PlatformService _platformService) {
+		platformService = _platformService;
+	}	
+	
+	/**
+	 * 资源ID
+	 */
+	private String resourceId;
+
+	public String getResourceId() {
+		return resourceId;
+	}
+
+	public void setResourceId(String _resourceId) {
+		resourceId = _resourceId;
+		
+		// 新建或加载资源
+		if (resource == null) {
+			Integer id = 0;
+			try {
+				id = Integer.valueOf(resourceId);
+			} catch (Exception e) {}
+			if (id == 0) {
+				resource = new Resource();
+				if (release == null) {
+					release = new Release();
+				}
+				resource.setRelease(release);
+			} else {
+				resource = resourceService.loadById(id);
+			}
+		}
+	}
+
+	/**
+	 * 资源
+	 */
+	private Resource resource;
+
+	public Resource getResource() {
+		return resource;
+	}
+
+	/**
+	 * 所属发行ID
+	 */
+	private String releaseId;
+
+	public String getReleaseId() {
+		return releaseId;
+	}
+
+	public void setReleaseId(String _releaseId) {
+		releaseId = _releaseId;
+		
+		// 加载发行
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(releaseId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			release = releaseService.loadById(id);
+		}
+	}
+
+	/**
+	 * 所属发行
+	 */
+	private Release release;
+
+	public Release getRelease() {
+		return release;
+	}
+
+	/**
+	 * 获取当前应用关联的全部平台
+	 */
+	public List<Platform> getAllPlatforms() {
+		// 查询条件
+		List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("apps", new QueryField("appId", release.getEdition().getApp().getAppId())));
+
+		// 排序
+		List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+		orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+		orderQueryFieldList.add(new QueryField("name", Boolean.TRUE));
+		
+		return platformService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+	}
+	
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		if (resource.getResourceId() == null) {
+			// 设置排序位置
+			List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+			predicateQueryFieldList.add(new QueryField("release", new QueryField("releaseId", resource.getRelease().getReleaseId())));
+			predicateQueryFieldList.add(new QueryField("platformId", resource.getPlatformId()));
+			predicateQueryFieldList.add(new QueryField("type", resource.getType()));
+			Integer position = resourceService.max("position", predicateQueryFieldList);
+			resource.setPosition(position == null ? 0 : position.intValue() + 1);		
+			
+			// 添加资源
+			Integer resourceId = resourceService.save(resource);
+			RequestContext.getCurrentInstance().closeDialog(resourceId != null ? Boolean.TRUE : Boolean.FALSE);
+		} else {
+			// 编辑资源
+			Resource resourceUpdated = resourceService.update(resource);
+			RequestContext.getCurrentInstance().closeDialog(resourceUpdated != null ? Boolean.TRUE : Boolean.FALSE);
+		}
+	}
+}

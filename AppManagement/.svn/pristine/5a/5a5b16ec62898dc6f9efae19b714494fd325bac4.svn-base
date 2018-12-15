@@ -1,0 +1,139 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/template.xhtml">
+	<ui:define name="title">
+		推广方案列表 - 
+		<span class="subitem" style="display:#{programListBean.edition == null ? '' : 'none'}">全部</span>
+		<span style="display:#{programListBean.edition != null ? '' : 'none'}"><a href="editionList.xhtml" class="subitem">#{programListBean.edition.app.name += programListBean.edition.name}</a><span class="subitem fontSize18">版本</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="editionId" value="#{programListBean.editionId}" />
+		</f:metadata>
+
+		<h:form id="programsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:inputSwitch id="programsMultiSelect" value="#{programListBean.programsMultiSelect}" onLabel="管理" offLabel="浏览">
+				<p:ajax update="programsForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="programsSingle" widgetVar="programsSingleTable"  var="program" value="#{programListBean.allPrograms}" selectionMode="single" rowKey="#{program.programId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!program.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{!programListBean.programsMultiSelect}">
+				<p:ajax event="rowSelect" listener="#{programListBean.selectProgramAction}" />
+							
+				<p:column headerText="推广方案ID" priority="1">
+					<h:outputText value="#{program.programId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{program.name}" />
+				</p:column>
+	
+				<p:column headerText="备注" priority="2">
+					<h:outputText value="#{program.remarks}" />
+				</p:column>
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{program.enabledEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="操作" priority="1" rendered="#{programListBean.edition == null}">
+					<p:commandButton icon="fa fa-fw fa-list" value="管理版本" actionListener="#{programListBean.manageEditionsAction(program)}" />
+				</p:column>
+			</p:dataTable>
+			
+			<p:fieldset legend="添加推广方案到版本" style="margin:20px 0px" rendered="#{programListBean.programsMultiSelect and programListBean.edition != null}">
+				<h:panelGrid columns="2" style="background-color:white">
+					<p:outputLabel for="programsSelect" value="选择推广方案:" style="font-weight:bold" />
+					<p:selectOneMenu id="programsSelect" value="#{programListBean.selectedNotUsedProgramId}">
+						<p:ajax listener="#{programListBean.addProgramToEditionAction}" partialSubmit="true" update="programsForm:messages programsSelect programsForm:programsMultiple" />
+						<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+						<f:selectItems value="#{programListBean.notUsedPrograms}" var="program" itemLabel="#{program.name}" itemValue="#{program.programId}"/>
+					</p:selectOneMenu>
+				</h:panelGrid>
+			</p:fieldset>
+
+			<p:dataTable id="programsMultiple" widgetVar="programsMultipleTable" var="program" value="#{programListBean.allPrograms}" selection="#{programListBean.selectedPrograms}" rowKey="#{program.programId}" draggableRows="#{programListBean.edition != null}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!program.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{programListBean.programsMultiSelect}">
+				<p:ajax event="rowReorder" listener="#{programListBean.moveProgramAction}" update="programsForm:messages  programsForm:programsMultiple" />
+				
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="推广方案ID" priority="1">
+					<h:outputText value="#{program.programId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{program.name}" />
+				</p:column>
+	
+				<p:column headerText="备注" priority="2">
+					<h:outputText value="#{program.remarks}" />
+				</p:column>
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{program.enabledEnum.name()}" />
+				</p:column>
+	
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{programListBean.editProgramAction(program)}" rendered="#{programListBean.edition == null}">
+						<p:ajax event="dialogReturn" listener="#{programListBean.handleEditProgramReturn}" update="programsForm:messages programsForm:programsMultiple" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{programListBean.deleteProgramAction(program)}" update="programsForm:messages programsForm:programsMultiple" style="margin-left:10px" rendered="#{programListBean.edition == null}">
+						<p:confirm header="删除推广方案" message="是否确定删除所选推广方案？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="从版本中删除" actionListener="#{programListBean.deleteProgramFromEditionAction(program)}" update="programsForm:messages programsForm:programsSelect programsForm:programsMultiple" rendered="#{programListBean.edition != null}">
+						<p:confirm header="从版本中删除推广方案" message="是否确定从版本中删除所选推广方案？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="programsMultiple" rendered="#{programListBean.programsMultiSelect and programListBean.edition == null}">
+				<p:menuitem icon="ui-icon-unlocked" value="可用" actionListener="#{programListBean.modifyProgramsEnabledAction(true)}" update="messages programsMultiple">
+					<p:confirm header="修改推广方案" message="是否确定修改所选推广方案为可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-locked" value="不可用" actionListener="#{programListBean.modifyProgramsEnabledAction(false)}" update="messages programsMultiple">
+					<p:confirm header="修改推广方案" message="是否确定修改所选推广方案为不可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-close" value="删除" actionListener="#{programListBean.deleteProgramAction(program)}" update="messages programsMultiple">
+					<p:confirm header="删除推广方案" message="是否确定删除所选推广方案？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+			
+			<p:contextMenu for="programsMultiple" rendered="#{programListBean.programsMultiSelect and programListBean.edition != null}">
+				<p:menuitem icon="ui-icon-close" value="批量从版本中删除" actionListener="#{programListBean.deleteProgramsFromEditionAction}" update="messages programsSelect programsMultiple">
+					<p:confirm header="从版本中删除推广方案" message="是否确定从版本中删除所选推广方案？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+			
+			<h:panelGrid columns="1" rendered="#{programListBean.programsMultiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addProgram" icon="ui-icon-plus" value="添加" actionListener="#{programListBean.addProgramAction}" update="messages programsMultiple"  rendered="#{programListBean.edition == null}">
+						<p:ajax event="dialogReturn" listener="#{programListBean.handleAddProgramReturn}" update="messages programsMultiple" />
+					</p:commandButton>
+					<p:commandButton id="editProgram" icon="ui-icon-pencil" value="编辑" actionListener="#{programListBean.editProgramAction}" update="messages programsMultiple" style="margin-left:20px"  rendered="#{programListBean.edition == null}">
+						<p:ajax event="dialogReturn" listener="#{programListBean.handleEditProgramReturn}" update="messages programsMultiple" />
+					</p:commandButton>
+					<p:commandButton id="deletePrograms" icon="ui-icon-close" value="批量删除" actionListener="#{programListBean.deleteProgramsAction}" update="messages programsMultiple" style="margin-left:20px"  rendered="#{programListBean.edition == null}">
+						<p:confirm header="删除推广方案" message="是否确定删除所选推广方案？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton id="deleteProgramsFromEdition" icon="ui-icon-close" value="批量从版本中删除" actionListener="#{programListBean.deleteProgramsFromEditionAction}" update="messages programsSelect programsMultiple" rendered="#{programListBean.edition != null}">
+						<p:confirm header="从版本中删除推广方案" message="是否确定从版本中删除所选推广方案？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

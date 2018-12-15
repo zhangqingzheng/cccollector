@@ -1,0 +1,485 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.SelectEvent;
+
+import com.cccollector.app.model.App;
+import com.cccollector.app.model.Edition;
+import com.cccollector.app.model.Program;
+import com.cccollector.app.service.AppService;
+import com.cccollector.app.service.EditionService;
+import com.cccollector.app.service.ProgramService;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.dao.QueryField.PredicateEnum;
+
+/**
+ * 版本列表Bean类
+ *
+ * @author 谢朋 Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class EditionListBean {
+
+	/**
+	 * 版本服务
+	 */
+	@ManagedProperty(value = "#{editionService}")
+	private EditionService editionService;
+
+	public void setEditionService(EditionService _editionService) {
+		editionService = _editionService;
+	}
+
+	/**
+	 * 应用服务
+	 */
+	@ManagedProperty(value = "#{appService}")
+	private AppService appService;
+
+	public void setAppService(AppService _appService) {
+		appService = _appService;
+	}
+
+	/**
+	 * 推广方案服务
+	 */
+	@ManagedProperty(value = "#{programService}")
+	private ProgramService programService;
+
+	public void setProgramService(ProgramService _programService) {
+		programService = _programService;
+	}
+
+	/**
+	 * 所属应用ID
+	 */
+	private String appId;
+
+	public String getAppId() {
+		return appId;
+	}
+
+	public void setAppId(String _appId) {
+		appId = _appId;
+
+		// 加载应用
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(appId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			app = appService.loadById(id);
+		}
+	}
+
+	/**
+	 * 所属应用
+	 */
+	private App app;
+
+	public App getApp() {
+		return app;
+	}
+
+	/**
+	 * 所属平台ID
+	 */
+	private String platformId;
+
+	public String getPlatformId() {
+		return platformId;
+	}
+
+	public void setPlatformId(String _platformId) {
+		platformId = _platformId;
+	}
+
+	/**
+	 * 关联推广方案ID
+	 */
+	private String programId;
+
+	public String getProgramId() {
+		return programId;
+	}
+
+	public void setProgramId(String _programId) {
+		programId = _programId;
+
+		// 加载推广方案
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(programId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			program = programService.loadById(id);
+		}
+	}
+
+	/**
+	 * 关联推广方案
+	 */
+	private Program program;
+
+	public Program getProgram() {
+		return program;
+	}
+
+	/**
+	 * 版本是否多选
+	 */
+	private boolean editionsMultiSelect;
+
+	public boolean getEditionsMultiSelect() {
+		return editionsMultiSelect;
+	}
+
+	public void setEditionsMultiSelect(boolean _editionsMultiSelect) {
+		editionsMultiSelect = _editionsMultiSelect;
+	}
+
+	/**
+	 * 全部版本
+	 */
+	private List<Edition> allEditions;
+
+	public List<Edition> getAllEditions() {
+		if (allEditions == null) {
+			// 查询条件
+			List<QueryField> predicateQueryFieldList = null;
+			if (app != null) {
+				predicateQueryFieldList = new ArrayList<QueryField>();
+				predicateQueryFieldList.add(new QueryField("app", new QueryField("appId", app.getAppId())));
+			}
+
+			if (program != null) {
+				predicateQueryFieldList = new ArrayList<QueryField>();
+				predicateQueryFieldList.add(new QueryField("programs", new QueryField("programId", program.getProgramId())));
+			}
+
+			// 排序
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+			orderQueryFieldList.add(new QueryField("osType", Boolean.TRUE));
+			orderQueryFieldList.add(new QueryField("os", Boolean.TRUE));
+
+			allEditions = editionService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+		}
+		return allEditions;
+	}
+
+	/**
+	 * 选中的版本
+	 */
+	private List<Edition> selectedEditions;
+
+	public List<Edition> getSelectedEditions() {
+		return selectedEditions;
+	}
+
+	public void setSelectedEditions(List<Edition> _selectedEditions) {
+		selectedEditions = _selectedEditions;
+	}
+
+	/**
+	 * 选择版本
+	 */
+	public void selectEditionAction(SelectEvent event) {
+		try {
+			Edition edition = (Edition) event.getObject();
+			FacesContext.getCurrentInstance().getExternalContext().redirect("releaseList.xhtml?editionId=" + edition.getEditionId() + "&platformId=" + platformId + "&appId=" + appId);
+		} catch (Exception e) {}
+	}
+
+	/**
+	 * 管理推广方案
+	 */
+	public void manageProgramsAction(Edition edition) {
+		try {
+			FacesContext.getCurrentInstance().getExternalContext().redirect("programList.xhtml?editionId=" + edition.getEditionId());
+		} catch (Exception e) {}
+	}
+
+	/**
+	 * 选中的未被推广方案使用的版本ID
+	 */
+	private Integer selectedNotUsedEditionId;
+
+	public Integer getSelectedNotUsedEditionId() {
+		return selectedNotUsedEditionId;
+	}
+
+	public void setSelectedNotUsedEditionId(Integer _selectedNotUsedEditionId) {
+		selectedNotUsedEditionId = _selectedNotUsedEditionId;
+	}
+
+	/**
+	 * 未被推广方案使用的版本
+	 */
+	public List<Edition> getNotUsedEditions() {
+		if (program == null) {
+			return null;
+		}
+		// 查询条件
+		List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("programs", new QueryField("programId", program.getProgramId(), PredicateEnum.NOT_IN)));
+
+		// 排序
+		List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+		orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+		orderQueryFieldList.add(new QueryField("osType", Boolean.TRUE));
+		orderQueryFieldList.add(new QueryField("os", Boolean.TRUE));
+
+		return editionService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+	}
+
+	/**
+	 * 添加版本到推广方案
+	 */
+	public void addEditionToProgramAction() {
+		// 添加版本到推广方案
+		Boolean success = editionService.addEditionToProgram(selectedNotUsedEditionId, program.getProgramId());
+
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success) {
+			// 清空选中的版本
+			selectedEditions = null;
+			// 清空选中的版本ID
+			selectedNotUsedEditionId = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加版本到推广方案成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "添加版本到推广方案失败，请重新尝试！"));
+		}
+
+		// 刷新全部版本数据
+		allEditions = null;
+	}
+
+	/**
+	 * 从推广方案中删除版本
+	 */
+	public void deleteEditionFromProgramAction(Edition edition) {
+		// 从推广方案中删除版本
+		Boolean success = editionService.deleteEditionFromProgram(edition.getEditionId(), program.getProgramId());
+
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success) {
+			// 清空选中的版本
+			selectedEditions = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "从推广方案中删除版本成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "从推广方案中删除版本失败，请重新尝试！"));
+		}
+
+		// 刷新全部版本数据
+		allEditions = null;
+	}
+
+	/**
+	 * 批量从推广方案中删除版本
+	 */
+	public void deleteEditionsFromProgramAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedEditions != null && selectedEditions.size() > 0) {
+			// 从推广方案中删除版本
+			for (Edition edition : selectedEditions) {
+				editionService.deleteEditionFromProgram(edition.getEditionId(), program.getProgramId());
+			}
+
+			// 清空选中的版本
+			selectedEditions = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "从推广方案中删除版本成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个版本进行删除！"));
+		}
+
+		// 刷新全部版本数据
+		allEditions = null;
+	}
+
+	/**
+	 * 添加版本
+	 */
+	public void addEditionAction() {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add("");
+		params.put("editionId", param);
+
+		// 显示编辑版本对话框
+		RequestContext.getCurrentInstance().openDialog("editionEdit", options, params);
+	}
+
+	/**
+	 * 处理添加版本返回
+	 */
+	public void handleAddEditionReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			// 清空选中的版本
+			selectedEditions = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加版本成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "添加版本失败，请重新尝试！"));
+		}
+
+		// 刷新全部版本数据
+		allEditions = null;
+	}
+
+	/**
+	 * 编辑版本
+	 */
+	public void editEditionAction(Edition edition) {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add(edition.getEditionId().toString());
+		params.put("editionId", param);
+
+		// 显示编辑版本对话框
+		RequestContext.getCurrentInstance().openDialog("editionEdit", options, params);
+	}
+
+	/**
+	 * 编辑版本
+	 */
+	public void editEditionAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedEditions != null && selectedEditions.size() > 0) {
+			if (selectedEditions.size() == 1) {
+				// 对话框选项
+				Map<String, Object> options = new HashMap<String, Object>();
+				options.put("width", 360);
+				options.put("resizable", false);
+				options.put("modal", true);
+				options.put("includeViewParams", true);
+
+				// 传递的参数
+				Map<String, List<String>> params = new HashMap<String, List<String>>();
+				List<String> param = new ArrayList<String>();
+				param.add(selectedEditions.get(0).getEditionId().toString());
+				params.put("editionId", param);
+
+				// 显示编辑版本对话框
+				RequestContext.getCurrentInstance().openDialog("editionEdit", options, params);
+			} else {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "只能选择一个版本进行编辑！"));
+			}
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个版本进行编辑！"));
+		}
+	}
+
+	/**
+	 * 处理编辑版本返回
+	 */
+	public void handleEditEditionReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "编辑版本成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "编辑版本失败，请重新尝试！"));
+		}
+
+		// 刷新全部版本数据
+		allEditions = null;
+	}
+
+	/**
+	 * 修改版本是否可用
+	 */
+	public void modifyEditionsEnabledAction(boolean enabled) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedEditions != null && selectedEditions.size() > 0) {
+			for (Edition edition : selectedEditions) {
+				edition.setEnabled(enabled);
+				editionService.update(edition, "enabled");
+			}
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "修改版本是否可用成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个版本进行修改！"));
+		}
+
+		// 刷新全部版本数据
+		allEditions = null;
+	}
+
+	/**
+	 * 删除版本
+	 */
+	public void deleteEditionAction(Edition edition) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 版本如果否包含子对象，则不能被删除
+		if (editionService.hasChildren(edition)) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的版本中包含子对象，请清空子对象再进行删除！"));
+			return;
+		}
+
+		// 删除版本
+		editionService.delete(edition);
+		selectedEditions = null;
+		facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除版本成功！"));
+
+		// 刷新全部版本数据
+		allEditions = null;
+	}
+
+	/**
+	 * 批量删除版本
+	 */
+	public void deleteEditionsAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedEditions != null && selectedEditions.size() > 0) {
+			// 版本如果否包含子对象，则不能被删除
+			for (Edition edition : selectedEditions) {
+				if (editionService.hasChildren(edition)) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的版本中包含子对象，请清空子对象再进行删除！"));
+					return;
+				}
+			}
+
+			// 删除版本
+			editionService.deleteAll(selectedEditions);
+			selectedEditions = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除版本成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个版本进行删除！"));
+		}
+
+		// 刷新全部版本数据
+		allEditions = null;
+	}
+}

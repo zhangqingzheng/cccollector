@@ -1,0 +1,119 @@
+/**
+ * 
+ */
+package com.cccollector.app.service;
+
+import java.util.List;
+import java.util.Map;
+
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
+import com.cccollector.app.model.Department;
+import com.cccollector.app.model.Module;
+import com.cccollector.universal.app.model.UserDetail;
+import com.cccollector.universal.service.GenericService;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+
+/**
+ * 用户详情服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Path("/userDetails")
+@Produces({ MediaType.APPLICATION_JSON })
+@Api(value = "用户详情服务")
+public interface UserDetailService extends GenericService<Integer, UserDetail> {
+    
+	/**
+	 * 根据用户名获取用户详情
+	 * 
+	 * @param username 用户名
+	 * @return 用户详情
+	 */
+    @Path("/getByUsername")
+    @GET
+    @ApiOperation(value = "根据用户名获取用户详情", response = UserDetail.class)
+    public Response getUserDetailByUsername(@ApiParam(value = "用户名", required = true) @QueryParam("username") String username) throws UsernameNotFoundException;
+	
+	/**
+     * 修改用户资料
+     * 
+     * @param userId 用户ID
+	 * @param email 电子邮箱
+	 * @param cellphone 手机号
+     * @return 正确信息
+     */
+    @Path("/{userId}/modifyProfile")
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @ApiOperation(value = "修改用户资料")
+    public Response modifyUserProfile(@ApiParam(value = "用户ID", required = true) @PathParam("userId") int userId, @ApiParam(value = "电子邮箱", required = false) @FormParam(value = "email") String email, @ApiParam(value = "手机号", required = false) @FormParam(value = "cellphone") String cellphone);
+	
+	/**
+     * 修改用户密码
+     * 
+     * @param userId 用户ID
+     * @param oldPassword 旧密码
+     * @param newPassword 新密码
+     * @return 正确信息
+     */
+    @Path("/{userId}/modifyPassword")
+    @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @ApiOperation(value = "修改用户密码")
+    public Response modifyUserPassword(@ApiParam(value = "用户ID", required = true) @PathParam("userId") int userId, @ApiParam(value = "旧密码", required = true) @FormParam("oldPassword") String oldPassword, @ApiParam(value = "新密码", required = true) @FormParam("newPassword") String newPassword);
+   
+    /**
+     * 获取用户在当前平台下所有的模块权限
+     * 
+     * @param userId 用户ID
+     * @return 所有的模块权限
+     */
+    @Path("/{userId}/modulePermissions")
+    @GET
+    @ApiOperation(value = "获取用户在当前平台下所有的模块权限", response = Module.class, responseContainer = "Map")
+    public Response getUserModulePermissions(@ApiParam(value = "用户ID", required = true) @PathParam("userId") int userId);
+ 
+    /**
+     * 获取已登录用户所属部门的独立部门
+     * 
+     * @param userId 用户ID
+     * @return 部门
+     */
+    @Path("/{userId}/getUserIndependentDepartments")
+    @GET
+    @ApiOperation(value = "获取已登录用户所属部门的独立部门", response = Department.class, responseContainer = "List")
+    @ApiParam(value = "用户ID", required = true) @PathParam("userId") 
+    public Response getUserIndependentDepartments(int userId);
+  
+    public Map<Integer, Department> getUserIndependentDepartments1(int userId);
+    
+    /**
+     * 查询部门
+     * 
+     * @param code 部门排序代码
+     * @return 部门
+     */
+    @Path("/{userId}/loadDepartments")
+    @GET
+    @ApiOperation(value = "查询部门", response = Department.class, responseContainer = "List")
+    @ApiParam(value = "部门排序代码", required = true) @QueryParam("code")
+    public Response loadDepartments(String code);
+
+    public List<Department> loadDepartments1(String code);
+}

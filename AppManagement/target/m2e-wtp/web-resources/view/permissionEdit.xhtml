@@ -1,0 +1,62 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="#{permissionBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="title">
+		#{permissionBean.permission.permissionId == null ? '添加' : '编辑'}权限
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="permissionList.xhtml?multiSelect=true&amp;moduleId=#{permissionBean.modelId1}&amp;platformId=#{permissionBean.modelId2}" class="subitem"><h:outputText id="subtitle" value="#{permissionBean.permission.name}" /></a></span>
+	</ui:define>
+	 
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{permissionBean.useDialog}" />
+			<f:viewParam name="moduleId" value="#{permissionBean.modelId1}" />
+			<f:viewParam name="platformId" value="#{permissionBean.modelId2}" />
+			<f:viewParam name="permissionId" value="#{permissionBean.modelId}" />
+		</f:metadata>
+		
+		<h:form id="permissionEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="permissionId" value="权限ID:" style="font-weight:bold" rendered="#{permissionBean.permission.permissionId != null}" />
+				<p:outputLabel id="permissionId" value="#{permissionBean.permission.permissionId}" rendered="#{permissionBean.permission.permissionId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" />
+				<p:inputText id="name" value="#{permissionBean.permission.name}" required="true" requiredMessage="名称为必填项" size="50">
+					<f:validateLength maximum="100" />
+					<p:ajax immediate="true" update="subtitle" />
+				</p:inputText>
+
+				<p:outputLabel for="type" value="类别:" style="font-weight:bold" rendered="#{permissionBean.permission.permissionId == null}" />
+				<p:selectOneMenu id="type" value="#{permissionBean.permission.type}" required="true" requiredMessage="类别为必填项" rendered="#{permissionBean.permission.permissionId == null}" >
+					<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+					<f:selectItems value="#{permissionBean.permission.typeEnums}" var="typeEnum" itemLabel="#{typeEnum.name()}" itemValue="#{typeEnum.ordinal()}" />
+					<p:ajax listener="#{permissionBean.changeTypeAction}" update="name" />
+				</p:selectOneMenu>
+				<p:outputLabel for="typeName" value="类别:" style="font-weight:bold" rendered="#{permissionBean.permission.permissionId != null}" />
+				<p:outputLabel id="typeName" value="#{permissionBean.permission.typeEnum.name()}" rendered="#{permissionBean.permission.permissionId != null}" />
+				
+				<p:outputLabel for="specificIds" value="特定ID:" style="font-weight:bold" />
+				<p:inputText id="specificIds" value="#{permissionBean.permission.specificIds}" size="50">
+					<f:validateLength maximum="1000" />
+				</p:inputText>
+				
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+				<p:inputSwitch id="enabled" value="#{permissionBean.permission.enabled}" onLabel="是" offLabel="否" />
+				
+				<p:outputLabel for="moduleName" value="所属模块:" style="font-weight:bold" />
+				<p:outputLabel id="moduleName" value="#{permissionBean.permission.module.name}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{permissionBean.saveAction}" update="messages" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

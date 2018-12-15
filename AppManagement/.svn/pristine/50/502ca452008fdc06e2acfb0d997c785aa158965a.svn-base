@@ -1,0 +1,67 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="#{certificateBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="title">
+		#{certificateBean.certificate.certificateId == null ? '添加' : '编辑'}证书
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="certificateList.xhtml?multiSelect=true&amp;rootCertificateId=#{certificateBean.modelId1}&amp;ownerType=#{certificateBean.modelId2 != null ? certificateBean.modelId2 : ''}&amp;ownerId=#{certificateBean.modelId3 != null ? certificateBean.modelId3 : ''}" class="subitem"><h:outputText id="subtitle" value="#{certificateBean.certificate.ownerName}" /></a></span>
+	</ui:define>
+		
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{certificateBean.useDialog}" />
+			<f:viewParam name="rootCertificateId" value="#{certificateBean.modelId1}" />
+			<f:viewParam name="ownerType" value="#{certificateBean.modelId2}" />
+			<f:viewParam name="ownerId" value="#{certificateBean.modelId3}" />
+			<f:viewParam name="selectedOwnerType" value="#{certificateBean.modelId4}" />
+			<f:viewParam name="selectedOwnerId" value="#{certificateBean.modelId5}" />
+			<f:viewParam name="certificateId" value="#{certificateBean.modelId}" />
+		</f:metadata>
+
+		<h:form id="certificateEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="certificateId" value="证书ID:" style="font-weight:bold" rendered="#{certificateBean.certificate.certificateId != null}" />
+				<p:outputLabel id="certificateId" value="#{certificateBean.certificate.certificateId}" rendered="#{certificateBean.certificate.certificateId != null}" />
+				
+				<p:outputLabel for="ownerType" value="所有者类别:" style="font-weight:bold" />
+				<p:outputLabel id="ownerType" value="#{certificateBean.certificate.ownerTypeEnum.name()}" />
+				
+				<p:outputLabel for="ownerId" value="所有者ID:" style="font-weight:bold" />
+				<p:outputLabel id="ownerId" value="#{certificateBean.certificate.ownerId}" />
+
+				<p:outputLabel for="ownerName" value="所有者名称:" style="font-weight:bold" />
+				<p:outputLabel id="ownerName" value="#{certificateBean.certificate.ownerName}" />
+				
+				<p:outputLabel for="password" value="PKCS密码:" style="font-weight:bold" rendered="#{certificateBean.certificate.certificateId != null}" />
+				<p:outputLabel id="password" value="#{certificateBean.certificate.password}" rendered="#{certificateBean.certificate.certificateId != null}" />
+
+				<p:outputLabel for="expirationTime" value="过期时间:" style="font-weight:bold" rendered="#{certificateBean.certificate.certificateId != null}" />
+				<p:outputLabel id="expirationTime" value="#{certificateBean.certificate.expirationTime}" rendered="#{certificateBean.certificate.certificateId != null}">
+				    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<p:outputLabel for="issueTime" value="签发时间:" style="font-weight:bold" rendered="#{certificateBean.certificate.certificateId != null}" />
+				<p:outputLabel id="issueTime" value="#{certificateBean.certificate.issueTime}" rendered="#{certificateBean.certificate.certificateId != null}">
+				    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" rendered="#{certificateBean.certificate.certificateId != null}" />
+				<p:outputLabel id="enabled" value="#{certificateBean.certificate.enabledEnum.name()}" rendered="#{certificateBean.certificate.certificateId != null}" />
+				
+				<p:outputLabel for="rootCertificateName" value="所属根证书:" style="font-weight:bold" />
+				<p:outputLabel id="rootCertificateName" value="#{certificateBean.certificate.rootCertificate.name}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{certificateBean.saveAction}" update="messages" rendered="#{certificateBean.certificate.certificateId == null}" />				
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

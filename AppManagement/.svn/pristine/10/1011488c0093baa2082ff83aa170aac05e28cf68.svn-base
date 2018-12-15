@@ -1,0 +1,21 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/template.xhtml">
+	<ui:define name="title">
+		首页
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="indexForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<h:panelGrid columns="1">
+				<p:link id="webServiceDocs" value="服务器端网络服务文档" href="#{indexBean.webServiceDocs}" target="_blank" />
+				<p:link id="apiDocs" value="客户端接口文档" href="#{indexBean.apiDocs}" target="_blank" />
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

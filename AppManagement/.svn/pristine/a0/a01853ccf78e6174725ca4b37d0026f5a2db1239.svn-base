@@ -1,0 +1,134 @@
+/**
+ * 
+ */
+package com.cccollector.app.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+/**
+ * 禁用IP类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Entity
+@Table(name = "user_blockIps")
+public class BlockIp implements Serializable {
+	
+	private static final long serialVersionUID = -4591641018756223499L;
+
+	private Integer _blockIpId;
+
+	/**
+	 * 禁用IP ID
+	 */
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public Integer getBlockIpId() {
+		return _blockIpId;
+	}
+
+	public void setBlockIpId(Integer blockIpId) {
+		_blockIpId = blockIpId;
+	}	
+
+	private String _ipAddress;
+
+	/**
+	 * IP地址
+	 */
+	@Column(nullable = false, length = 100)
+	public String getIpAddress() {
+		return _ipAddress;
+	}
+
+	public void setIpAddress(String ipAddress) {
+		_ipAddress = ipAddress;
+	}
+
+	private Integer _createTime;
+
+	/**
+	 * 创建时间
+	 */
+	@JsonIgnore
+	@Column(nullable = false)
+	public Integer getCreateTime() {
+		return _createTime;
+	}
+
+
+	public void setCreateTime(Integer createTime) {
+		_createTime = createTime;
+	}	
+
+	/**
+	 * Date类型编辑时间
+	 */
+	@JsonIgnore
+	@Transient
+	public Date getCreateTimeDate() {
+		if (_createTime != null) {
+			return new Date((long) _createTime * 1000);
+		}
+		return null;
+	}
+	
+	@Transient
+	public void setCreateTimeDate(Date createTimeDate) {
+		if (createTimeDate != null) {
+			_createTime = (int) (createTimeDate.getTime() / 1000);
+		} else {
+			_createTime = (int) (new Date().getTime() / 1000);
+		}
+	}		
+	
+	private Integer _expiresTime;
+
+	/**
+	 * 到期时间
+	 */
+	@JsonIgnore
+	@Column(nullable = false)
+	public Integer getExpiresTime() {
+		return _expiresTime;
+	}
+
+
+	public void setExpiresTime(Integer expiresTime) {
+		_expiresTime = expiresTime;
+	}	
+
+	/**
+	 * Date类型编辑时间
+	 */
+	@JsonIgnore
+	@Transient
+	public Date getExpiresTimeDate() {
+		if (_expiresTime != null) {
+			return new Date((long) _expiresTime * 1000);
+		}
+		return null;
+	}
+	
+	@Transient
+	public void setExpiresTimeDate(Date expiresTimeDate) {
+		if (expiresTimeDate != null) {
+			_expiresTime = (int) (expiresTimeDate.getTime() / 1000);
+		} else {
+			_expiresTime = (int) (new Date().getTime() / 1000);
+		}
+	}	
+	
+}

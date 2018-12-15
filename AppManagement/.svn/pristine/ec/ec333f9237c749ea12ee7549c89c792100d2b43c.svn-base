@@ -1,0 +1,310 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.SelectEvent;
+
+import com.cccollector.app.model.Edition;
+import com.cccollector.app.model.Release;
+import com.cccollector.app.service.EditionService;
+import com.cccollector.app.service.ReleaseService;
+import com.cccollector.universal.dao.QueryField;
+
+/**
+ * 发行列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class ReleaseListBean {
+
+	/**
+	 * 发行服务
+	 */
+	@ManagedProperty(value = "#{releaseService}")
+	private ReleaseService releaseService;
+
+	public void setReleaseService(ReleaseService _releaseService) {
+		releaseService = _releaseService;
+	}
+
+	/**
+	 * 版本服务
+	 */
+	@ManagedProperty(value = "#{editionService}")
+	private EditionService editionService;
+
+	public void setEditionService(EditionService _editionService) {
+		editionService = _editionService;
+	}
+
+	/**
+	 * 所属版本ID
+	 */
+	private String editionId;
+
+	public String getEditionId() {
+		return editionId;
+	}
+
+	public void setEditionId(String _editionId) {
+		editionId = _editionId;
+		
+		// 加载版本
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(editionId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			edition = editionService.loadById(id);
+		}
+	}
+
+	/**
+	 * 所属版本
+	 */
+	private Edition edition;
+
+	public Edition getEdition() {
+		return edition;
+	}
+
+	/**
+	 * 所属应用ID
+	 */
+	private String appId;
+
+	public String getAppId() {
+		return appId;
+	}
+
+	public void setAppId(String _appId) {
+		appId = _appId;
+	}
+
+	/**
+	 * 所属平台ID
+	 */
+	private String platformId;
+
+	public String getPlatformId() {
+		return platformId;
+	}
+
+	public void setPlatformId(String _platformId) {
+		platformId = _platformId;
+	}
+
+	/**
+	 * 发行是否多选
+	 */
+	private boolean releasesMultiSelect;
+
+	public boolean getReleasesMultiSelect() {
+		return releasesMultiSelect;
+	}
+
+	public void setReleasesMultiSelect(boolean _releasesMultiSelect) {
+		releasesMultiSelect = _releasesMultiSelect;
+	}
+
+	/**
+	 * 全部发行
+	 */
+	private List<Release> allReleases;
+
+	public List<Release> getAllReleases() {
+		if (allReleases == null) {
+			// 查询条件
+			List<QueryField> predicateQueryFieldList = null;
+			if (edition != null) {
+				predicateQueryFieldList = new ArrayList<QueryField>();
+				predicateQueryFieldList.add(new QueryField("edition", new QueryField("editionId", edition.getEditionId())));
+			}
+
+			// 排序
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("releaseDate", Boolean.FALSE));
+			
+			allReleases = releaseService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+		}
+		return allReleases;
+	}
+
+	/**
+	 * 选中的发行
+	 */
+	private List<Release> selectedReleases;
+
+	public List<Release> getSelectedReleases() {
+		return selectedReleases;
+	}
+
+	public void setSelectedReleases(List<Release> _selectedReleases) {
+		selectedReleases = _selectedReleases;
+	}
+
+	/**
+	 * 选择发行
+	 */
+	public void selectReleaseAction(SelectEvent event) {
+		try {
+			Release release = (Release) event.getObject();
+			if (!releasesMultiSelect) {
+				FacesContext.getCurrentInstance().getExternalContext().redirect("resourceList.xhtml?releaseId=" + release.getReleaseId() + "&editionId=" + edition.getEditionId() + "&platformId=" + platformId + "&appId=" + appId);
+			}
+		} catch (Exception e) {}
+	}	
+	
+	/**
+	 * 添加发行
+	 */
+	public void addReleaseAction() {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 420);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add("");
+		params.put("releaseId", param);
+		
+		// 显示编辑发行对话框
+		RequestContext.getCurrentInstance().openDialog("releaseEdit", options, params);
+	}
+	
+	/**
+	 * 处理添加发行返回
+	 */
+	public void handleAddReleaseReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			// 清空选中的发行
+			selectedReleases = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加发行成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "添加发行失败，请重新尝试！"));
+		}
+		
+		// 刷新全部发行数据
+		allReleases = null;
+	}
+	
+	/**
+	 * 编辑发行
+	 */
+	public void editReleaseAction(Release release) {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 420);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add(release.getReleaseId().toString());
+		params.put("releaseId", param);
+		
+		// 显示编辑发行对话框
+		RequestContext.getCurrentInstance().openDialog("releaseEdit", options, params);
+	}
+	
+	/**
+	 * 编辑发行
+	 */
+	public void editReleaseAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedReleases != null && selectedReleases.size() > 0) {
+			if (selectedReleases.size() == 1) {
+				// 对话框选项
+				Map<String, Object> options = new HashMap<String, Object>();
+				options.put("width", 420);
+				options.put("resizable", false);
+				options.put("modal", true);
+				options.put("includeViewParams", true);
+				
+				// 传递的参数
+				Map<String, List<String>> params = new HashMap<String, List<String>>();
+				List<String> param = new ArrayList<String>();
+				param.add(selectedReleases.get(0).getReleaseId().toString());
+				params.put("releaseId", param);
+				
+				// 显示编辑发行对话框
+				RequestContext.getCurrentInstance().openDialog("releaseEdit", options, params);
+			} else {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "只能选择一个发行进行编辑！"));
+			}
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个发行进行编辑！"));
+		}
+	}
+	
+	/**
+	 * 处理编辑发行返回
+	 */
+	public void handleEditReleaseReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "编辑发行成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "编辑发行失败，请重新尝试！"));
+		}
+		
+		// 刷新全部发行数据
+		allReleases = null;
+	}
+	
+	/**
+	 * 删除发行
+	 */
+	public void deleteReleaseAction(Release release) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 删除发行
+		releaseService.delete(release);
+		selectedReleases = null;
+		facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除发行成功！"));
+		// 刷新全部发行数据
+		allReleases = null;
+	}
+	
+	/**
+	 * 批量删除发行
+	 */
+	public void deleteReleasesAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedReleases != null && selectedReleases.size() > 0) {
+			// 删除发行
+			releaseService.deleteAll(selectedReleases);
+			selectedReleases = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除发行成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个发行进行删除！"));
+		}
+		
+		// 刷新全部发行数据
+		allReleases = null;
+	}
+}

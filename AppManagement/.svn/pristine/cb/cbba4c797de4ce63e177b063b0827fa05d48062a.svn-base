@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+	<h:head>
+		<title>#{programBean.program.programId == null ? '添加' : '编辑'}推广方案</title>
+	    <h:outputStylesheet name="css/showcase.css" />
+	</h:head>
+	 
+	<h:body style="background-color:#ffffff;">
+		<h:form id="programEditForm" style="margin:10px">
+			<f:metadata>
+				<f:viewParam name="programId" value="#{programBean.programId}" />
+			</f:metadata>
+
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="programId" value="推广方案ID:" style="font-weight:bold" rendered="#{programBean.program.programId != null}" />
+				<p:outputLabel id="programId" value="#{programBean.program.programId}" rendered="#{programBean.program.programId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" />
+				<p:inputText id="name" value="#{programBean.program.name}" required="true" requiredMessage="名称为必填项" size="30">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="remarks" value="备注:" style="font-weight:bold" />
+				<p:inputTextarea id="remarks" value="#{programBean.program.remarks}" autoResize="false" rows="10" cols="30">
+					<f:validateLength maximum="1000" />
+				</p:inputTextarea>
+				
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+				<p:inputSwitch id="enabled" value="#{programBean.program.enabled}" onLabel="是" offLabel="否" />
+			
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{programBean.saveAction}" update="messages" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</h:body>
+</html>

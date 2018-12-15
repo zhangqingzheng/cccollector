@@ -1,0 +1,145 @@
+/**
+ * 
+ */
+package com.cccollector.app.model;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+/**
+ * 岗位类
+ *
+ * @author 谢朋
+ * Copyright © 2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Entity
+@Table(name = "user_jobs")
+public class Job implements Serializable {
+
+	private static final long serialVersionUID = -7016631869151564312L;
+	
+	private Integer _jobId;
+
+	/**
+	 * 岗位ID
+	 */
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public Integer getJobId() {
+		return _jobId;
+	}
+
+	public void setJobId(Integer jobId) {
+		_jobId = jobId;
+	}
+
+	private String _name;
+
+	/**
+	 * 名称
+	 */
+	@Column(nullable = false, length = 100)
+	public String getName() {
+		return _name;
+	}
+
+	public void setName(String name) {
+		_name = name;
+	}
+	
+	private Integer _position;
+
+	/**
+	 * 排序位置
+	 */
+	@JsonIgnore
+	@Column(nullable = false)
+	public Integer getPosition() {
+		return _position;
+	}
+
+	public void setPosition(Integer position) {
+		_position = position;
+	}
+
+	private User _user;
+	
+	/**
+	 * 所属的用户
+	 */
+	@ManyToOne
+	@JoinColumn(name = "userId", nullable = false)
+	public User getUser() {
+		return _user;
+	}
+	
+	public void setUser(User user) {
+		_user = user;
+	}
+	
+	private Department _department;
+	
+	/**
+	 * 所属的部门
+	 */
+	@JsonIgnore
+	@ManyToOne
+	@JoinColumn(name = "departmentId", nullable = false)
+	public Department getDepartment() {
+		return _department;
+	}
+
+	public void setDepartment(Department department) {
+		_department = department;
+	}
+	
+	private List<Role> _roles = new ArrayList<Role>();
+
+	/**
+	 * 关联的角色
+	 */
+	@JsonIgnore
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "user_jobRoles", joinColumns = @JoinColumn(name = "jobId", nullable = false), inverseJoinColumns = @JoinColumn(name = "roleId", nullable = false))
+	@OrderBy("name")
+	public List<Role> getRoles() {
+		return _roles;
+	}
+
+	public void setRoles(List<Role> roles) {
+		_roles = roles;
+	}
+	
+	private List<Permission> _permissions = new ArrayList<Permission>();
+
+	/**
+	 * 关联的权限
+	 */
+	@JsonIgnore
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "user_jobPermissions", joinColumns = @JoinColumn(name = "jobId", nullable = false), inverseJoinColumns = @JoinColumn(name = "permissionId", nullable = false))
+	@OrderBy("name")
+	public List<Permission> getPermissions() {
+		return _permissions;
+	}
+
+	public void setPermissions(List<Permission> permissions) {
+		_permissions = permissions;
+	}	
+}

@@ -1,0 +1,148 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/template.xhtml">
+	<ui:define name="title">
+		#{userBean.user.userId == null ? '添加' : '编辑'}用户
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="userId" value="#{userBean.userId}" />
+		</f:metadata>
+
+		<h:form id="userEditForm">
+			<p:messages id="messages" />
+			
+			<p:tabView dynamic="true" cache="true">
+				<p:tab title="用户">
+					<h:panelGrid columns="2">
+						<p:outputLabel for="userId" value="用户ID:" style="font-weight:bold" rendered="#{userBean.user.userId != null}" />
+						<p:outputLabel id="userId" value="#{userBean.user.userId}" rendered="#{userBean.user.userId != null}" />
+						
+						<p:outputLabel for="username" value="用户名:" style="font-weight:bold" />
+						<p:inputText id="username" value="#{userBean.user.username}" required="true" requiredMessage="用户名为必填项" size="30">
+							<f:validateLength minimum="4" maximum="100" />
+						</p:inputText>
+						
+						<p:outputLabel for="password" value="密码:" style="font-weight:bold" />
+						<p:password id="password" value="#{userBean.user.password}" required="#{userBean.user.userId == null}" requiredMessage="密码为必填项" size="30" autocomplete="new-password">
+							<f:validateLength minimum="8" />
+						</p:password>
+						
+						<p:outputLabel for="realName" value="真实姓名:" style="font-weight:bold" />
+						<p:inputText id="realName" value="#{userBean.user.realName}" required="true" requiredMessage="真实姓名为必填项" size="30">
+							<f:validateLength maximum="100" />
+						</p:inputText>
+						
+						<p:outputLabel for="hasAvatar" value="是否有头像:" style="font-weight:bold" />
+						<p:outputLabel id="hasAvatar" value="#{userBean.user.hasAvatarEnum.name()}" />
+
+						<p:outputLabel for="avatar" value="头像:" style="font-weight:bold" />
+						<h:panelGroup id="avatar">
+							<p:fileUpload id="avatarFileUpload" fileUploadListener="#{userBean.handleAvatarFileUpload}" mode="advanced" auto="true" dragDropSupport="false" allowTypes="/(\.|\/)(jpe?g)$/" label="选择头像" invalidFileMessage="文件格式错误，只接受JPG格式！" update="avatar" />
+							<p:graphicImage id="avatarGraphicImage" value="#{userBean.avatarImage}" stream="false" cache="false" width="100" />
+							<p:commandButton id="avatarDeleteButton" icon="ui-icon-close" value="删除" actionListener="#{userBean.handleAvatarDelete}" update="avatar" immediate="true" style="margin-left:20px" rendered="#{userBean.avatarFilePath != null}" />
+						</h:panelGroup>
+						
+						<p:outputLabel for="email" value="电子邮箱:" style="font-weight:bold" />
+						<p:inputText id="email" value="#{userBean.user.email}" size="30">
+							<f:validateLength maximum="100" />
+						</p:inputText>
+						
+						<p:outputLabel for="cellphone" value="手机号:" style="font-weight:bold" />
+						<p:inputText id="cellphone" value="#{userBean.user.cellphone}" size="30">
+							<f:validateLength maximum="100" />
+						</p:inputText>
+
+						<p:outputLabel for="remarks" value="备注:" style="font-weight:bold" />
+						<p:inputTextarea id="remarks" value="#{userBean.user.remarks}" autoResize="false" rows="10" cols="30">
+							<f:validateLength maximum="1000" />
+						</p:inputTextarea>
+						
+						<p:outputLabel for="type" value="类别:" style="font-weight:bold" />
+						<p:selectOneMenu id="type" value="#{userBean.user.type}" required="true" requiredMessage="类别为必填项" >
+							<f:selectItems value="#{userBean.user.typeEnums}" var="typeEnum" itemLabel="#{typeEnum.name()}" itemValue="#{typeEnum.ordinal()}" />
+						</p:selectOneMenu>
+						
+						<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+						<p:inputSwitch id="enabled" value="#{userBean.user.enabled}" onLabel="是" offLabel="否" required="true" requiredMessage="是否可用为必填项" />
+						
+						<p:outputLabel for="expiresDate" value="到期日期:" style="font-weight:bold" />
+						<p:calendar id="expiresDate" value="#{userBean.user.expiresDate}" pattern="yyyy年M月d日" navigator="true" showOtherMonths="false" size="30" />
+						
+						<p:outputLabel for="createTime" value="创建时间:" style="font-weight:bold" rendered="#{userBean.user.userId != null}" />
+						<p:outputLabel id="createTime" value="#{userBean.user.createTimeDate}" rendered="#{userBean.user.userId != null}">
+						    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+						</p:outputLabel>
+						
+						<p:outputLabel for="lastLoginTime" value="最近登录时间:" style="font-weight:bold" />
+						<p:outputLabel id="lastLoginTime" value="#{userBean.user.lastLoginTimeDate}" rendered="#{userBean.user.userId != null}">
+						    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+						</p:outputLabel>
+						
+						<f:facet name="footer">
+							<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{userBean.saveAction}" update="userEditForm:messages" />
+						</f:facet>
+					</h:panelGrid>
+				</p:tab>
+				<p:tab title="role" rendered="#{userBean.user.userId != null}">
+					<h:panelGrid columns="2">				
+						<p:selectOneMenu id="platformsSelect" value="#{userBean.selectedPlatformId}" style="margin-left:10px">
+						    <p:ajax listener="#{userBean.onSelectedPlatformIdChange}" partialSubmit="true" update="pickListRole" />
+							<f:selectItem itemLabel="选择平台" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{userBean.allPlatforms}" var="platform" itemLabel="#{platform.name}" itemValue="#{platform.platformId}" />
+						</p:selectOneMenu>								
+					</h:panelGrid>
+					<h:panelGrid columns="2">
+					<p:pickList id="pickListRole" value="#{userBean.allRoles}" var="role" itemLabel="#{role.name}" itemValue="#{role}">
+					</p:pickList>	
+					   <p:dialog modal="true" showEffect="fade" hideEffect="fade" widgetVar="roleDialog">
+					        <h:panelGrid id="displayRoles" columns="2">
+					            <h:outputText value="SourceRoles: " style="font-weight:bold" />
+					             <ui:repeat value="#{userBean.allSourceRoles}" var="role">
+					                <h:outputText value="#{role.name}" style="margin-right:5px" />
+					            </ui:repeat>
+					 
+					            <h:outputText value="TargetRoles: " style="font-weight:bold" />
+					            <ui:repeat value="#{userBean.allTargetRoles}" var="role">
+					                <h:outputText value="#{role.name}" style="margin-right:5px" />
+					            </ui:repeat>
+					        </h:panelGrid>
+					    </p:dialog>	
+						
+						<f:facet name="footer">
+							<p:commandButton id="saveButtonRole" icon="ui-icon-disk" value="保存" actionListener="#{userBean.saveAction}" update="userEditForm:messages" />
+						</f:facet>
+					</h:panelGrid>
+				</p:tab>
+				<p:tab title="permission" rendered="#{userBean.user.userId != null}">
+					<h:panelGrid columns="2">
+					<p:pickList id="pickListPermission" value="#{userBean.allPermissions}" var="permission" itemLabel="#{permission.name}" itemValue="#{permission}" />
+						
+					   <p:dialog modal="true" showEffect="fade" hideEffect="fade" widgetVar="permissionDialog">
+					        <h:panelGrid id="displayPermissions" columns="2">
+					            <h:outputText value="SourcePermissions: " style="font-weight:bold" />
+					             <ui:repeat value="#{userBean.allSourcePermissions}" var="permission">
+					                <h:outputText value="#{permission.name}" style="margin-right:5px" />
+					            </ui:repeat>
+					 
+					            <h:outputText value="TargetPermissions: " style="font-weight:bold" />
+					            <ui:repeat value="#{userBean.allTargetPermissions}" var="permission">
+					                <h:outputText value="#{permission.name}" style="margin-right:5px" />
+					            </ui:repeat>
+					        </h:panelGrid>
+					    </p:dialog>	
+						
+						<f:facet name="footer">
+							<p:commandButton id="saveButtonPermission" icon="ui-icon-disk" value="保存" actionListener="#{userBean.saveAction}" update="userEditForm:messages" />
+						</f:facet>
+					</h:panelGrid>					
+				</p:tab>
+			</p:tabView>
+		</h:form>
+	</ui:define>
+</ui:composition>

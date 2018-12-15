@@ -1,0 +1,229 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import java.io.File;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+import javax.ws.rs.core.Response;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.UserDao;
+import com.cccollector.app.model.User;
+import com.cccollector.app.service.UserService;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.dao.QueryField.PredicateEnum;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 用户服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("userService")
+public class UserServiceImpl extends GenericServiceHibernateImpl<Integer, User> implements UserService {
+	
+	@Autowired
+	private UserDao userDao;
+	
+	/**
+	 * 平台标识符
+	 */
+	@Value("${platformBundleId}")
+	private String platformBundleId;
+	
+	/**
+	 * ImageMagick命令路径
+	 */
+	@Value("${imageMagickPath}")
+	private String imageMagickPath;
+	
+	/**
+	 * Tomcat数据目录
+	 */
+	@Value("${paths.tomcatDataPath}")
+	private String tomcatDataPath;
+	
+	/**
+	 * nginx数据目录
+	 */
+	@Value("${paths.nginxDataPath}")
+	private String nginxDataPath;
+	
+	/**
+	 * 应用根路径键
+	 */
+	@Value("${paths.webAppRootKey}")
+	private String webAppRootKey;
+	
+	/**
+	 * 临时路径
+	 */
+	@Value("${paths.webTemp}")
+	private String webTemp;
+	
+	/**
+	 * 图像路径
+	 */
+	@Value("${paths.image}")
+	private String image;
+	
+	/**
+	 * 用户路径
+	 */
+	@Value("${paths.users}")
+	private String users;
+	
+	/**
+	 * 缩略图URL
+	 */
+	@Value("${paths.thumbnailUrl}")
+	private String thumbnailUrl;
+	
+	/**
+	 * 用户头像缩略图尺寸
+	 */
+	@Value("${paths.userAvatarThumbnailSize}")
+	private String userAvatarThumbnailSize;
+
+	@Override
+	public String getPlatformBundleId() {
+		return platformBundleId;
+	}
+	
+	@Override
+	public String getImageMagickPath() {
+		return imageMagickPath;
+	}
+
+	@Override
+	public String getTempPath() {
+		return System.getProperty(webAppRootKey) + webTemp + File.separator;
+	}
+
+	@Override
+	public String getDataPath() {
+		return tomcatDataPath + platformBundleId + File.separator;
+	}
+
+	@Override
+	public String getImagePath() {
+		return nginxDataPath + platformBundleId + File.separator + image + File.separator;
+	}
+
+	@Override
+	public String getUsersPath() {
+		return users + File.separator;
+	}
+
+	@Override
+	public String getDataUsersPath() {
+		return getDataPath() + getUsersPath();
+	}
+
+	@Override
+	public String getAvatarThumbnailUsersUrl() {
+		return thumbnailUrl + userAvatarThumbnailSize + "/" + users + "/";
+	}
+	
+	@Override
+	public Response modifyPassword(int userId, String oldPassword, String newPassword) {
+		try {
+			User user = userDao.loadById(userId);
+			
+			// 验证输入旧密码
+			try {
+				MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+				messageDigest.reset();
+				String salt = platformBundleId + user.getSalt();
+				messageDigest.update(salt.getBytes("UTF-8"));
+				byte[] hashed = messageDigest.digest(oldPassword.getBytes("UTF-8"));
+				String oldPasswordMD5 = new BigInteger(1, hashed).toString(16);
+				if (!user.getPassword().equals(oldPasswordMD5)) {
+					return Response.status(Response.Status.SERVICE_UNAVAILABLE).build();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			// 设置新密码
+			user.setSalt(createRandomSalt(40));
+			MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+			messageDigest.reset();
+			String salt = platformBundleId + user.getSalt();
+			messageDigest.update(salt.getBytes("UTF-8"));
+			byte[] hashed = messageDigest.digest(newPassword.getBytes("UTF-8"));
+			String passwordMD5 = new BigInteger(1, hashed).toString(16);
+			user.setPassword(passwordMD5);
+			userDao.update(user, "password", "salt");
+			// 返回正确信息
+			return Response.status(Response.Status.OK).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.status(Response.Status.SERVICE_UNAVAILABLE).build();
+		}
+	}
+	
+	@Override
+	public List<User> loadUsersBySearchWord(String searchWord) {
+		// 根据搜索词查询用户
+		int id = 0;
+		try {
+			id = Integer.valueOf(searchWord);
+		} catch (Exception e) {}
+		List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+		if (id > 0) {
+			predicateQueryFieldList.add(new QueryField("userId", id, PredicateEnum.EQUAL, QueryField.BooleanOperatorEnum.OR));
+		}
+		predicateQueryFieldList.add(new QueryField("username", searchWord, PredicateEnum.LIKE, QueryField.BooleanOperatorEnum.OR));
+		predicateQueryFieldList.add(new QueryField("realName", searchWord, PredicateEnum.LIKE, QueryField.BooleanOperatorEnum.OR));
+		predicateQueryFieldList.add(new QueryField("email", searchWord, PredicateEnum.LIKE, QueryField.BooleanOperatorEnum.OR));
+		predicateQueryFieldList.add(new QueryField("cellphone", searchWord, PredicateEnum.LIKE, QueryField.BooleanOperatorEnum.OR));
+		List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+		orderQueryFieldList.add(new QueryField("createTime", Boolean.FALSE));
+		List<User> users = userDao.loadPage(predicateQueryFieldList, orderQueryFieldList, 0, 20);
+		List<User> enabledUsers = new ArrayList<User>();
+ 		if (users.size() == 0) {
+			return null;
+		} else {
+			for (User user : users) {
+				if (user.getEnabled() == true) {
+					enabledUsers.add(user);
+				}
+			}
+		}
+		return enabledUsers;
+	}
+	
+	/**
+	 * 随机生成40位密码盐
+	 */
+	public static String createRandomSalt(int length) {
+		// 密码盐
+        String value = "";  
+        Random random = new Random();  
+           
+        for(int i = 0; i < length; i++) {  
+              
+            String charOrNum = random.nextInt(2) % 2 == 0 ? "char" : "num";  
+            //输出字母还是数字  
+            if( "char".equalsIgnoreCase(charOrNum) ) {  
+                //输出大写字母或小写字母 
+                int temp = random.nextInt(2) % 2 == 0 ? 65 : 97;  
+                value += (char)(random.nextInt(26) + temp);  
+            } else if( "num".equalsIgnoreCase(charOrNum) ) {  
+                value += String.valueOf(random.nextInt(10));  
+            }  
+        }  
+        return value;
+	}
+}

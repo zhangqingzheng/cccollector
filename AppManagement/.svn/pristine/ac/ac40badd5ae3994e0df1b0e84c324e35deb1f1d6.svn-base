@@ -1,0 +1,132 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/template.xhtml">
+	<ui:define name="title">
+		推广表 - 
+		<span><a href="programList.xhtml" class="subitem">#{promotionListBean.program.name}</a><span class="subitem fontSize18">推广方案</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="programId" value="#{promotionListBean.programId}" />
+			<f:viewParam name="multiSelect" value="#{promotionListBean.promotionsMultiSelect}" />
+		</f:metadata>
+		
+		<h:form id="promotionsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:inputSwitch id="promotionsMultiSelect" value="#{promotionListBean.promotionsMultiSelect}" onLabel="管理" offLabel="浏览">
+				<p:ajax update="promotionsForm" />
+			</p:inputSwitch>
+				
+			<p:dataTable id="promotionsSingle" widgetVar="promotionsSingleTable" var="promotion" value="#{promotionListBean.allPromotions}" selectionMode="single" rowKey="#{promotion.promotionId}" resizableColumns="true"  emptyMessage="无数据" style="margin:10px 0px" rendered="#{!promotionListBean.promotionsMultiSelect}">
+				<p:column headerText="推广ID" priority="1">
+					<h:outputText value="#{promotion.promotionId}" />
+				</p:column>
+	
+				<p:column headerText="标题" priority="1">
+					<h:outputText value="#{promotion.title}" />
+				</p:column>
+				
+				<p:column headerText="下载地址" priority="1">
+					<h:outputText value="#{promotion.downloadAddress}" />
+				</p:column>
+			
+				<p:column headerText="打开地址" priority="1">
+					<h:outputText value="#{promotion.openAddress}" />
+				</p:column>
+				
+				<p:column headerText="图标" priority="1">
+					<p:graphicImage id="icon" value="#{promotionListBean.loadIconThumbnail(promotion)}" stream="false" height="50" />
+					<p:tooltip for="icon" value="#{promotion.iconUpdateTime}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>		
+				
+				<p:column headerText="关联标识符" priority="1">
+					<h:outputText value="#{promotion.relativeBundleId}" />
+				</p:column>
+				
+				<p:column headerText="是否可见" priority="1">
+					<h:outputText value="#{promotion.visibleEnum.name()}" />
+				</p:column>
+			</p:dataTable>
+
+			<p:dataTable id="promotionsMultiple" widgetVar="promotionsMultipleTable" var="promotion" value="#{promotionListBean.allPromotions}" selection="#{promotionListBean.selectedPromotions}" rowKey="#{promotion.promotionId}" draggableRows="true" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{promotionListBean.promotionsMultiSelect}">
+				<p:ajax event="rowReorder" listener="#{promotionListBean.moveMediaAction}" update="promotionsForm:messages promotionsForm:promotionsMultiple" />
+				<p:ajax event="rowDblselect" listener="#{promotionListBean.selectPromotionAction}" />
+				
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="推广ID" priority="1">
+					<h:outputText value="#{promotion.promotionId}" />
+				</p:column>
+	
+				<p:column headerText="标题" priority="1">
+					<h:outputText value="#{promotion.title}" />
+				</p:column>
+				
+				<p:column headerText="下载地址" priority="1">
+					<h:outputText value="#{promotion.downloadAddress}" />
+				</p:column>
+			
+				<p:column headerText="打开地址" priority="1">
+					<h:outputText value="#{promotion.openAddress}" />
+				</p:column>
+				
+				<p:column headerText="图标" priority="1">
+					<p:graphicImage id="icon" value="#{promotionListBean.loadIconThumbnail(promotion)}" stream="false" height="50" />
+					<p:tooltip for="icon" value="#{promotion.iconUpdateTime}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>	
+				
+				<p:column headerText="关联标识符" priority="1">
+					<h:outputText value="#{promotion.relativeBundleId}" />
+				</p:column>
+				
+				<p:column headerText="是否可见" priority="1">
+					<h:outputText value="#{promotion.visibleEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{promotionListBean.editPromotionAction(promotion)}" update="promotionsForm:messages promotionsForm:promotionsMultiple" />
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{promotionListBean.deletePromotionAction(promotion)}" update="promotionsForm:messages promotionsForm:promotionsMultiple" style="margin-left:10px">
+						<p:confirm header="删除推广" message="是否确定删除所选推广？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="promotionsMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{promotionListBean.addPromotionAction}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{promotionListBean.editPromotionAction}" update="messages" />
+				<p:menuitem icon="ui-icon-close" value="批量删除" actionListener="#{promotionListBean.deletePromotionsAction}" update="messages promotionsMultiple">
+					<p:confirm header="删除推广" message="是否确定删除所选推广？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{promotionListBean.promotionsMultiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addPromotion" icon="ui-icon-plus" value="添加" actionListener="#{promotionListBean.addPromotionAction}" />
+					<p:commandButton id="editPromotion" icon="ui-icon-pencil" value="编辑" actionListener="#{promotionListBean.editPromotionAction}" update="messages" style="margin-left:20px" />
+					<p:commandButton id="deletePromotions" icon="ui-icon-close" value="批量删除" actionListener="#{promotionListBean.deletePromotionsAction}" update="messages promotionsMultiple" style="margin-left:20px">
+						<p:confirm header="删除推广" message="是否确定删除所选推广？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

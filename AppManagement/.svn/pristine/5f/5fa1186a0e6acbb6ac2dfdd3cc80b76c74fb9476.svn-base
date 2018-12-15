@@ -1,0 +1,330 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import javax.ws.rs.core.Response;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.CertificateDao;
+import com.cccollector.app.dao.DepartmentDao;
+import com.cccollector.app.dao.JobDao;
+import com.cccollector.app.dao.PermissionDao;
+import com.cccollector.app.dao.PlatformDao;
+import com.cccollector.app.dao.RoleDao;
+import com.cccollector.app.dao.RootCertificateDao;
+import com.cccollector.app.dao.UserDao;
+import com.cccollector.app.dao.UserDetailDao;
+import com.cccollector.app.model.Certificate;
+import com.cccollector.app.model.Department;
+import com.cccollector.app.model.Job;
+import com.cccollector.app.model.Permission;
+import com.cccollector.app.model.Platform;
+import com.cccollector.app.model.RootCertificate;
+import com.cccollector.app.model.User;
+import com.cccollector.app.service.UserDetailService;
+import com.cccollector.universal.app.model.UserDetail;
+import com.cccollector.universal.app.util.SecurityUtils;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.dao.QueryField.PredicateEnum;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 用户详情服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("userDetailService")
+@Primary
+public class UserDetailServiceImpl extends GenericServiceHibernateImpl<Integer, UserDetail> implements UserDetailService, UserDetailsService {
+	
+	@SuppressWarnings("unused")
+	@Autowired
+	private UserDetailDao userDetailDao;	
+	
+	@Autowired
+	private RootCertificateDao rootCertificateDao;
+	
+	@Autowired
+	private CertificateDao certificateDao;
+	
+	@Autowired
+	private PlatformDao platformDao;
+	
+	@Autowired
+	private DepartmentDao departmentDao;
+	
+	@Autowired
+	private UserDao userDao;
+	
+	/**
+	 * 平台标识符
+	 */
+	@Value("${platformBundleId}")
+	private String platformBundleId;
+
+	@Override
+	public Response getUserDetailByUsername(String username) throws UsernameNotFoundException {
+		UserDetail userDetail = (UserDetail) loadUserByUsername(username);
+		return Response.ok(userDetail).build();
+	}
+	
+	@Override
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+		if (username == null || username.isEmpty()) {
+			throw new UsernameNotFoundException("用户名为空");
+		}
+		
+		// 处理用户名
+		String[] usernames = username.split("~");
+		UserDetail userDetail = new UserDetail();
+		userDetail.setUsername(usernames[0]);
+		
+		// 处理证书
+		Certificate certificate = null;
+		if (usernames.length > 1) {
+			// 处理本平台证书（根证书），并返回用户详情
+			if (userDetail.getUsername().equals(platformBundleId)) {
+				Integer rootCertificateId = 0;
+				try {
+					rootCertificateId = Integer.valueOf(usernames[1]);
+				} catch (Exception e) {}
+				RootCertificate rootCertificate = rootCertificateDao.loadById(rootCertificateId);
+				if (rootCertificate == null) {
+					throw new UsernameNotFoundException("证书不存在");
+				} else {
+					userDetail.setPlatformId(0);
+					userDetail.setCertificateEnabled(rootCertificate.getEnabled());
+					userDetail.setEnabled(true);
+					return userDetail;
+				}
+			}
+			
+			// 处理证书
+			Integer certificateId = 0;
+			try {
+				certificateId = Integer.valueOf(usernames[2]);
+			} catch (Exception e) {}
+			certificate = certificateDao.loadById(certificateId);
+			if (certificate == null) {
+				throw new UsernameNotFoundException("证书不存在");
+			} else {
+				userDetail.setCertificateEnabled(certificate.getEnabled() && certificate.getRootCertificate().getEnabled());
+			}
+		}
+		
+		// 处理平台证书，并返回用户详情
+		if (certificate != null && certificate.getOwnerTypeEnum() == Certificate.OwnerTypeEnum.平台) {
+			Platform platform = platformDao.loadById(certificate.getOwnerId());
+			userDetail.setPlatformId(platform.getPlatformId());
+			userDetail.setEnabled(platform != null && platform.getEnabled());
+			return userDetail;
+		}
+		
+		// 查询用户
+		User user = null;
+		if (certificate == null) {
+			List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+			predicateQueryFieldList.add(new QueryField("username", userDetail.getUsername()));
+			List<User> users = userDao.loadAll(predicateQueryFieldList, null);
+			user = users.size() == 0 ? null : users.get(0);
+		} else {
+			user = userDao.loadById(certificate.getOwnerId());
+		}
+		if (user == null) {
+			throw new UsernameNotFoundException("用户不存在");
+		}
+
+		// 设置用户详情
+		userDetail.setUserId(user.getUserId());
+		userDetail.setRealName(user.getRealName());
+		userDetail.setHasAvatar(user.getHasAvatar());
+		userDetail.setEmail(user.getEmail());
+		userDetail.setCellphone(user.getCellphone());
+		userDetail.setType(user.getType());
+		userDetail.setEnabled(user.getEnabled());
+		userDetail.setExpiresDate(user.getExpiresDate());
+		userDetail.setLastLoginTime(user.getLastLoginTime());
+		
+		return userDetail;
+	}
+	
+	@Override
+	public Response modifyUserPassword(int userId, String oldPassword, String newPassword) {
+		try {
+			User user = userDao.loadById(userId);
+			
+			// 验证输入旧密码
+			MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+			messageDigest.reset();
+			String salt = platformBundleId + user.getSalt();
+			messageDigest.update(salt.getBytes("UTF-8"));
+			byte[] hashed = messageDigest.digest(oldPassword.getBytes("UTF-8"));
+			String oldPasswordMD5 = new BigInteger(1, hashed).toString(16);
+			if (!user.getPassword().equals(oldPasswordMD5)) {
+				return Response.status(Response.Status.SERVICE_UNAVAILABLE).build();
+			}
+			
+			// 设置新密码
+			user.setSalt(createRandomSalt(40));
+			salt = platformBundleId + user.getSalt();
+			messageDigest.update(salt.getBytes("UTF-8"));
+			hashed = messageDigest.digest(newPassword.getBytes("UTF-8"));
+			String passwordMD5 = new BigInteger(1, hashed).toString(16);
+			user.setPassword(passwordMD5);
+			
+			// 返回正确信息
+			return Response.status(Response.Status.OK).build();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Response.status(Response.Status.SERVICE_UNAVAILABLE).build();
+		}
+	}
+	
+	@Override
+	public Response getUserPermissions(int userId) {
+		// 获取用户
+		User user = userDao.loadById(userId, "jobs");
+		if (user.getJobs().isEmpty()) {
+			return null;
+		}
+		
+		// 获取平台ID
+		Integer platformId = SecurityUtils.getLoginUserDetail().getPlatformId();
+		
+		List<QueryField> predicateQueryFieldList = null;
+		
+		// 获取用户岗位的权限
+		predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("userId", user.getUserId()));
+		predicateQueryFieldList.add(new QueryField("jobs", new QueryField("permissions", new QueryField("module", new QueryField("platform", new QueryField("platformId", platformId))))));
+		List<Permission> jobPermissions = userDao.loadAll(Permission.class, new QueryField("jobs", new QueryField("permissions", null)), predicateQueryFieldList, null);
+		
+		predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("userId", user.getUserId()));
+		predicateQueryFieldList.add(new QueryField("jobs", new QueryField("roles", new QueryField("platform", new QueryField("platformId", platformId)))));
+		List<Permission> jobRolePermissions = userDao.loadAll(Permission.class, new QueryField("jobs", new QueryField("roles",new QueryField("permissions", null))), predicateQueryFieldList, null);
+		
+		// 获取用户部门的权限
+		predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("userId", user.getUserId()));
+		predicateQueryFieldList.add(new QueryField("jobs", new QueryField("department", new QueryField("permissions", new QueryField("module", new QueryField("platform", new QueryField("platformId", platformId)))))));
+		List<Permission> departmentPermissions = userDao.loadAll(Permission.class, new QueryField("jobs", new QueryField("department", new QueryField("permissions", null))), predicateQueryFieldList, null);
+		
+		predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("userId", user.getUserId()));
+		predicateQueryFieldList.add(new QueryField("jobs", new QueryField("department", new QueryField("roles", new QueryField("platform", new QueryField("platformId", platformId))))));
+		List<Permission> departmentRolePermissions = userDao.loadAll(Permission.class, new QueryField("jobs", new QueryField("roles",new QueryField("permissions", null))), predicateQueryFieldList, null);
+		
+		// 用户所有权限
+		List<Permission> userPermissions = new ArrayList<Permission>();
+		userPermissions.addAll(jobPermissions);
+		userPermissions.addAll(jobRolePermissions);
+		userPermissions.addAll(departmentPermissions);
+		userPermissions.addAll(departmentRolePermissions);
+		if (userPermissions.isEmpty()) {
+			return null;
+		}
+		Map<Integer, Permission> permissions = new HashMap<Integer, Permission>();
+		for (Permission userPermission : userPermissions) {
+			permissions.put(userPermission.getPermissionId(), userPermission);
+		}
+		if (permissions.isEmpty()) {
+			return null;
+		}
+		return Response.ok(permissions).build();
+	}
+	
+	@Override
+	public Response getUserIndependentDepartments(int userId) {
+		// 用户
+		User user = userDao.loadById(userId, "jobs");
+		
+		List<QueryField> predicateQueryFieldList = null; 
+		List<QueryField> orderQueryFieldList = null;
+		
+		// 查询所有的独立部门
+		predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("isIndependent", true));
+		orderQueryFieldList = new ArrayList<QueryField>();
+		orderQueryFieldList.add(new QueryField("code", true));
+		List<Department> allDepartments = departmentDao.loadAll(predicateQueryFieldList, orderQueryFieldList);
+		
+		// 获取用户的所有岗位
+		List<Job> userJobs = user.getJobs();
+		if (userJobs == null || userJobs.size() == 0) {
+			return null;
+		}
+		List<Integer> userJobIds = new ArrayList<Integer>();
+		for (Job job : userJobs) {
+			userJobIds.add(job.getJobId());
+		}
+		
+		// 获取登录用户所有部门
+		predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("jobs", new QueryField("jobId", userJobIds, PredicateEnum.IN)));
+		orderQueryFieldList = new ArrayList<QueryField>();
+		orderQueryFieldList.add(new QueryField("code", Boolean.FALSE));
+		List<Department> userDepartments = departmentDao.loadAll(predicateQueryFieldList, orderQueryFieldList);
+		if (userDepartments == null || userDepartments.size() == 0) {
+			return null;
+		}
+		List<Department> userDepartmentsTemp = new ArrayList<Department>();  
+	        for(int i = 0; i < userDepartments.size(); i ++){  
+	            if(!userDepartmentsTemp.contains(userDepartments.get(i))){  
+	            	userDepartmentsTemp.add(userDepartments.get(i));  
+	            }  
+	        }  
+		List<Department> independentDepartments = new ArrayList<>();
+		for (Department department : allDepartments) {
+			for (Department userDepartment : userDepartments) {
+				if (userDepartment.getCode().startsWith(department.getCode())) {
+					independentDepartments.add(userDepartment);
+				}
+			}
+		}
+		if (independentDepartments.size() == 0) {
+			return null;
+		}
+		return Response.ok(independentDepartments).build(); 
+	}
+	
+	/**
+	 * 随机生成40位密码盐
+	 */
+	public static String createRandomSalt(int length) {
+		// 密码盐
+        String value = "";  
+        Random random = new Random();  
+           
+        for (int i = 0; i < length; i++) {  
+              
+            String charOrNum = random.nextInt(2) % 2 == 0 ? "char" : "num";  
+            //输出字母还是数字  
+            if ( "char".equalsIgnoreCase(charOrNum) ) {  
+                //输出大写字母或小写字母 
+                int temp = random.nextInt(2) % 2 == 0 ? 65 : 97;  
+                value += (char)(random.nextInt(26) + temp);  
+            } else if ( "num".equalsIgnoreCase(charOrNum) ) {  
+                value += String.valueOf(random.nextInt(10));  
+            }  
+        }  
+        return value;
+	}
+}

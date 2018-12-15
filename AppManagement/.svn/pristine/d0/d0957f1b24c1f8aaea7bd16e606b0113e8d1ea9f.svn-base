@@ -1,0 +1,81 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import org.primefaces.PrimeFaces;
+
+import com.cccollector.app.model.Department;
+
+/**
+ * 部门Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class DepartmentBean extends BaseEditBean<Department> {
+
+	public DepartmentBean() {
+		genericEditBeanHandler = new GenericEditBeanHandlerModelRelated<Department>() {
+			
+			@Override
+			public Department loadModel(Integer modelId) {
+				Department department = null;
+				if (modelId == null) {
+					department = new Department();
+					department.setParentDepartment(getParentDepartment());
+				} else {
+					department = departmentService.loadById(modelId);
+				}
+				return department;
+			}
+
+			@Override
+			public Object loadRelatedModel(int index, int relatedModelId) {
+				if (index == 1) {
+					return departmentService.loadById(relatedModelId);
+				}
+				return null;
+			}
+		};
+	}
+	
+	/**
+	 * 部门
+	 */
+	public Department getDepartment() {
+		return getModel();
+	}
+	
+	/**
+	 * 父部门
+	 */
+	public Department getParentDepartment() {
+		return (Department) relatedModel(1);
+	}
+
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		if (getDepartment().getRemarks().equals("")) {
+			getDepartment().setRemarks(null);
+		}
+		
+		if (getDepartment().getDepartmentId() == null) {
+			//添加
+			departmentService.addDepartment(getDepartment());
+			PrimeFaces.current().dialog().closeDynamic(true);
+		} else {
+			//更新部门
+			Department updateDepartment = departmentService.update(getDepartment());
+			PrimeFaces.current().dialog().closeDynamic(updateDepartment != null);
+		}
+		
+	}
+}

@@ -1,0 +1,92 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.DepartmentDao;
+import com.cccollector.app.dao.JobDao;
+import com.cccollector.app.dao.RoleDao;
+import com.cccollector.app.model.Department;
+import com.cccollector.app.model.Job;
+import com.cccollector.app.model.Role;
+import com.cccollector.app.service.RoleService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 角色服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("roleService")
+public class RoleServiceImpl extends GenericServiceHibernateImpl<Integer, Role> implements RoleService {
+	
+	@Autowired
+	private RoleDao roleDao;
+	
+	@Autowired
+	private JobDao jobDao;
+	
+	@Autowired
+	private DepartmentDao departmentDao;
+
+	@Override
+	public void addRole(Role role) {
+		// 设置排序位置
+		Integer position = roleDao.max("position", null);
+		role.setPosition(position == null ? 0 : position.intValue() + 1);
+		
+		// 保存角色
+		roleDao.save(role);
+	}
+
+	@Override
+	public void addRoleToJob(Integer roleId, Integer jobId) {
+		Role role = roleDao.loadById(roleId, "jobs");
+		Job job = jobDao.loadById(jobId, "roles");
+		job.getRoles().add(role);
+	}
+
+	@Override
+	public void deleteRoleFromJob(Integer roleId, Integer jobId) {
+		Job job = jobDao.loadById(jobId, "roles");
+		for (Role role : job.getRoles()) {
+			if (role.getRoleId() == roleId) {
+				job.getRoles().remove(role);
+				List<Role> roleList = new ArrayList<Role>(job.getRoles());
+				job.getRoles().clear();
+				jobDao.getEntityManager().flush();
+				job.getRoles().addAll(roleList);
+				return;
+			}
+		}
+	}
+	
+	@Override
+	public void addRoleToDepartment(Integer roleId, Integer departmentId) {
+		Role role = roleDao.loadById(roleId, "departments");
+		Department department = departmentDao.loadById(departmentId, "roles");
+		department.getRoles().add(role);
+	}
+	
+	@Override
+	public void deleteRoleFromDepartment(Integer roleId, Integer departmentId) {
+		Department department = departmentDao.loadById(departmentId, "roles");
+		for (Role role : department.getRoles()) {
+			if (role.getRoleId() == roleId) {
+				department.getRoles().remove(role);
+				List<Role> roleList = new ArrayList<Role>(department.getRoles());
+				department.getRoles().clear();
+				departmentDao.getEntityManager().flush();
+				department.getRoles().addAll(roleList);
+				return;
+			}
+		}
+	}
+}

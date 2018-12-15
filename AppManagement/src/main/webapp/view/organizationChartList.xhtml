@@ -1,0 +1,32 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="title">
+		组织结构图 - 
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		<span class="subitem">全部</span>
+	</ui:define>
+	
+	<ui:define name="implementation">
+		<h:form id="form">
+		    <p:organigram id="organigram" value="#{organizationChartListBean.rootDepartmentOrganigramNode}" var="department">
+		        <p:organigramNode>
+		            <h:outputText value="#{department.data}" />
+		        </p:organigramNode>
+		 
+		        <p:organigramNode type="root" style="border-radius: 10px;">
+		            <h:outputText value="#{department.data}" />
+		        </p:organigramNode>
+		 
+		        <p:organigramNode type="department" styleClass="department" icon="ui-icon-suitcase" iconPos="left">
+		            <h:outputText value="#{department.data}" />
+		        </p:organigramNode>
+		    </p:organigram>
+    	</h:form>
+	</ui:define>
+</ui:composition>

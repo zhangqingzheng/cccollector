@@ -1,0 +1,76 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.EditionDao;
+import com.cccollector.app.dao.ProgramDao;
+import com.cccollector.app.model.Edition;
+import com.cccollector.app.model.Program;
+import com.cccollector.app.service.ProgramService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 推广方案服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("programService")
+public class ProgramServiceImpl extends GenericServiceHibernateImpl<Integer, Program> implements ProgramService {
+	
+	@Autowired
+	private ProgramDao programDao;
+	
+	@Autowired
+	private EditionDao editionDao;
+
+	@Override
+	public Boolean addProgramToEdition(Integer programId, Integer editionId) {
+		Program program = programDao.loadById(programId);
+		Edition edition = editionDao.loadById(editionId, "programs");
+		edition.getPrograms().add(program);
+		editionDao.save(edition);
+		return true;
+	}
+
+	@Override
+	public Boolean moveProgramsInEdition(List<Program> programs, Integer editionId) {
+		Edition edition = editionDao.loadById(editionId, "newsSources");
+		// 清除版本包含的所有推广方案，并同步数据库
+		edition.getPrograms().clear();
+		editionDao.save(edition);
+		editionDao.getEntityManager().flush();
+		// 将推广方案添加至版本
+		edition.getPrograms().addAll(programs);
+		editionDao.save(edition);
+		return true;
+	}
+
+	@Override
+	public Boolean deleteProgramFromEdition(Integer programId, Integer editionId) {
+		Edition edition = editionDao.loadById(editionId, "programs");
+		for (Program program : edition.getPrograms()) {
+			if (program.getProgramId() == programId) {
+				// 从版本中去掉需要删除的推广方案，并将剩余的推广方案保存至programList
+				edition.getPrograms().remove(program);
+				List<Program> programList = new ArrayList<Program>(edition.getPrograms());
+				// 清除版本包含的所有推广方案，并同步数据库
+				edition.getPrograms().clear();
+				editionDao.save(edition);
+				editionDao.getEntityManager().flush();
+				// 将programList中保存的推广方案添加至版本
+				edition.getPrograms().addAll(programList);
+				editionDao.save(edition);
+				return true;
+			}
+		}
+		return false;
+	}
+}

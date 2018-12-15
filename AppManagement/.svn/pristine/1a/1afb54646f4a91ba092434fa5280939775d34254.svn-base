@@ -1,0 +1,40 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/template.xhtml">
+	<ui:define name="title">
+		禁用IP列表 - 
+		<span class="subitem">全部</span>
+	</ui:define>
+
+	<ui:define name="implementation">		
+		<h:form id="blockIpsForm">
+			<p:growl id="messages" showDetail="true" />
+
+			<p:dataTable id="blockIpsSingle" var="blockIp" value="#{blockIpListBean.allBlockIps}" selectionMode="single" rowKey="#{blockIp.blockIpId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px">
+	
+				<p:column headerText="禁用IPID" priority="1">
+					<h:outputText value="#{blockIp.blockIpId}" />
+				</p:column>
+	
+				<p:column headerText="IP地址" priority="1">
+					<h:outputText value="#{blockIp.ipAddress}" />
+				</p:column>			
+
+				<p:column headerText="创建时间" priority="1">
+					<h:outputText value="#{blockIp.createTimeDate}">
+					    <f:convertDateTime  pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai"/>
+					</h:outputText>
+				</p:column>	
+				
+				<p:column headerText="到期时间" priority="1">
+					<h:outputText value="#{blockIp.expiresTimeDate}">
+					    <f:convertDateTime  pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai"/>
+					</h:outputText>
+				</p:column>															
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

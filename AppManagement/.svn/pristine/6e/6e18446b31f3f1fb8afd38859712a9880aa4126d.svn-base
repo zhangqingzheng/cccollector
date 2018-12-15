@@ -1,0 +1,238 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import org.primefaces.PrimeFaces;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.model.DefaultTreeNode;
+import org.primefaces.model.TreeNode;
+
+import com.cccollector.app.model.Department;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.view.GenericListBean;
+
+/**
+ * 部门列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class DepartmentListBean extends BaseListBean<Department> implements Serializable {
+	
+	private static final long serialVersionUID = 6012584890306603688L;
+
+	public DepartmentListBean() {
+		modelDisplayName = "部门";
+		modelAttributeName = "department";
+		modelIdAttributeName = "departmentId";
+		submodelAttributeName = "job";
+		genericListBeanHandler = new GenericListBean.GenericListBeanHandlerAll<Department>() {
+
+			@Override
+			public List<Department> loadAllModelList() {
+				List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+				orderQueryFieldList.add(new QueryField("code", true));
+				return departmentService.loadAll(orderQueryFieldList);
+			}
+		};
+	}
+
+	/**
+	 * 根部门TreeNode
+	 */
+	private TreeNode rootDepartmentTreeNode;
+
+	public TreeNode getRootDepartmentTreeNode() {
+		if (rootDepartmentTreeNode == null) {
+			Map<Integer, TreeNode> treeNodeMap = new HashMap<Integer, TreeNode>();
+			// 根部门TreeNode
+			Department rootDepartment = new Department();
+			rootDepartment.setDepartmentId(0);
+			rootDepartmentTreeNode = new DefaultTreeNode(rootDepartment);
+			
+			// 根据部门生成TreeNode
+			for (Department department : getAllModels()) {
+				TreeNode parentTreeNode = department.getParentDepartment() == null ? rootDepartmentTreeNode : treeNodeMap.get(department.getParentDepartment().getDepartmentId());
+				TreeNode treeNode = new DefaultTreeNode(department, parentTreeNode);
+				treeNodeMap.put(department.getDepartmentId(), treeNode);
+			}
+		}
+		return rootDepartmentTreeNode;
+	}
+	
+	/**
+	 * 加载部门徽章缩略图
+	 */
+	public String loadBadgeThumbnail(Department department) {
+		return departmentService.getDepartmentBadgeThumbnailUrl(department);
+	}
+
+	/**
+	 * 管理岗位
+	 */
+	public void manageJobsAction(Department department) {
+		handleNavigation(submodelAttributeName + "List.xhtml?" + modelIdAttributeName + "=" + department.getDepartmentId());
+	}
+	
+	/**
+	 * 管理角色和权限
+	 */
+	public void manageRolesAndPermissionsAction(Department department) {
+		handleNavigation("roleAndPermissionList.xhtml?" + modelIdAttributeName + "=" + department.getDepartmentId());
+	}
+	
+	/**
+	 * 选中的部门TreeNode
+	 */
+	private TreeNode selectedDepartmentTreeNode;
+
+	public TreeNode getSelectedDepartmentTreeNode() {
+		return selectedDepartmentTreeNode;
+	}
+
+	public void setSelectedDepartmentTreeNode(TreeNode _selectedDepartmentTreeNode) {
+		selectedDepartmentTreeNode = _selectedDepartmentTreeNode;
+	}
+	
+	/**
+	 * 编辑选中部门
+	 */
+	public void editSelectedDepartmentAction() {
+		if (selectedDepartmentTreeNode == null) {
+			addErrorMessage("请选择一个部门进行编辑！");
+			return;
+		}
+		Department department = (Department)selectedDepartmentTreeNode.getData();
+		if (useDialog && !isMobileScreen()) {
+			openDialog(department.getDepartmentId().toString());
+		} else {
+			handleNavigation(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=" + department.getDepartmentId().toString());
+		}
+	}
+	
+	/**
+	 * 添加部门
+	 */
+	public void addDepartmentAction() {
+		String parentDepartmentId = selectedDepartmentTreeNode != null ? ((Department) selectedDepartmentTreeNode.getData()).getDepartmentId().toString() : "";
+		if (useDialog && !isMobileScreen()) {
+			// 对话框选项
+			Map<String, Object> options = new HashMap<String, Object>();
+			options.put("resizable", false);
+			options.put("width", 600);
+			options.put("height", 400);
+			options.put("contentWidth", "100%");
+			options.put("contentHeight", "100%");
+			options.put("includeViewParams", true);
+			
+			// 传递的参数
+			Map<String, List<String>> params = new HashMap<String, List<String>>();
+			List<String> param = new ArrayList<String>();
+			param.add("true");
+			params.put("useDialog", param);
+			param = new ArrayList<String>();
+			param.add("");
+			params.put(modelIdAttributeName, param);
+			param = new ArrayList<String>();
+			param.add(parentDepartmentId);
+			params.put("parentDepartmentId", param);
+			
+			// 显示添加对话框
+			PrimeFaces.current().dialog().openDynamic(modelAttributeName + "Edit", options, params);
+		} else {
+			handleNavigation(modelAttributeName + "Edit.xhtml?" + modelIdAttributeName + "=&parentDepartmentId=" + parentDepartmentId);
+		}
+	}
+
+	/**
+	 * 处理编辑部门返回
+	 */
+	public void handleEditDepartmentReturn(SelectEvent event) {
+		addInfoMessage("编辑" + modelDisplayName + "成功！");
+		
+		// 清空全部模型数据
+		allModels = null;
+		// 清空选中TreeNode
+		selectedDepartmentTreeNode = null;
+		// 刷新根栏目TreeNode
+		rootDepartmentTreeNode = null;
+	}
+	
+	/**
+	 * 处理添加部门返回
+	 */
+	public void handleAddDepartmentReturn(SelectEvent event) {
+		addInfoMessage("添加" + modelDisplayName + "成功！");
+		
+		// 清空全部模型数据
+		allModels = null;
+		// 清空选中TreeNode
+		selectedDepartmentTreeNode = null;
+		// 刷新根栏目TreeNode
+		rootDepartmentTreeNode = null;
+	}
+	
+	/**
+	 * 删除部门
+	 */
+	public void deleteDepartmentAction(Department department) {
+		// 部门如果否包含子对象，则不能被删除
+		if (departmentService.hasChildren(department)) {
+			addErrorMessage("要删除的部门中包含子对象，请清空子对象再进行删除！");
+			return;
+		}
+
+		// 删除部门
+		departmentService.delete(department);
+		addInfoMessage("删除部门成功！");
+		
+		// 清空全部模型数据
+		allModels = null;
+		// 清空选中的TreeNode
+		selectedDepartmentTreeNode = null;
+		// 刷新根部门TreeNode
+		rootDepartmentTreeNode = null;
+	}
+
+	/**
+	 * 删除部门
+	 */
+	public void deleteDepartmentAction() {
+		if (selectedDepartmentTreeNode == null) {
+			addErrorMessage("请选择一个部门进行删除！");
+			return;
+		}
+		
+		// 部门如果否包含子对象，则不能被删除
+		Department department = (Department) selectedDepartmentTreeNode.getData();
+		if (departmentService.hasChildren(department)) {
+			addErrorMessage("要删除的部门中包含子对象，请清空子对象再进行删除！");
+			return;
+		}
+
+		// 删除部门
+		departmentService.delete(department);
+		// 将选中的TreeNode从父TreeNode中删除
+		selectedDepartmentTreeNode.getParent().getChildren().remove(selectedDepartmentTreeNode);
+		addInfoMessage("删除部门成功！");
+		
+		// 清空全部模型数据
+		allModels = null;
+		// 清空选中的TreeNode
+		selectedDepartmentTreeNode = null;
+		// 刷新根部门TreeNode
+		rootDepartmentTreeNode = null;
+	}
+}

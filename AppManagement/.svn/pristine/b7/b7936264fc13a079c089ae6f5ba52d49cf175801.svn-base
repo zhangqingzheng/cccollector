@@ -1,0 +1,152 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.hibernate.exception.ConstraintViolationException;
+import org.primefaces.context.RequestContext;
+import org.springframework.dao.DataIntegrityViolationException;
+
+import com.cccollector.app.model.Module;
+import com.cccollector.app.model.Permission;
+import com.cccollector.app.service.ModuleService;
+import com.cccollector.app.service.PermissionService;
+
+/**
+ * 权限Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class PermissionBean {
+
+	/**
+	 * 权限服务
+	 */
+	@ManagedProperty(value = "#{permissionService}")
+	private PermissionService permissionService;
+
+	public void setPermissionService(PermissionService _permissionService) {
+		permissionService = _permissionService;
+	}
+
+	/**
+	 * 模块服务
+	 */
+	@ManagedProperty(value = "#{moduleService}")
+	private ModuleService moduleService;
+
+	public void setModuleService(ModuleService _moduleService) {
+		moduleService = _moduleService;
+	}
+
+	/**
+	 * 权限ID
+	 */
+	private String permissionId;
+
+	public String getPermissionId() {
+		return permissionId;
+	}
+
+	public void setPermissionId(String _permissionId) {
+		permissionId = _permissionId;
+		
+		// 新建或加载权限
+		if (permission == null) {
+			Integer id = 0;
+			try {
+				id = Integer.valueOf(permissionId);
+			} catch (Exception e) {}
+			if (id == 0) {
+				permission = new Permission();
+				permission.setEnabled(true);
+				if (module == null) {
+					module = new Module();
+				}
+				permission.setModule(module);
+			} else {
+				permission = permissionService.loadById(id);
+			}
+		}
+	}
+
+	/**
+	 * 权限
+	 */
+	private Permission permission;
+
+	public Permission getPermission() {
+		return permission;
+	}
+
+	/**
+	 * 所属模块ID
+	 */
+	private String moduleId;
+
+	public String getModuleId() {
+		return moduleId;
+	}
+
+	public void setModuleId(String _moduleId) {
+		moduleId = _moduleId;
+		
+		// 加载模块
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(moduleId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			module = moduleService.loadById(id);
+		}
+	}
+
+	/**
+	 * 所属模块
+	 */
+	private Module module;
+
+	public Module getModule() {
+		return module;
+	}
+	
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (permission.getPermissionId() == null) {
+			Integer permissionId = null;
+			try {
+				// 添加权限
+				permissionId = permissionService.save(permission);
+			} catch (ConstraintViolationException e) {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "标识符必须唯一，不能重复！", "标识符必须唯一，不能重复！"));
+				return;
+			}
+			RequestContext.getCurrentInstance().closeDialog(permissionId != null ? Boolean.TRUE : Boolean.FALSE);
+		} else {
+			Permission permissionUpdated = null;
+			try {
+				// 编辑权限
+				permissionUpdated = permissionService.update(permission);
+			} catch (DataIntegrityViolationException e) {
+				if (e.contains(ConstraintViolationException.class)) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "标识符必须唯一，不能重复！", "标识符必须唯一，不能重复！"));
+					return;
+				}
+			}
+			RequestContext.getCurrentInstance().closeDialog(permissionUpdated != null ? Boolean.TRUE : Boolean.FALSE);
+		}
+	}
+}

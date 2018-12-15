@@ -1,0 +1,79 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.DepartmentDao;
+import com.cccollector.app.dao.JobDao;
+import com.cccollector.app.dao.PermissionDao;
+import com.cccollector.app.model.Department;
+import com.cccollector.app.model.Job;
+import com.cccollector.app.model.Permission;
+import com.cccollector.app.service.PermissionService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 权限服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("permissionService")
+public class PermissionServiceImpl extends GenericServiceHibernateImpl<Integer, Permission> implements PermissionService {
+	
+	@Autowired
+	private PermissionDao permissionDao;
+	
+	@Autowired
+	private JobDao jobDao;
+
+	@Autowired
+	private DepartmentDao departmentDao;
+	
+	@Override
+	public Boolean addPermissionToJob(Integer permissionId, Integer jobId) {
+		Permission permission = permissionDao.loadById(permissionId, "jobs");
+		Job job = jobDao.loadById(jobId, "permissions");
+		job.getPermissions().add(permission);
+		jobDao.save(job);
+		return true;
+	}
+
+	@Override
+	public Boolean deletePermissionFromJob(Integer permissionId, Integer jobId) {
+		Job job = jobDao.loadById(jobId, "permissions");
+		for (Permission permission : job.getPermissions()) {
+			if (permission.getPermissionId() == permissionId) {
+				job.getPermissions().remove(permission);
+				jobDao.save(job);
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	@Override
+	public Boolean addPermissionToDepartment(Integer permissionId, Integer departmentId) {
+		Permission permission = permissionDao.loadById(permissionId, "departments");
+		Department department = departmentDao.loadById(departmentId, "permissions");
+		department.getPermissions().add(permission);
+		departmentDao.save(department);
+		return true;
+	}
+	
+	@Override
+	public Boolean deletePermissionFromDepartment(Integer permissionId, Integer departmentId) {
+		Department department = departmentDao.loadById(departmentId, "permissions");
+		for (Permission permission : department.getPermissions()) {
+			if (permission.getPermissionId() == permissionId) {
+				department.getPermissions().remove(permission);
+				departmentDao.save(department);
+				return true;
+			}
+		}
+		return false;
+	}
+}

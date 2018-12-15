@@ -1,0 +1,63 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.EditionDao;
+import com.cccollector.app.dao.ProgramDao;
+import com.cccollector.app.model.Edition;
+import com.cccollector.app.model.Program;
+import com.cccollector.app.service.EditionService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 版本服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("editionService")
+public class EditionServiceImpl extends GenericServiceHibernateImpl<Integer, Edition> implements EditionService {
+	
+	@Autowired
+	private EditionDao editionDao;
+	
+	@Autowired
+	private ProgramDao programDao;
+
+	@Override
+	public Boolean addEditionToProgram(Integer editionId, Integer programId) {
+		Edition edition = editionDao.loadById(editionId, "programs");
+		Program program = programDao.loadById(programId);
+		edition.getPrograms().add(program);
+		editionDao.save(edition);
+		return true;
+	}
+
+	@Override
+	public Boolean deleteEditionFromProgram(Integer editionId, Integer programId) {
+		Edition edition = editionDao.loadById(editionId, "programs");
+		for (Program program : edition.getPrograms()) {
+			if (program.getProgramId() == programId) {
+				// 从需要删除的版本中去掉推广方案，并将需要删除的版本中剩余的推广方案保存至programList
+				edition.getPrograms().remove(program);
+				List<Program> programList = new ArrayList<Program>(edition.getPrograms());
+				// 清除需要删除的版本包含的所有推广方案，并同步数据库
+				edition.getPrograms().clear();
+				editionDao.save(edition);
+				editionDao.getEntityManager().flush();
+				// 将programList中保存的推广方案添加至需要删除的版本
+				edition.getPrograms().addAll(programList);
+				editionDao.save(edition);
+				return true;
+			}
+		}
+		return false;
+	}
+}

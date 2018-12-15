@@ -1,0 +1,316 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.SelectEvent;
+
+import com.cccollector.app.model.Platform;
+import com.cccollector.app.model.Module;
+import com.cccollector.app.service.ModuleService;
+import com.cccollector.app.service.PlatformService;
+import com.cccollector.universal.dao.QueryField;
+
+/**
+ * 模块列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class ModuleListBean {
+
+	/**
+	 * 模块服务
+	 */
+	@ManagedProperty(value = "#{moduleService}")
+	private ModuleService moduleService;
+
+	public void setModuleService(ModuleService _moduleService) {
+		moduleService = _moduleService;
+	}
+
+	/**
+	 * 平台服务
+	 */
+	@ManagedProperty(value = "#{platformService}")
+	private PlatformService platformService;
+
+	public void setPlatformService(PlatformService _platformService) {
+		platformService = _platformService;
+	}
+
+	/**
+	 * 所属平台ID
+	 */
+	private String platformId;
+
+	public String getPlatformId() {
+		return platformId;
+	}
+
+	public void setPlatformId(String _platformId) {
+		platformId = _platformId;
+		
+		// 加载平台
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(platformId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			platform = platformService.loadById(id);
+		}
+	}
+
+	/**
+	 * 所属平台
+	 */
+	private Platform platform;
+
+	public Platform getPlatform() {
+		return platform;
+	}
+	
+	/**
+	 * 模块是否多选
+	 */
+	private boolean modulesMultiSelect;
+
+	public boolean getModulesMultiSelect() {
+		return modulesMultiSelect;
+	}
+
+	public void setModulesMultiSelect(boolean _modulesMultiSelect) {
+		modulesMultiSelect = _modulesMultiSelect;
+	}
+
+	/**
+	 * 全部模块
+	 */
+	private List<Module> allModules;
+
+	public List<Module> getAllModules() {
+		if (allModules == null) {
+			// 查询条件
+			List<QueryField> predicateQueryFieldList = null;
+			if (platform != null) {
+				predicateQueryFieldList = new ArrayList<QueryField>();
+				predicateQueryFieldList.add(new QueryField("platform", new QueryField("platformId", platform.getPlatformId())));
+			}
+
+			// 排序
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("position", Boolean.FALSE));
+			
+			allModules = moduleService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+		}
+		return allModules;
+	}
+
+	/**
+	 * 选中的模块
+	 */
+	private List<Module> selectedModules;
+
+	public List<Module> getSelectedModules() {
+		return selectedModules;
+	}
+
+	public void setSelectedModules(List<Module> _selectedModules) {
+		selectedModules = _selectedModules;
+	}
+	
+	/**
+	 * 选择模块
+	 */
+	public void selectModuleAction(SelectEvent event) {
+		try {
+			Module module = (Module) event.getObject();
+			FacesContext.getCurrentInstance().getExternalContext().redirect("permissionList.xhtml?moduleId=" + module.getModuleId() + "&platformId=" + platformId);
+		} catch (Exception e) {}
+	}
+	
+	/**
+	 * 添加模块
+	 */
+	public void addModuleAction() {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add("");
+		params.put("moduleId", param);
+		
+		// 显示编辑模块对话框
+		RequestContext.getCurrentInstance().openDialog("moduleEdit", options, params);
+	}
+	
+	/**
+	 * 处理添加模块返回
+	 */
+	public void handleAddModuleReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			// 清空选中的模块
+			selectedModules = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加模块成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "添加模块失败，请重新尝试！"));
+		}
+		
+		// 刷新全部模块数据
+		allModules = null;
+	}
+	
+	/**
+	 * 编辑模块
+	 */
+	public void editModuleAction(Module module) {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add(module.getModuleId().toString());
+		params.put("moduleId", param);
+		
+		// 显示编辑模块对话框
+		RequestContext.getCurrentInstance().openDialog("moduleEdit", options, params);
+	}
+	
+	/**
+	 * 编辑模块
+	 */
+	public void editModuleAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedModules != null && selectedModules.size() > 0) {
+			if (selectedModules.size() == 1) {
+				// 对话框选项
+				Map<String, Object> options = new HashMap<String, Object>();
+				options.put("width", 360);
+				options.put("resizable", false);
+				options.put("modal", true);
+				options.put("includeViewParams", true);
+				
+				// 传递的参数
+				Map<String, List<String>> params = new HashMap<String, List<String>>();
+				List<String> param = new ArrayList<String>();
+				param.add(selectedModules.get(0).getModuleId().toString());
+				params.put("moduleId", param);
+				
+				// 显示编辑模块对话框
+				RequestContext.getCurrentInstance().openDialog("moduleEdit", options, params);
+			} else {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "只能选择一个模块进行编辑！"));
+			}
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个模块进行编辑！"));
+		}
+	}
+	
+	/**
+	 * 处理编辑模块返回
+	 */
+	public void handleEditModuleReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "编辑模块成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "编辑模块失败，请重新尝试！"));
+		}
+		
+		// 刷新全部模块数据
+		allModules = null;
+	}
+	
+	/**
+	 * 修改模块是否可用
+	 */
+	public void modifyModulesEnabledAction(boolean enabled) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedModules != null && selectedModules.size() > 0) {
+			for (Module module : selectedModules) {
+				module.setEnabled(enabled);
+				moduleService.update(module, "enabled");
+			}
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "修改模块是否可用成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个模块进行修改！"));
+		}
+		
+		// 刷新全部模块数据
+		allModules = null;
+	}
+	
+	/**
+	 * 删除模块
+	 */
+    public void deleteModuleAction(Module module) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 模块如果否包含子对象，则不能被删除
+		if (moduleService.hasChildren(module)) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的模块中包含子对象，请清空子对象再进行删除！"));
+			return;
+		}
+	
+		// 删除模块
+		moduleService.delete(module);
+		selectedModules = null;
+		facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除模块成功！"));
+
+		// 刷新全部模块数据
+		allModules = null;
+	}
+	
+	/**
+	 * 批量删除模块
+	 */
+	public void deleteModulesAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedModules != null && selectedModules.size() > 0) {
+			// 模块如果否包含子对象，则不能被删除
+			for (Module module : selectedModules) {
+				if (moduleService.hasChildren(module)) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的模块中包含子对象，请清空子对象再进行删除！"));
+					return;
+				}
+			}
+			
+			// 删除模块
+			moduleService.deleteAll(selectedModules);
+			selectedModules = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除模块成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个模块进行删除！"));
+		}
+		
+		// 刷新全部模块数据
+		allModules = null;
+	}
+}

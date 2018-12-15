@@ -1,0 +1,91 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.io.Serializable;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import com.cccollector.app.model.Binary;
+import com.cccollector.app.model.Release;
+
+/**
+ * 二进制文件Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class BinaryBean extends BaseEditBean<Binary> implements Serializable {
+
+	private static final long serialVersionUID = 2991830342991151876L;
+
+	public BinaryBean () {
+		genericEditBeanHandler = new GenericEditBeanHandlerModelRelated<Binary>() {
+
+			@Override
+			public Binary loadModel(Integer modelId) {
+				Binary binary = null;
+				if (modelId == null) {
+					binary = new Binary();
+					binary.setType(Binary.TypeEnum.APK.ordinal());
+					binary.setRelease(getRelease());
+				} else {
+					binary = binaryService.loadById(modelId);
+					
+					// 处理多媒体
+					loadFile(1, binaryService.getDataPath() + binary.binaryFilePath());
+				}
+				return binary;
+			}
+
+			@Override
+			public Object loadRelatedModel(int index, int relatedModelId) {
+				if (index == 1) {
+					return releaseService.loadById(relatedModelId);
+				}
+				return null;
+			}
+		};
+	}
+
+	/**
+	 * 二进制文件
+	 */
+	public Binary getBinary() {
+		return getModel();
+	}
+
+	/**
+	 * 所属发行
+	 */
+	public Release getRelease() {
+		return (Release) relatedModel(1);
+	}
+
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		Binary binary = getBinary();
+		// 文件必填
+		if (filePath(1) == null) {
+			addValidatingMessage("二进制文件为必填项");
+			return;
+		}
+		if (binary.getBinaryId() == null) {
+			// 添加二进制文件
+			binaryService.addBinary(binary, filePath(1));
+			addInfoMessageToFlash("添加二进制文件成功！");
+		} else {
+			// 编辑二进制文件
+			binaryService.updateBinary(binary, filePath(1));
+			addInfoMessageToFlash("编辑二进制文件成功！");	
+		}
+		
+		handleNavigation("binaryList.xhtml?multiSelect=true&releaseId=" + getModelId1() + "&editionId=" + getModelId2() + "&appId=" + getModelId3());
+	}
+}

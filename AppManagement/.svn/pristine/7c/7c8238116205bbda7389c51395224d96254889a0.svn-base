@@ -1,0 +1,134 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import com.cccollector.app.model.App;
+import com.cccollector.app.model.Edition;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.view.GenericListBean;
+
+/**
+ * 版本列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class EditionListBean extends BaseListBean<Edition> implements Serializable {
+
+	private static final long serialVersionUID = -9170038682744783380L;
+
+	public EditionListBean() {
+		modelDisplayName = "版本";
+		modelAttributeName = "edition";
+		modelIdAttributeName = "editionId";
+		submodelAttributeName = "release";
+		genericListBeanHandler = new GenericListBean.GenericListBeanHandlerRelatedAll<Edition>() {
+
+			@Override
+			public Object loadRelatedModel(int index, int relatedModelId) {
+				if (index == 1) {
+					return appService.loadById(relatedModelId);
+				}
+				return null;
+			}
+
+			@Override
+			public List<Edition> loadAllModelList() {
+				if (getApp() == null) {
+					return null;
+				}
+				List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+				predicateQueryFieldList.add(new QueryField("app", new QueryField("appId", getApp().getAppId())));
+				List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+				orderQueryFieldList.add(new QueryField("enabled", false));
+				orderQueryFieldList.add(new QueryField("osType", true));
+				orderQueryFieldList.add(new QueryField("os", true));
+				return editionService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+			}
+		};		
+	}
+
+	/**
+	 * 所属应用
+	 */
+	public App getApp() {
+		return (App) relatedModel(1);
+	}
+
+	/**
+	 * 批量修改版本是否可用
+	 */
+	public void modifyEditionsEnabledAction(boolean enabled) {
+		if (getSelectedModels() == null || getSelectedModels().size() == 0) {
+			addErrorMessage("请选择一个或多个版本进行修改！");
+			return;
+		}
+		
+		// 修改版本是否可用
+		for (Edition edition : getSelectedModels()) {
+			edition.setEnabled(enabled);
+			editionService.update(edition, "enabled");
+		}
+		addInfoMessage("修改版本是否可用成功！");
+		
+		// 刷新全部模型
+		allModels = null;
+	}
+
+	/**
+	 * 删除版本
+	 */
+	public void deleteEditionAction(Edition edition) {
+		// 版本如果否包含子对象，则不能被删除
+		if (editionService.hasChildren(edition)) {
+			addErrorMessage("要删除的版本中包含子对象，请清空子对象再进行删除！");
+			return;
+		}
+		
+		// 删除版本
+		editionService.delete(edition);
+		addInfoMessage("删除版本成功！");
+		
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 刷新全部模型
+		allModels = null;
+	}
+
+	/**
+	 * 批量删除版本
+	 */
+	public void deleteEditionsAction() {
+		if (getSelectedModels() == null || getSelectedModels().size() == 0) {
+			addErrorMessage("请选择一个或多个版本进行删除！");
+			return;
+		}
+		
+		// 版本如果否包含子对象，则不能被删除
+		for (Edition edition : getSelectedModels()) {
+			if (editionService.hasChildren(edition)) {
+				addErrorMessage("要删除的版本中包含子对象，请清空子对象再进行删除！");
+				return;
+			}
+		}
+		
+		// 删除版本
+		editionService.deleteAll(getSelectedModels());				
+		addInfoMessage("删除版本成功！");
+		
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 刷新全部模型
+		allModels = null;
+	}
+}

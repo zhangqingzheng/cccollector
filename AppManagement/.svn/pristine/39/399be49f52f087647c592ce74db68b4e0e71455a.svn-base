@@ -1,0 +1,542 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.SortMeta;
+import org.primefaces.model.SortOrder;
+import org.primefaces.model.StreamedContent;
+
+import com.cccollector.app.model.Certificate;
+import com.cccollector.app.model.Platform;
+import com.cccollector.app.model.RootCertificate;
+import com.cccollector.app.model.User;
+import com.cccollector.app.service.CertificateService;
+import com.cccollector.app.service.PlatformService;
+import com.cccollector.app.service.RootCertificateService;
+import com.cccollector.app.service.UserService;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.model.GenericLazyDataHandler;
+import com.cccollector.universal.model.GenericLazyDataModel;
+
+/**
+ * 证书列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class CertificateListBean {
+
+	/**
+	 * 证书服务
+	 */
+	@ManagedProperty(value = "#{certificateService}")
+	private CertificateService certificateService;
+
+	public void setCertificateService(CertificateService _certificateService) {
+		certificateService = _certificateService;
+	}
+
+	/**
+	 * 根证书服务
+	 */
+	@ManagedProperty(value = "#{rootCertificateService}")
+	private RootCertificateService rootCertificateService;
+
+	public void setRootCertificateService(RootCertificateService _rootCertificateService) {
+		rootCertificateService = _rootCertificateService;
+	}	
+
+	/**
+	 * 平台服务
+	 */
+	@ManagedProperty(value = "#{platformService}")
+	private PlatformService platformService;
+
+	public void setPlatformService(PlatformService _platformService) {
+		platformService = _platformService;
+	}	
+	
+	/**
+	 * 用户服务
+	 */
+	@ManagedProperty(value = "#{userService}")
+	private UserService userService;
+
+	public void setUserService(UserService _userService) {
+		userService = _userService;
+	}	
+	
+	/**
+	 * 所属根证书ID
+	 */
+	private String rootCertificateId;
+
+	public String getRootCertificateId() {
+		return rootCertificateId;
+	}
+
+	public void setRootCertificateId(String _rootCertificateId) {
+		rootCertificateId = _rootCertificateId;
+		
+		// 加载根证书
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(rootCertificateId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			rootCertificate = rootCertificateService.loadById(id);
+		}
+	}
+
+	/**
+	 * 所属根证书
+	 */
+	private RootCertificate rootCertificate;
+
+	public RootCertificate getRootCertificate() {
+		return rootCertificate;
+	}
+
+	/**
+	 * 所有者类别
+	 */
+	private String ownerType;
+
+	public String getOwnerType() {
+		return ownerType;
+	}
+
+	public void setOwnerType(String _ownerType) {
+		ownerType = _ownerType;
+	}
+
+	/**
+	 * 所有者ID
+	 */
+	private String ownerId;
+
+	public String getOwnerId() {
+		return ownerId;
+	}
+
+	public void setOwnerId(String _ownerId) {
+		ownerId = _ownerId;
+		
+		// 加载所有者
+		if (owner == null) {
+			Integer type = -1;
+			Integer id = 0;
+			try {
+				type = Integer.valueOf(ownerType);
+				id = Integer.valueOf(ownerId);
+			} catch (Exception e) {}
+			if (type != -1 && id != 0) {
+				owner = type == 0 ? platformService.loadById(id) : userService.loadById(id);
+			}
+		}
+	}
+
+	/**
+	 * 所有者
+	 */
+	private Object owner;
+
+	public Object getOwner() {
+		return owner;
+	}	
+	
+	/**
+	 * 证书是否多选
+	 */
+	private boolean certificatesMultiSelect;
+
+	public boolean getCertificatesMultiSelect() {
+		return certificatesMultiSelect;
+	}
+
+	public void setCertificatesMultiSelect(boolean _certificatesMultiSelect) {
+		certificatesMultiSelect = _certificatesMultiSelect;
+	}
+	
+	/**
+	 * 证书数据模型
+	 */
+	private GenericLazyDataModel<Integer, Certificate> certificateDataModel;
+
+	public GenericLazyDataModel<Integer, Certificate> getCertificateDataModel() {
+		if (certificateDataModel == null) {
+			certificateDataModel = new GenericLazyDataModel<Integer, Certificate>(new GenericLazyDataHandler<Integer, Certificate>() {
+
+				@Override
+				public List<Certificate> load(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String, Object> filters) {
+					// 查询条件
+					List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+					if (rootCertificate != null) {
+						predicateQueryFieldList.add(new QueryField("rootCertificate", new QueryField("rootCertificateId", rootCertificate.getRootCertificateId())));
+					}
+					if (owner != null) {
+						predicateQueryFieldList.add(new QueryField("ownerType", owner instanceof Platform ? Certificate.OwnerTypeEnum.平台.ordinal() : Certificate.OwnerTypeEnum.用户.ordinal()));
+						predicateQueryFieldList.add(new QueryField("ownerId", owner instanceof Platform ? ((Platform) owner).getPlatformId() : ((User) owner).getUserId()));
+					}
+					
+					// 过滤条件
+					for (String key : filters.keySet()) {
+						Object value = filters.get(key);
+						switch (key) {
+						case "ownerType":
+							predicateQueryFieldList.add(new QueryField("ownerType", value));
+							break;
+						case "ownerId":
+							predicateQueryFieldList.add(new QueryField("ownerId", value));
+							break;
+						}
+					}
+					
+					predicateQueryFieldList = predicateQueryFieldList.size() == 0 ? null : predicateQueryFieldList;
+
+					// 排序
+					List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+					orderQueryFieldList.add(new QueryField("ownerType", Boolean.TRUE));
+					orderQueryFieldList.add(new QueryField("ownerId", Boolean.FALSE));
+					orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+					orderQueryFieldList.add(new QueryField("certificateId", Boolean.FALSE));
+					
+					// 总行数
+					certificateDataModel.setRowCount(certificateService.count(predicateQueryFieldList).intValue());
+
+					return certificateService.loadPage(predicateQueryFieldList, orderQueryFieldList, first, pageSize);
+				}
+
+				@Override
+				public List<Certificate> load(int first, int pageSize, List<SortMeta> multiSortMeta, Map<String, Object> filters) {
+					return null;
+				}
+
+				@Override
+				public Certificate getById(Integer id, List<Certificate> Certificates) {
+					for (Certificate Certificate : Certificates) {
+						if (id.equals(Certificate.getCertificateId())) {
+							return Certificate;
+						}
+					}
+					return null;
+				}
+
+				@Override
+				public Integer getId(Certificate Certificate) {
+					return Certificate.getCertificateId();
+				}
+			});
+		}
+		return certificateDataModel;
+	}	
+
+	/**
+	 * 证书所有者类别枚举数组
+	 */
+	public Certificate.OwnerTypeEnum[] getOwnerTypeEnums() {
+		return Certificate.OwnerTypeEnum.values();
+	}
+
+	/**
+	 * 选中的所有者类别
+	 */
+	private Integer selectedOwnerType;
+	
+	public Integer getSelectedOwnerType() {
+		return selectedOwnerType;
+	}
+
+	public void setSelectedOwnerType(Integer _selectedOwnerType) {
+		selectedOwnerType = _selectedOwnerType;
+	}
+
+	/**
+	 * 选中的所有者ID
+	 */
+	private Integer selectedOwnerId;
+	
+	public Integer getSelectedOwnerId() {
+		return selectedOwnerId;
+	}
+
+	public void setSelectedOwnerId(Integer _selectedOwnerId) {
+		selectedOwnerId = _selectedOwnerId;
+	}
+	
+	/**
+	 * 全部所有者
+	 */
+	public List<?> getAllOwners() {
+		if (selectedOwnerType != null && selectedOwnerType == Certificate.OwnerTypeEnum.平台.ordinal()) {
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+			orderQueryFieldList.add(new QueryField("name", Boolean.TRUE));
+			return platformService.loadAll(orderQueryFieldList);
+		} else if (selectedOwnerType != null && selectedOwnerType == Certificate.OwnerTypeEnum.用户.ordinal()) {
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("username", Boolean.TRUE));
+			return userService.loadAll(orderQueryFieldList);
+		}
+		
+		return new ArrayList<>();
+	}	
+
+	/**
+	 * 获取带PKCS8私钥证书文件
+	 */
+	public StreamedContent getCertificateWithKeyPKCS8File(Certificate certificate) {
+		try {
+			FileInputStream fileInputStream = new FileInputStream(rootCertificateService.getDataRootCertificatesPath() + certificate.getRootCertificate().getRootCertificatePath() + certificateService.getCertificatesPath() + certificate.certificateWithKeyPKCS8FilePath());
+			StreamedContent certificateWithKeyPKCS8File = new DefaultStreamedContent(fileInputStream, "application/octet-stream", certificate.certificateWithKeyPKCS8FileName());
+			return certificateWithKeyPKCS8File;
+		} catch (Exception e) {}
+		return null;
+	}
+
+	/**
+	 * 获取带PKCS12私钥证书文件
+	 */
+	public StreamedContent getCertificateWithKeyPKCS12File(Certificate certificate) {
+		try {
+			FileInputStream fileInputStream = new FileInputStream(rootCertificateService.getDataRootCertificatesPath() + certificate.getRootCertificate().getRootCertificatePath() + certificateService.getCertificatesPath() + certificate.certificateWithKeyPKCS12FilePath());
+			StreamedContent certificateWithKeyPKCS12File = new DefaultStreamedContent(fileInputStream, "application/octet-stream", certificate.certificateWithKeyPKCS12FileName());
+			return certificateWithKeyPKCS12File;
+		} catch (Exception e) {}
+		return null;
+	}
+	
+	/**
+	 * 选中的证书
+	 */
+	private List<Certificate> selectedCertificates;
+
+	public List<Certificate> getSelectedCertificates() {
+		return selectedCertificates;
+	}
+
+	public void setSelectedCertificates(List<Certificate> _selectedCertificates) {
+		selectedCertificates = _selectedCertificates;
+	}
+
+	/**
+	 * 添加证书
+	 */
+	public void addCertificateAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 如果没有选择所有者，则返回
+		if ((ownerType == null || ownerId == null) && (selectedOwnerType == null || selectedOwnerId == null)) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请先选择所有者，再添加证书！"));
+			return;
+		}
+		
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add("");
+		params.put("certificateId", param);
+		if ((ownerType == null || ownerId == null) && (selectedOwnerType != null && selectedOwnerId != null)) {
+			param = new ArrayList<String>();
+			param.add(selectedOwnerType.toString());
+			params.put("selectedOwnerType", param);
+			param = new ArrayList<String>();
+			param.add(selectedOwnerId.toString());
+			params.put("selectedOwnerId", param);
+		}
+		
+		// 显示编辑证书对话框
+		RequestContext.getCurrentInstance().openDialog("certificateEdit", options, params);
+	}
+	
+	/**
+	 * 处理添加证书返回
+	 */
+	public void handleAddCertificateReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			// 清空选中的证书
+			selectedCertificates = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加证书成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "添加证书失败，请重新尝试！"));
+		}
+		
+		// 刷新全部证书数据
+		certificateDataModel = null;
+	}
+	
+	/**
+	 * 编辑证书
+	 */
+	public void editCertificateAction(Certificate certificate) {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add(certificate.getCertificateId().toString());
+		params.put("certificateId", param);
+		
+		// 显示编辑证书对话框
+		RequestContext.getCurrentInstance().openDialog("certificateEdit", options, params);
+	}
+	
+	/**
+	 * 编辑证书
+	 */
+	public void editCertificateAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedCertificates != null && selectedCertificates.size() > 0) {
+			if (selectedCertificates.size() == 1) {
+				// 对话框选项
+				Map<String, Object> options = new HashMap<String, Object>();
+				options.put("width", 360);
+				options.put("resizable", false);
+				options.put("modal", true);
+				options.put("includeViewParams", true);
+				
+				// 传递的参数
+				Map<String, List<String>> params = new HashMap<String, List<String>>();
+				List<String> param = new ArrayList<String>();
+				param.add(selectedCertificates.get(0).getCertificateId().toString());
+				params.put("certificateId", param);
+				
+				// 显示编辑证书对话框
+				RequestContext.getCurrentInstance().openDialog("certificateEdit", options, params);
+			} else {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "只能选择一个证书进行编辑！"));
+			}
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个证书进行编辑！"));
+		}
+	}
+	
+	/**
+	 * 处理编辑证书返回
+	 */
+	public void handleEditCertificateReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "编辑证书成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "编辑证书失败，请重新尝试！"));
+		}
+		
+		// 刷新全部证书数据
+		certificateDataModel = null;
+	}
+	
+	/**
+	 * 启用证书
+	 */
+	public void enableAction(Certificate certificate) {
+		// 如果已启用，则返回
+		if (certificate.getEnabled()) {
+			return;
+		}
+		
+		// 启用证书
+		certificate.setEnabled(true);
+		certificateService.update(certificate, "enabled");																					
+		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "启用证书成功！"));
+		
+		// 刷新全部证书数据
+		certificateDataModel = null;
+	}
+	
+	/**
+	 * 停用证书
+	 */
+	public void disableAction(Certificate certificate) {
+		// 如果已停用，则返回
+		if (!certificate.getEnabled()) {
+			return;
+		}
+		
+		// 停用证书
+		certificate.setEnabled(false);
+		certificateService.update(certificate, "enabled");																					
+		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "停用证书成功！"));
+		
+		// 刷新全部证书数据
+		certificateDataModel = null;
+	}
+	
+	/**
+	 * 删除证书
+	 */
+	public void deleteCertificateAction(Certificate certificate) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 证书如果已启用，则不能被删除
+		if (certificate.getEnabled()) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的证书已启用，请停用后再进行删除！"));
+			return;			
+		}
+		
+		// 删除证书
+		certificateService.delete(certificate);
+		selectedCertificates = null;
+		facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除证书成功！"));
+		
+		// 刷新全部证书数据
+		certificateDataModel = null;
+	}
+	
+	/**
+	 * 批量删除证书
+	 */
+	public void deleteCertificatesAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedCertificates != null && selectedCertificates.size() > 0) {
+			for (Certificate certificate : selectedCertificates) {
+				// 证书如果已启用，则不能被删除
+				if (certificate.getEnabled() == true) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的证书已启用，请停用后再进行删除！"));
+					return;			
+				}
+			}
+			
+			// 删除证书
+			certificateService.deleteAll(selectedCertificates);
+			selectedCertificates = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除证书成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个证书进行删除！"));
+		}
+		
+		// 刷新全部证书数据
+		certificateDataModel = null;
+	}	
+}

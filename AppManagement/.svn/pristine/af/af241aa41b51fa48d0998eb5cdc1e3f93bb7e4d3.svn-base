@@ -1,0 +1,114 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="title">
+		二进制文件列表 - 
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		<span><a href="releaseList.xhtml?editionId=#{binaryListBean.modelId2}&amp;appId=#{binaryListBean.modelId3}" class="subitem">#{binaryListBean.release.showName}</a><span class="subitem fontSize18">发行</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="releaseId" value="#{binaryListBean.modelId1}" />		
+			<f:viewParam name="editionId" value="#{binaryListBean.modelId2}" />
+			<f:viewParam name="appId" value="#{binaryListBean.modelId3}" />
+			<f:viewParam name="multiSelect" value="#{binaryListBean.multiSelect}" />
+		</f:metadata>
+
+		<h:form id="binariesForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:inputSwitch id="multiSelect" value="#{binaryListBean.multiSelect}" onLabel="管理" offLabel="浏览">
+				<p:ajax update="binariesForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="binariesSingle" widgetVr="binariesSingleTable" var="binary" value="#{binaryListBean.allModels}" selectionMode="single" rowKey="#{binary.binaryId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{!binaryListBean.multiSelect}">				
+				<p:column headerText="二进制文件ID" priority="1">
+					<h:outputText value="#{binary.binaryId}" />
+				</p:column>
+				
+				<p:column headerText="类别" priority="1">
+					<h:outputText value="#{binary.typeEnum.name()}" />
+				</p:column>				
+
+				<p:column headerText="文件大小" priority="1">
+					<h:outputText value="#{binary.fileSizeFormatString}" />
+				</p:column>
+				
+				<p:column headerText="状态" priority="1">
+					<h:outputText id="status" value="#{binary.statusEnum.name()}" />
+				</p:column>
+			</p:dataTable>
+
+			<p:dataTable id="binariesMultiple" widgetVar="binariesMultipleTable" var="binary" value="#{binaryListBean.allModels}" selection="#{binaryListBean.selectedModels}" rowKey="#{binary.binaryId}" draggableRows="true" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{binaryListBean.multiSelect}">
+				<p:ajax event="rowDblselect" listener="#{binaryListBean.selectModelAction}" />
+
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="二进制文件ID" priority="1">
+					<h:outputText value="#{binary.binaryId}" />
+				</p:column>
+				
+				<p:column headerText="类别" priority="1">
+					<h:outputText value="#{binary.typeEnum.name()}" />
+				</p:column>				
+
+				<p:column headerText="文件大小" priority="1">
+					<h:outputText value="#{binary.fileSizeFormatString}" />
+				</p:column>
+				
+				<p:column headerText="状态" priority="1">
+					<h:outputText id="status" value="#{binary.statusEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="发布" priority="1">
+					<p:commandButton icon="fa fa-fw fa-share" value="发布" actionListener="#{binaryListBean.publishBinaryAction(binary)}" update="binariesForm:messages binariesForm:binariesMultiple" rendered="#{binary.status == 0}">
+						<p:confirm header="发布二进制文件" message="是否确定发布所选二进制文件？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton icon="fa fa-fw fa-reply" value="撤销发布" actionListener="#{binaryListBean.cancelPublishBinaryAction(binary)}" update="binariesForm:messages binariesForm:binariesMultiple" rendered="#{binary.status == 1}">
+						<p:confirm header="撤销发布二进制文件" message="是否确定撤销发布所选二进制文件？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton icon="fa fa-fw fa-share" value="废弃" actionListener="#{binaryListBean.discardBinaryAction(binary)}" update="binariesForm:messages binariesForm:binariesMultiple" rendered="#{binary.status == 1}">
+						<p:confirm header="废弃二进制文件" message="是否确定废弃所选二进制文件？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton icon="fa fa-fw fa-reply" value="撤销废弃" actionListener="#{binaryListBean.cancelDiscardBinaryAction(binary)}" update="binariesForm:messages binariesForm:binariesMultiple" rendered="#{binary.status == 2}">
+						<p:confirm header="撤销废弃二进制文件" message="是否确定撤销废弃所选二进制文件？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>				
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{binaryListBean.editModelAction(binary)}" />
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{binaryListBean.deleteBinaryAction(binary)}" update="binariesForm:messages binariesForm:binariesMultiple" style="margin-left:10px">
+						<p:confirm header="删除二进制文件" message="是否确定删除所选二进制文件？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="binariesMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{binaryListBean.addModelAction}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{binaryListBean.editSelectedModelAction}" update="messages" />
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{binaryListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addBinary" icon="ui-icon-plus" value="添加" actionListener="#{binaryListBean.addModelAction}" />
+					<p:commandButton id="editBinary" icon="ui-icon-pencil" value="编辑" actionListener="#{binaryListBean.editSelectedModelAction}" update="messages" style="margin-left:20px" />
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

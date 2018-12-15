@@ -1,0 +1,129 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import java.io.File;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.UserDao;
+import com.cccollector.app.model.User;
+import com.cccollector.app.service.UserService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 用户服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("userService")
+public class UserServiceImpl extends GenericServiceHibernateImpl<Integer, User> implements UserService {
+	
+	@SuppressWarnings("unused")
+	@Autowired
+	private UserDao userDao;
+	
+	/**
+	 * 平台标识符
+	 */
+	@Value("${platformBundleId}")
+	private String platformBundleId;
+	
+	/**
+	 * ImageMagick命令路径
+	 */
+	@Value("${imageMagickPath}")
+	private String imageMagickPath;
+	
+	/**
+	 * Tomcat数据目录
+	 */
+	@Value("${paths.tomcatDataPath}")
+	private String tomcatDataPath;
+	
+	/**
+	 * nginx数据目录
+	 */
+	@Value("${paths.nginxDataPath}")
+	private String nginxDataPath;
+	
+	/**
+	 * 应用根路径键
+	 */
+	@Value("${paths.webAppRootKey}")
+	private String webAppRootKey;
+	
+	/**
+	 * 临时路径
+	 */
+	@Value("${paths.webTemp}")
+	private String webTemp;
+	
+	/**
+	 * 图像路径
+	 */
+	@Value("${paths.image}")
+	private String image;
+	
+	/**
+	 * 用户路径
+	 */
+	@Value("${paths.users}")
+	private String users;
+	
+	/**
+	 * 缩略图URL
+	 */
+	@Value("${paths.thumbnailUrl}")
+	private String thumbnailUrl;
+	
+	/**
+	 * 用户头像缩略图尺寸
+	 */
+	@Value("${paths.userAvatarThumbnailSize}")
+	private String userAvatarThumbnailSize;
+
+	@Override
+	public String getPlatformBundleId() {
+		return platformBundleId;
+	}
+	
+	@Override
+	public String getImageMagickPath() {
+		return imageMagickPath;
+	}
+
+	@Override
+	public String getTempPath() {
+		return System.getProperty(webAppRootKey) + webTemp + File.separator;
+	}
+
+	@Override
+	public String getDataPath() {
+		return tomcatDataPath + platformBundleId + File.separator;
+	}
+
+	@Override
+	public String getImagePath() {
+		return nginxDataPath + platformBundleId + File.separator + image + File.separator;
+	}
+
+	@Override
+	public String getUsersPath() {
+		return users + File.separator;
+	}
+
+	@Override
+	public String getDataUsersPath() {
+		return getDataPath() + getUsersPath();
+	}
+
+	@Override
+	public String getAvatarThumbnailUsersUrl() {
+		return thumbnailUrl + userAvatarThumbnailSize + "/" + users + "/";
+	}
+}

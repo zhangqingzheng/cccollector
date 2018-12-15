@@ -1,0 +1,217 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import com.cccollector.app.model.App;
+import com.cccollector.app.model.Platform;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.dao.QueryField.PredicateEnum;
+
+/**
+ * 应用列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class AppListBean extends BaseListBean<App> {
+
+	public AppListBean () {
+		modelDisplayName = "应用";
+		modelAttributeName = "app";
+		modelIdAttributeName = "appId";
+		submodelAttributeName = "edition";
+		genericListBeanHandler = new GenericListBeanHandlerRelatedAll<App>() {
+
+			@Override
+			public Object loadRelatedModel(int index, int relatedModelId) {
+				if (index == 1) {
+					return platformService.loadById(relatedModelId);
+				}
+				return null;
+			}
+
+			@Override
+			public List<App> loadAllModelList() {
+				List<QueryField> predicateQueryFieldList = null;
+				if (getPlatform() != null) {
+					predicateQueryFieldList = new ArrayList<QueryField>();
+					predicateQueryFieldList.add(new QueryField("platforms", new QueryField("platformId", getPlatform().getPlatformId())));
+				}
+				List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+				orderQueryFieldList.add(new QueryField("enabled", false));
+				orderQueryFieldList.add(new QueryField("name", true));
+				return appService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+			}
+		};
+	}
+
+	/**
+	 * 关联平台
+	 */
+	public Platform getPlatform() {
+		return (Platform) relatedModel(1);
+	}
+	
+	/**
+	 * 管理平台
+	 */
+	public void managePlatformsAction(App app) {
+		handleNavigation("platformList.xhtml?appId=" + app.getAppId());
+	}
+
+	/**
+	 * 选中的未被平台使用的应用ID
+	 */
+	private Integer selectedNotUsedAppId;
+
+	public Integer getSelectedNotUsedAppId() {
+		return selectedNotUsedAppId;
+	}
+
+	public void setSelectedNotUsedAppId(Integer _selectedNotUsedAppId) {
+		selectedNotUsedAppId = _selectedNotUsedAppId;
+	}
+
+	/**
+	 * 未被平台使用的应用
+	 */
+	public List<App> getNotUsedApps() {
+		if (getPlatform() == null) {
+			return null;
+		}
+		
+		List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+		predicateQueryFieldList.add(new QueryField("platforms", new QueryField("platformId", getPlatform().getPlatformId(), PredicateEnum.NOT_IN)));
+		List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+		orderQueryFieldList.add(new QueryField("enabled", false));
+		orderQueryFieldList.add(new QueryField("name", true));
+		return appService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+	}
+	
+	/**
+	 * 添加应用到平台
+	 */
+	public void addAppToPlatformAction() {
+		// 添加应用到平台
+		appService.addAppToPlatform(selectedNotUsedAppId, getPlatform().getPlatformId());
+		addInfoMessage("添加应用到平台成功！");
+		
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 清空选中的未被平台使用的应用ID
+		selectedNotUsedAppId = null;
+		// 刷新全部模型
+		allModels = null;
+	}
+	
+	/**
+	 * 从平台中删除应用
+	 */
+	public void deleteAppFromPlatformAction(App app) {
+		// 从平台中删除应用
+		appService.deleteAppFromPlatform(app.getAppId(), getPlatform().getPlatformId());
+		addInfoMessage("从平台中删除应用成功！");
+		
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 刷新全部模型
+		allModels = null;
+	}
+	
+	/**
+	 * 批量从平台中删除应用
+	 */
+	public void deleteAppsFromPlatformAction() {
+		if (getSelectedModels() == null || getSelectedModels().size() == 0) {
+			addErrorMessage("请选择一个或多个应用进行删除！");
+			return;
+		}
+		
+		// 从平台中删除应用
+		for (App app : getSelectedModels()) {
+			appService.deleteAppFromPlatform(app.getAppId(), getPlatform().getPlatformId());
+		}
+		addInfoMessage("从平台中删除应用成功！");
+		
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 刷新全部模型
+		allModels = null;
+	}
+	
+	/**
+	 * 批量修改应用是否可用
+	 */
+	public void modifyAppsEnabledAction(boolean enabled) {
+		if (getSelectedModels() == null || getSelectedModels().size() == 0) {
+			addErrorMessage("请选择一个或多个应用进行修改！");
+			return;
+		}
+		
+		// 修改应用是否可用
+		for (App app : getSelectedModels()) {
+			app.setEnabled(enabled);
+			appService.update(app, "enabled");
+		}
+		addInfoMessage("修改平台是否可用成功！");
+		
+		// 刷新全部模型
+		allModels = null;
+	}
+	
+	/**
+	 * 删除应用
+	 */
+	public void deleteAppAction(App app) {
+		// 应用如果否包含子对象，则不能被删除
+		if (appService.hasChildren(app)) {
+			addErrorMessage("要删除的应用中包含子对象，请清空子对象再进行删除！");
+			return;
+		}
+		
+		// 删除应用
+		appService.delete(app);
+		addInfoMessage("删除应用成功！");
+		
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 刷新全部模型
+		allModels = null;
+	}
+	
+	/**
+	 * 批量删除应用
+	 */
+	public void deleteAppsAction() {
+		if (getSelectedModels() == null || getSelectedModels().size() == 0) {
+			addErrorMessage("请选择一个或多个平台进行删除！");
+			return;
+		}
+		
+		// 应用如果否包含子对象，则不能被删除
+		for (App app : getSelectedModels()) {
+			if (appService.hasChildren(app)) {
+				addErrorMessage("要删除的应用中包含子对象，请清空子对象再进行删除！");
+				return;
+			}
+		}
+		
+		// 删除应用
+		appService.deleteAll(getSelectedModels());				
+		addInfoMessage("删除应用成功！");
+		
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 刷新全部模型
+		allModels = null;
+	}
+}

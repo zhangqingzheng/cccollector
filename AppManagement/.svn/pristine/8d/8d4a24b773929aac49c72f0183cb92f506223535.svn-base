@@ -1,0 +1,135 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import org.primefaces.model.SortOrder;
+
+import com.cccollector.app.model.Department;
+import com.cccollector.app.model.Job;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.dao.QueryField.PredicateEnum;
+import com.cccollector.universal.view.GenericListBean;
+
+/**
+ * 岗位列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class JobListBean extends BaseListBean<Job> {
+
+	public JobListBean() {
+		modelDisplayName = "岗位";
+		modelAttributeName = "job";
+		modelIdAttributeName = "jobId";
+		useDialog = false;
+		genericListBeanHandler = new GenericListBean.GenericListBeanHandlerRelatedPage<Job>() {
+
+			@Override
+			public Object loadRelatedModel(int index, int relatedModelId) {
+				if (index == 1) {
+					return departmentService.loadById(relatedModelId);
+				} 
+				return null;
+			}
+
+			@Override
+			public List<Job> loadPageModelList(int first, int pageSize, String sortField, SortOrder sortOrder, Map<String, Object> filters, StringBuffer totalRowCount) {
+				// 查询条件
+				List<QueryField> predicateQueryFieldList = new ArrayList<QueryField>();
+				predicateQueryFieldList.add(new QueryField("department", new QueryField("departmentId", getDepartment().getDepartmentId())));
+				
+				// 过滤条件
+				for (String key : filters.keySet()) {
+					Object value = filters.get(key);
+					switch (key) {
+					case "name":
+						predicateQueryFieldList.add(new QueryField("name", value, PredicateEnum.LIKE));
+						break;
+					case "user.username":
+						predicateQueryFieldList.add(new QueryField("user",new QueryField("username", value, PredicateEnum.LIKE)));
+						break;
+					}
+				}
+
+				// 排序
+				List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+				orderQueryFieldList.add(new QueryField("position", Boolean.TRUE));
+				
+				// 总行数
+				totalRowCount.append(jobService.count(predicateQueryFieldList).toString());
+				
+				return jobService.loadPage(predicateQueryFieldList, orderQueryFieldList, first, pageSize);
+			}
+		};
+	}
+
+	/**
+	 * 所属部门
+	 */
+	public Department getDepartment() {
+		return (Department) relatedModel(1);
+	}
+	
+	/**
+	 * 管理角色与权限
+	 */
+	public void manageRolesAndPermissionsAction(Job job) {
+		handleNavigation("roleAndPermissionList.xhtml?" + modelIdAttributeName + "=" + job.getJobId() + "&departmentId=" + getModelId1());
+	}
+
+	/**
+	 * 删除岗位
+	 */
+	public void deleteJobAction(Job job) {
+		// 岗位如果否包含子对象，则不能被删除
+		if (jobService.hasChildren(job)) {
+			addErrorMessage("要删除的岗位中包含子对象，请清空子对象再进行删除！");
+			return;
+		}
+		// 删除岗位
+		jobService.delete(job);
+		addInfoMessage("删除岗位成功！");
+		
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 刷新分页模型
+		pageModel = null;
+	}
+	
+	/**
+	 * 批量删除岗位
+	 */
+	public void deleteJobsAction() {
+		if (getSelectedModels() == null || getSelectedModels().size() == 0) {
+			addErrorMessage("请选择一个或多个岗位进行删除！");
+			return;
+		}
+		// 岗位如果否包含子对象，则不能被删除
+		for (Job job : getSelectedModels()) {
+			if (jobService.hasChildren(job)) {
+				addErrorMessage("要删除的岗位中包含子对象，请清空子对象再进行删除！");
+				return;
+			}
+		}
+		
+		// 删除岗位
+		jobService.deleteAll(getSelectedModels());
+		addInfoMessage("删除岗位成功！");
+		
+		// 清空选中模型
+		setSelectedModels(null);
+		// 刷新分页模型
+		pageModel = null;
+	}
+}

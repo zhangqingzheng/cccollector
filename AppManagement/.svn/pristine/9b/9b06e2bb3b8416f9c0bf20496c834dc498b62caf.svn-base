@@ -1,0 +1,417 @@
+/**
+ * 
+ */
+package com.cccollector.app.model;
+
+import java.io.File;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+/**
+ * 用户类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Entity
+@Table(name = "user_users")
+public class User implements Serializable {
+	
+	private static final long serialVersionUID = -4591641018756223499L;
+
+	private Integer _userId;
+
+	/**
+	 * 用户ID
+	 */
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public Integer getUserId() {
+		return _userId;
+	}
+
+	public void setUserId(Integer userId) {
+		_userId = userId;
+	}
+	
+	/**
+	 * 用户URL路径
+	 */
+	@JsonIgnore
+	@Transient
+	public String getUserUrlPath() {
+		return "users/";
+	}
+
+	/**
+	 * 用户文件路径
+	 */
+	@JsonIgnore
+	@Transient
+	public String getUserFilePath() {
+		return "users" + File.separator;
+	}
+
+	private String _username;
+
+	/**
+	 * 用户名
+	 */
+	@Column(nullable = false, length = 100)
+	public String getUsername() {
+		return _username;
+	}
+
+	public void setUsername(String username) {
+		_username = username;
+	}
+
+	private String _password;
+
+	/**
+	 * 密码
+	 */
+	@Column(nullable = false, length = 32)
+	public String getPassword() {
+		return _password;
+	}
+
+	public void setPassword(String password) {
+		_password = password;
+	}	
+	
+	private String _salt;
+
+	/**
+	 * 密码盐
+	 */
+	@Column(nullable = false, length = 40)
+	public String getSalt() {
+		return _salt;
+	}
+
+	public void setSalt(String salt) {
+		_salt = salt;
+	}	
+
+	private String _realName;	
+
+	/**
+	 * 真实姓名
+	 */	
+	@Column(nullable = false, length = 100)	
+	public String getRealName() {
+		return _realName;
+	}
+
+	public void setRealName(String realName) {
+		_realName = realName;
+	}
+	
+	private Boolean _hasAvatar;
+
+	/**
+	 * 是否有头像
+	 */
+	@Column(nullable = false)
+	public Boolean getHasAvatar() {
+		return _hasAvatar;
+	}
+
+	public void setHasAvatar(Boolean hasAvatar) {
+		_hasAvatar = hasAvatar;
+	}
+
+	/**
+	 * 是否有头像枚举
+	 */
+	public static enum HasAvatarEnum {
+		否,
+		是
+	}
+
+	/**
+	 * 是否有头像的枚举
+	 */
+	@Transient
+	public HasAvatarEnum getHasAvatarEnum() {
+		int index = _hasAvatar ? 1 : 0;
+		return HasAvatarEnum.values()[index];
+	}	
+	
+	/**
+	 * 头像URL路径
+	 */
+	public String avatarUrlPath() {
+		return getUserUrlPath() + _userId + "_avatar.jpg";
+	}
+
+	/**
+	 * 头像文件路径
+	 */
+	public String avatarFilePath() {
+		return getUserFilePath() + _userId + "_avatar.jpg";
+	}
+	
+	private String _email;
+	
+	/**
+	 * 电子邮箱
+	 */	
+	@Column(nullable = true, length = 100)
+	public String getEmail() {
+		return _email;
+	}
+
+	public void setEmail(String email) {
+		_email = email;
+	}
+
+	private String _cellphone;	
+
+	/**
+	 * 手机号
+	 */
+	@Column(nullable = true, length = 100)
+	public String getCellphone() {
+		return _cellphone;
+	}
+
+	public void setCellphone(String cellphone) {
+		_cellphone = cellphone;
+	}
+
+	private String _remarks;
+
+	/**
+	 * 备注
+	 */
+	@Column(nullable = true, length = 1000)
+	public String getRemarks() {
+		return _remarks;
+	}
+
+	public void setRemarks(String remarks) {
+		_remarks = remarks;
+	}	
+
+	private Integer _type;
+
+	/**
+	 * 类别
+	 */
+	@Column(nullable = false)
+	public Integer getType() {
+		return _type;
+	}
+
+	public void setType(Integer type) {
+		_type = type;
+	}
+
+	/**
+	 * 类别枚举
+	 */
+	public static enum TypeEnum {
+		正式,
+		试用,
+		兼职,
+		临时,
+		离职
+	}
+
+	/**
+	 * 类别枚举数组
+	 */
+	@Transient
+	public TypeEnum[] getTypeEnums() {
+		return TypeEnum.values();
+	}
+
+	/**
+	 * 类别的枚举
+	 */
+	@Transient
+	public TypeEnum getTypeEnum() {
+		return TypeEnum.values()[_type];
+	}	
+	
+	private Boolean _enabled;
+
+	/**
+	 * 是否可用
+	 */
+	@Column(nullable = false)
+	public Boolean getEnabled() {
+		return _enabled;
+	}
+
+	public void setEnabled(Boolean enabled) {
+		_enabled = enabled;
+	}
+
+	/**
+	 * 是否可用枚举
+	 */
+	public static enum EnabledEnum {
+		否,
+		是
+	}
+
+	/**
+	 * 是否可用的枚举
+	 */
+	@Transient
+	public EnabledEnum getEnabledEnum() {
+		int index = _enabled ? 1 : 0;
+		return EnabledEnum.values()[index];
+	}	
+
+	private Date _expiresDate;
+
+	/**
+	 * 到期日期
+	 */
+	@Column(nullable = true)
+	public Date getExpiresDate() {
+		return _expiresDate;
+	}
+
+	public void setExpiresDate(Date expiresDate) {
+		_expiresDate = expiresDate;
+	}	
+
+	private Integer _createTime;
+
+	/**
+	 * 创建时间
+	 */
+	@Column(nullable = false)
+	public Integer getCreateTime() {
+		return _createTime;
+	}
+
+
+	public void setCreateTime(Integer createTime) {
+		_createTime = createTime;
+	}
+
+	/**
+	 * Date类型编辑时间
+	 */
+	@Transient
+	public Date getCreateTimeDate() {
+		if (_createTime != null) {
+			return new Date((long) _createTime * 1000);
+		}
+		return null;
+	}
+	
+	@Transient
+	public void setCreateTimeDate(Date createTimeDate) {
+		if (createTimeDate != null) {
+			_createTime = (int) (createTimeDate.getTime() / 1000);
+		} else {
+			_createTime = (int) (new Date().getTime() / 1000);
+		}
+	}	
+	
+	private Integer _lastLoginTime;
+
+	/**
+	 * 最近登录时间
+	 */
+	@Column(nullable = true)
+	public Integer getLastLoginTime() {
+		return _lastLoginTime;
+	}
+
+	public void setLastLoginTime(Integer lastLoginTime) {
+		_lastLoginTime = lastLoginTime;
+	}
+
+	/**
+	 * Date类型最近登录时间
+	 */
+	@Transient
+	public Date getLastLoginTimeDate() {
+		if (_lastLoginTime != null) {
+			return new Date((long) _lastLoginTime * 1000);
+		}
+		return null;
+	}
+	
+	@Transient
+	public void setLastLoginTimeDate(Date lastLoginTimeDate) {
+		if (lastLoginTimeDate != null) {
+			_lastLoginTime = (int) (lastLoginTimeDate.getTime() / 1000);
+		} else {
+			_lastLoginTime = (int) (new Date().getTime() / 1000);
+		}
+	}	
+	
+	private List<Role> _roles = new ArrayList<Role>();
+
+	/**
+	 * 包含的角色
+	 */
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "user_userRoles", joinColumns = @JoinColumn(name = "userId", nullable = false), inverseJoinColumns = @JoinColumn(name = "roleId", nullable = false))
+	@OrderBy("name")
+	public List<Role> getRoles() {
+		return _roles;
+	}
+
+	public void setRoles(List<Role> roles) {
+		_roles = roles;
+	}
+	
+	private List<Permission> _permissions = new ArrayList<Permission>();
+
+	/**
+	 * 关联的权限
+	 */
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "user_userPermissions", joinColumns = @JoinColumn(name = "userId", nullable = false), inverseJoinColumns = @JoinColumn(name = "permissionId", nullable = false))
+	@OrderBy("name")
+	public List<Permission> getPermissions() {
+		return _permissions;
+	}
+
+	public void setPermissions(List<Permission> permissions) {
+		_permissions = permissions;
+	}	
+	
+	private List<Job> _jobs = new ArrayList<Job>();
+
+	/**
+	 * 包含的岗位
+	 */
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "user")
+	@OrderBy("position")
+	public List<Job> getJobs() {
+		return _jobs;
+	}
+
+	public void setJobs(List<Job> jobs) {
+		_jobs = jobs;
+	}
+}

@@ -1,0 +1,33 @@
+/**
+ * 
+ */
+package com.cccollector.app.service;
+
+import java.util.List;
+
+import com.cccollector.app.model.Module;
+import com.cccollector.universal.service.GenericService;
+
+/**
+ * 模块服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public interface ModuleService extends GenericService<Integer, Module> {
+	
+	/**
+	 * 添加模板
+	 * 
+	 * @param mudule 待添加的模板
+	 * @param platformId 平台ID
+	 */
+	public void addModule(Module module, int platformId);
+	
+	/**
+	 * 在平台中移动模板
+	 * 
+	 * @param mudules 移动后的书库
+	 */
+	public void moveModules(List<Module> mudules);
+}

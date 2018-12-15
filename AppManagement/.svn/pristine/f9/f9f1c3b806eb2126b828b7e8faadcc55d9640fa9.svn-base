@@ -1,0 +1,144 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+
+import org.hibernate.exception.ConstraintViolationException;
+import org.primefaces.context.RequestContext;
+import org.springframework.dao.DataIntegrityViolationException;
+
+import com.cccollector.app.model.Platform;
+import com.cccollector.app.model.Role;
+import com.cccollector.app.service.PlatformService;
+import com.cccollector.app.service.RoleService;
+
+/**
+ * 角色Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class RoleBean {
+
+	/**
+	 * 角色服务
+	 */
+	@ManagedProperty(value = "#{roleService}")
+	private RoleService roleService;
+
+	public void setRoleService(RoleService _roleService) {
+		roleService = _roleService;
+	}
+
+	/**
+	 * 平台服务
+	 */
+	@ManagedProperty(value = "#{platformService}")
+	private PlatformService platformService;
+
+	public void setPlatformService(PlatformService _platformService) {
+		platformService = _platformService;
+	}
+
+	/**
+	 * 角色ID
+	 */
+	private String roleId;
+
+	public String getRoleId() {
+		return roleId;
+	}
+
+	public void setRoleId(String _roleId) {
+		roleId = _roleId;
+		
+		// 新建或加载角色
+		if (role == null) {
+			Integer id = 0;
+			try {
+				id = Integer.valueOf(roleId);
+			} catch (Exception e) {}
+			if (id == 0) {
+				role = new Role();
+				role.setEnabled(true);
+				if (platform == null) {
+					platform = new Platform();
+				}
+				role.setPlatform(platform);
+			} else {
+				role = roleService.loadById(id);
+			}
+		}
+	}
+
+	/**
+	 * 角色
+	 */
+	private Role role;
+
+	public Role getRole() {
+		return role;
+	}
+
+	/**
+	 * 所属平台ID
+	 */
+	private String platformId;
+
+	public String getPlatformId() {
+		return platformId;
+	}
+
+	public void setPlatformId(String _platformId) {
+		platformId = _platformId;
+		
+		// 加载平台
+		Integer id = 0;
+		try {
+			id = Integer.valueOf(platformId);
+		} catch (Exception e) {}
+		if (id != 0) {
+			platform = platformService.loadById(id);
+		}
+	}
+
+	/**
+	 * 所属平台
+	 */
+	private Platform platform;
+
+	public Platform getPlatform() {
+		return platform;
+	}
+	
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		// 设置排序位置
+		Integer position = roleService.max("position", null);
+		role.setPosition(position == null ? 0 : position.intValue() + 1);
+		
+		if (role.getRoleId() == null) {
+			Integer roleId = null;
+			try {
+				// 添加角色
+				roleId = roleService.save(role);
+			} catch (ConstraintViolationException e) {}
+			RequestContext.getCurrentInstance().closeDialog(roleId != null ? Boolean.TRUE : Boolean.FALSE);
+		} else {
+			Role roleUpdated = null;
+			try {
+				// 编辑角色
+				roleUpdated = roleService.update(role);
+			} catch (DataIntegrityViolationException e) {}
+			RequestContext.getCurrentInstance().closeDialog(roleUpdated != null ? Boolean.TRUE : Boolean.FALSE);
+		}
+	}
+}

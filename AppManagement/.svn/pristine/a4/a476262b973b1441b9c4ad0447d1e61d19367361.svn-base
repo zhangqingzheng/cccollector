@@ -1,0 +1,143 @@
+/**
+ * 
+ */
+package com.cccollector.app.model;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+/**
+ * 推广方案类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+*/
+@Entity
+@Table(name = "app_programs")
+public class Program implements Serializable {
+
+	private static final long serialVersionUID = -2183575375286869260L;
+
+	private Integer _programId;
+
+	/**
+	 * 推广方案ID
+	 */
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public Integer getProgramId() {
+		return _programId;
+	}
+
+	public void setProgramId(Integer programId) {
+		_programId = programId;
+	}
+
+	private String _name;
+
+	/**
+	 * 名称
+	 */
+	@Column(nullable = false, length = 100)
+	public String getName() {
+		return _name;
+	}
+
+	public void setName(String name) {
+		_name = name;
+	}
+
+	private String _remarks;
+
+	/**
+	 * 备注
+	 */
+	@JsonIgnore
+	@Column(nullable = true, length = 1000)
+	public String getRemarks() {
+		return _remarks;
+	}
+
+	public void setRemarks(String remarks) {
+		_remarks = remarks;
+	}
+
+	private Boolean _enabled;
+
+	/**
+	 * 是否可用
+	 */
+	@JsonIgnore
+	@Column(nullable = false)
+	public Boolean getEnabled() {
+		return _enabled;
+	}
+
+	public void setEnabled(Boolean enabled) {
+		_enabled = enabled;
+	}
+
+	/**
+	 * 是否可用枚举
+	 */
+	public static enum EnabledEnum {
+		否,
+		是
+	}
+
+	/**
+	 * 是否可用的枚举
+	 */
+	@JsonIgnore
+	@Transient
+	public EnabledEnum getEnabledEnum() {
+		int index = _enabled ? 1 : 0;
+		return EnabledEnum.values()[index];
+	}
+
+	private List<Edition> _editions = new ArrayList<Edition>();
+
+	/**
+	 * 关联的版本
+	 */
+	@JsonIgnore
+	@ManyToMany(fetch = FetchType.LAZY, mappedBy = "programs")
+	@OrderBy("osType, os")
+	public List<Edition> getEditions() {
+		return _editions;
+	}
+	
+	public void setEditions(List<Edition> editions) {
+		_editions = editions;
+	}
+
+	private List<Promotion> _promotions = new ArrayList<Promotion>();
+
+
+	/**
+	 * 包含的推广
+	 */
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "program")
+	@OrderBy("position")
+	public List<Promotion> getPromotions() {
+		return _promotions;
+	}
+
+	public void setPromotions(List<Promotion> promotions) {
+		_promotions = promotions;
+	}
+}

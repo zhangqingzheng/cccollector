@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+	<h:head>
+		<title>#{moduleBean.module.moduleId == null ? '添加' : '编辑'}模块</title>
+	    <h:outputStylesheet name="css/showcase.css" />
+	</h:head>
+	 
+	<h:body style="background-color:#ffffff;">
+		<h:form id="moduleEditForm" style="margin:10px">
+			<f:metadata>
+				<f:viewParam name="platformId" value="#{moduleBean.platformId}" />
+				<f:viewParam name="moduleId" value="#{moduleBean.moduleId}" />
+			</f:metadata>
+
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="moduleId" value="模块ID:" style="font-weight:bold" rendered="#{moduleBean.module.moduleId != null}" />
+				<p:outputLabel id="moduleId" value="#{moduleBean.module.moduleId}" rendered="#{moduleBean.module.moduleId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" />
+				<p:inputText id="name" value="#{moduleBean.module.name}" required="true" requiredMessage="名称为必填项" size="30">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="bundleId" value="标识符:" style="font-weight:bold" />
+				<p:inputText id="bundleId" value="#{moduleBean.module.identifier}" required="true" requiredMessage="标识符为必填项" size="30">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="remarks" value="备注:" style="font-weight:bold" />
+				<p:inputTextarea id="remarks" value="#{moduleBean.module.remarks}" autoResize="false" rows="10" cols="30">
+					<f:validateLength maximum="1000" />
+				</p:inputTextarea>
+				
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+				<p:inputSwitch id="enabled" value="#{moduleBean.module.enabled}" onLabel="是" offLabel="否" />
+				
+				<p:outputLabel for="PlatformsName" value="所属平台:" style="font-weight:bold" />
+				<p:outputLabel id="PlatformsName" value="#{moduleBean.module.platform.name}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{moduleBean.saveAction}" update="messages" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</h:body>
+</html>

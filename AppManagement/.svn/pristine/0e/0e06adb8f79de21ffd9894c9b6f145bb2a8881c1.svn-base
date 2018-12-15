@@ -1,0 +1,141 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/template.xhtml">
+	<ui:define name="title">
+		角色列表 - 
+	</ui:define>
+	<ui:define name="subtitle">
+		<span style="display:#{roleListBean.platform != null ? '' : 'none'}"><a href="platformList.xhtml" class="subitem">#{roleListBean.platform.name}</a><span class="subitem fontSize18">平台</span></span>
+		<span style="display:#{roleListBean.job != null ? '' : 'none'}"><a href="jobList.xhtml?departmentId=#{roleListBean.modelId3}" class="subitem">#{roleListBean.job.name}</a><span class="subitem fontSize18">岗位</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="platformId" value="#{roleListBean.modelId1}" />
+			<f:viewParam name="jobId" value="#{roleListBean.modelId2}" />
+			<f:viewParam name="departmentId" value="#{roleListBean.modelId3}" />
+			<f:viewParam name="multiSelect" value="#{roleListBean.multiSelect}" />
+		</f:metadata>
+
+		<h:form id="rolesForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:remoteCommand name="screenTypeRemoteCommand" />
+			<p:inputText id="screenType" widgetVar="screenTypeHidden" value="#{roleListBean.screenType}" style="display:none" />
+			
+			<p:inputSwitch id="multiSelect" value="#{roleListBean.multiSelect}" onLabel="管理" offLabel="浏览">
+				<p:ajax update="rolesForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="rolesSingle" var="role" value="#{roleListBean.allModels}" selectionMode="single" rowKey="#{role.roleId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!role.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{!roleListBean.multiSelect}">
+	
+				<p:column headerText="角色ID" priority="1">
+					<h:outputText value="#{role.roleId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{role.name}" />
+				</p:column>
+	
+				<p:column headerText="备注" priority="1">
+					<h:outputText value="#{role.remarks}" />
+				</p:column>
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{role.enabledEnum.name()}" />
+				</p:column>
+			</p:dataTable>
+			
+			<p:fieldset legend="添加角色到岗位" style="margin:20px 0px" rendered="#{roleListBean.multiSelect and roleListBean.job != null}">
+				<h:panelGrid columns="2" style="background-color:white">
+					<p:outputLabel for="rolesSelect" value="选择角色:" style="font-weight:bold" />
+					<p:selectOneMenu id="rolesSelect" value="#{roleListBean.selectedNotUsedRoleId}">
+						<p:ajax listener="#{roleListBean.addRoleToJobAction}" partialSubmit="true" update="rolesForm:messages rolesSelect rolesForm:rolesMultiple" />
+						<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+						<f:selectItems value="#{roleListBean.notUsedRoles}" var="role" itemLabel="#{role.name}" itemValue="#{role.roleId}"/>
+					</p:selectOneMenu>
+				</h:panelGrid>
+			</p:fieldset>
+
+			<p:dataTable id="rolesMultiple" var="role" value="#{roleListBean.allModels}" selection="#{roleListBean.selectedModels}" rowKey="#{role.roleId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!role.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{roleListBean.multiSelect}">
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="角色ID" priority="1">
+					<h:outputText value="#{role.roleId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{role.name}" />
+				</p:column>
+	
+				<p:column headerText="备注" priority="1">
+					<h:outputText value="#{role.remarks}" />
+				</p:column>
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{role.enabledEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{roleListBean.editModelAction(role)}" rendered="#{roleListBean.job == null}">
+						<p:ajax event="dialogReturn" listener="#{roleListBean.handleEditModelReturn}" update="rolesForm:messages rolesForm:rolesMultiple" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{roleListBean.deleteRoleAction(role)}" update="rolesForm:messages rolesForm:rolesMultiple" style="margin-left:10px" rendered="#{roleListBean.job == null}">
+						<p:confirm header="删除角色" message="是否确定删除所选角色？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="从岗位中删除" actionListener="#{roleListBean.deleteRoleFromJobAction(role)}" update="rolesForm:messages rolesForm:rolesMultiple rolesForm:rolesSelect" rendered="#{roleListBean.job != null}">
+						<p:confirm header="从岗位中删除角色" message="是否确定从岗位中删除所选角色？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="rolesMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{roleListBean.addModelAction}" rendered="#{roleListBean.job == null}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{roleListBean.editSelectedModelAction}" update="messages" rendered="#{roleListBean.job == null}" />
+				<p:menuitem icon="ui-icon-unlocked" value="可用" actionListener="#{roleListBean.modifyRolesEnabledAction(true)}" update="messages rolesMultiple">
+					<p:confirm header="修改角色" message="是否确定修改所选角色为可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-locked" value="不可用" actionListener="#{roleListBean.modifyRolesEnabledAction(false)}" update="messages rolesMultiple">
+					<p:confirm header="修改角色" message="是否确定修改所选角色为不可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-close" value="批量删除" actionListener="#{roleListBean.deleteRolesAction}" update="messages rolesMultiple" rendered="#{roleListBean.job == null}" >
+					<p:confirm header="删除角色" message="是否确定删除所选角色？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+			
+			<p:contextMenu for="rolesMultiple" rendered="#{roleListBean.multiSelect and roleListBean.job != null}">
+				<p:menuitem icon="ui-icon-close" value="批量从岗位中删除" actionListener="#{roleListBean.deleteRolesFromJobAction}" update="messages rolesSelect rolesMultiple">
+					<p:confirm header="从岗位中删除角色" message="是否确定从岗位中删除所选角色？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{roleListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addRole" icon="ui-icon-plus" value="添加" actionListener="#{roleListBean.addModelAction}" rendered="#{roleListBean.job == null}">
+						<p:ajax event="dialogReturn" listener="#{roleListBean.handleAddModelReturn}" update="messages rolesMultiple" />
+					</p:commandButton>
+					<p:commandButton id="editRole" icon="ui-icon-pencil" value="编辑" actionListener="#{roleListBean.editSelectedModelAction}" update="messages" style="margin-left:20px" rendered="#{roleListBean.job == null}">
+						<p:ajax event="dialogReturn" listener="#{roleListBean.handleEditModelReturn}" update="messages rolesMultiple" />
+					</p:commandButton>
+					<p:commandButton id="deleteRoles" icon="ui-icon-close" value="批量删除" actionListener="#{roleListBean.deleteRolesAction}" update="messages rolesMultiple" style="margin-left:20px" rendered="#{roleListBean.job == null}">
+						<p:confirm header="删除角色" message="是否确定删除所选角色？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton id="deleteRolesFromJob" icon="ui-icon-close" value="批量从岗位中删除" actionListener="#{roleListBean.deleteRolesFromJobAction}" update="messages rolesSelect rolesMultiple" rendered="#{roleListBean.job != null}">
+						<p:confirm header="从岗位中删除角色" message="是否确定从岗位中删除所选角色？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<b:beans xmlns:b="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+    <!-- 配置数据源 -->
+	<b:bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<b:property name="driverClass" value="com.mysql.cj.jdbc.Driver" />
+		<b:property name="jdbcUrl" value="jdbc:mysql://10.1.1.100:3306/AppManagement?useUnicode=true&amp;characterEncoding=utf-8&amp;serverTimezone=GMT%2B8&amp;useSSL=false" />
+		<b:property name="user" value="AppManagement" />
+		<b:property name="password" value="l>8X4o!0Tbu2" />
+		<b:property name="minPoolSize" value="5" />
+		<b:property name="maxPoolSize" value="30" />
+		<b:property name="initialPoolSize" value="10" />
+		<b:property name="testConnectionOnCheckout" value="false"/>
+		<b:property name="testConnectionOnCheckin" value="true"/>
+		<b:property name="idleConnectionTestPeriod" value="3600"/>
+	</b:bean>
+
+    <!-- 配置Hibernate Session工厂 -->
+    <b:bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+		<b:property name="dataSource" ref="dataSource" />
+        <b:property name="hibernateProperties">
+            <b:props>
+                <!-- 系统使用的数据库方言 -->
+                <b:prop key="hibernate.dialect">org.hibernate.dialect.MySQL5Dialect</b:prop>
+                <!-- 是否打印Hibernate生成的SQL到控制台 -->
+                <b:prop key="hibernate.show_sql">true</b:prop>
+                <!-- 是否格式化打印出来的SQL -->
+                <b:prop key="hibernate.format_sql">true</b:prop>
+            </b:props>
+        </b:property>
+        <!-- 自动扫描注解方式配置的Hibernate类文件 -->
+        <b:property name="packagesToScan">
+            <b:list>
+                <b:value>com.cccollector.app.model</b:value>
+            </b:list>
+        </b:property>
+    </b:bean>
+
+    <!-- 配置事务管理器 -->
+    <b:bean name="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <b:property name="sessionFactory" ref="sessionFactory" />
+    </b:bean>
+
+    <!-- 注解方式配置事物 -->
+    <tx:annotation-driven transaction-manager="transactionManager" />
+</b:beans>

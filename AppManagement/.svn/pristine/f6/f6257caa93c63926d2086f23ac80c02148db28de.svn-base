@@ -1,0 +1,62 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import com.cccollector.app.model.Job;
+import com.cccollector.app.model.Role;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.view.GenericListBean;
+
+/**
+ * 角色列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class roleAndPermissionListBean extends BaseListBean<Role> {
+	public roleAndPermissionListBean() {
+		modelDisplayName = "角色";
+		modelAttributeName = "role";
+		modelIdAttributeName = "roleId";
+		genericListBeanHandler = new GenericListBean.GenericListBeanHandlerRelatedAll<Role>() {
+
+			@Override
+			public Object loadRelatedModel(int index, int relatedModelId) {
+				if (index == 1) {
+					return jobService.loadById(relatedModelId);
+				}
+				return null;
+			}
+
+			@Override
+			public List<Role> loadAllModelList() {
+				// 查询条件
+				List<QueryField> predicateQueryFieldList = null;
+				if (getJob() != null) {
+					predicateQueryFieldList = new ArrayList<QueryField>();
+					predicateQueryFieldList.add(new QueryField("jobs", new QueryField("jobId", getJob().getJobId())));
+				}
+				// 排序
+				List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+				orderQueryFieldList.add(new QueryField("position", Boolean.TRUE));
+				return roleService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+			}
+		};
+	}
+	
+	/**
+	 * 关联岗位
+	 */
+	public Job getJob() {
+		return (Job) relatedModel(1);
+	}
+}

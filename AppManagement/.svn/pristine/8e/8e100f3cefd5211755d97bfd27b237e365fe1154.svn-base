@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+	<h:head>
+		<title>#{rootCertificateBean.rootCertificate.rootCertificateId == null ? '添加' : '编辑'}根证书</title>
+	    <h:outputStylesheet name="css/showcase.css" />
+	</h:head>
+	 
+	<h:body style="background-color:#ffffff;">
+		<h:form id="rootCertificateEditForm" style="margin:10px">
+			<f:metadata>
+				<f:viewParam name="rootCertificateId" value="#{rootCertificateBean.rootCertificateId}" />
+			</f:metadata>
+
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="rootCertificateId" value="根证书ID:" style="font-weight:bold" rendered="#{rootCertificateBean.rootCertificate.rootCertificateId != null}" />
+				<p:outputLabel id="rootCertificateId" value="#{rootCertificateBean.rootCertificate.rootCertificateId}" rendered="#{rootCertificateBean.rootCertificate.rootCertificateId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" />
+				<p:inputText id="name" value="#{rootCertificateBean.rootCertificate.name}" required="true" requiredMessage="名称为必填项" size="30">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="password" value="PKCS密码:" style="font-weight:bold" rendered="#{rootCertificateBean.rootCertificate.rootCertificateId != null}" />
+				<p:outputLabel id="password" value="#{rootCertificateBean.rootCertificate.password}" rendered="#{rootCertificateBean.rootCertificate.rootCertificateId != null}" />
+
+				<p:outputLabel for="createTime" value="创建时间:" style="font-weight:bold" rendered="#{rootCertificateBean.rootCertificate.rootCertificateId != null}" />
+				<p:outputLabel id="createTime" value="#{rootCertificateBean.rootCertificate.createTime}" rendered="#{rootCertificateBean.rootCertificate.rootCertificateId != null}">
+				    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<p:outputLabel for="expirationTime" value="过期时间:" style="font-weight:bold" rendered="#{rootCertificateBean.rootCertificate.rootCertificateId != null}" />
+				<p:outputLabel id="expirationTime" value="#{rootCertificateBean.rootCertificate.expirationTime}" rendered="#{rootCertificateBean.rootCertificate.rootCertificateId != null}">
+				    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+				<p:outputLabel id="enabled" value="#{rootCertificateBean.rootCertificate.enabledEnum.name()}" />
+					
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{rootCertificateBean.saveAction}" update="messages" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</h:body>
+</html>

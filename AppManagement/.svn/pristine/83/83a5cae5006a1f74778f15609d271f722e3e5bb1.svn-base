@@ -1,0 +1,148 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="title">
+		根证书列表 -
+		<span class="subitem">全部</span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="multiSelect" value="#{rootCertificateListBean.rootCertificatesMultiSelect}" />
+		</f:metadata>
+
+		<h:form id="rootCertificatesForm">
+			<p:growl id="messages" showDetail="true" />
+
+			<p:inputSwitch id="rootCertificatesMultiSelect" value="#{rootCertificateListBean.rootCertificatesMultiSelect}" onLabel="管理" offLabel="浏览">
+				<p:ajax update="rootCertificatesForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="rootCertificatesSingle" widgetVar="rootCertificatesSingleTable" var="rootCertificate" value="#{rootCertificateListBean.allRootCertificates}" selectionMode="single" rowKey="#{rootCertificate.rootCertificateId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!rootCertificate.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{!rootCertificateListBean.rootCertificatesMultiSelect}">
+				<p:ajax event="rowSelect" listener="#{rootCertificateListBean.selectRootCertificateAction}" />
+
+				<p:column headerText="根证书ID" priority="1">
+					<h:outputText value="#{rootCertificate.rootCertificateId}" />
+				</p:column>
+
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{rootCertificate.name}" />
+				</p:column>
+
+				<p:column headerText="PKCS密码" priority="1">
+					<h:outputText value="#{rootCertificate.password}" />
+				</p:column>
+
+				<p:column headerText="创建时间" priority="1">
+					<h:outputText value="#{rootCertificate.createTime}">
+					    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>	
+
+				<p:column headerText="过期时间" priority="1">
+					<h:outputText value="#{rootCertificate.expirationTime}">
+					    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>	
+
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{rootCertificate.enabledEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="使用" priority="1">
+					<p:commandButton icon="fa fa-fw fa-cloud-download" value="PEM" ajax="false">
+						<p:fileDownload value="#{rootCertificateListBean.getRootCertificateFile(rootCertificate)}" ajax="false" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+
+			<p:dataTable id="rootCertificatesMultiple" widgetVar="rootCertificatesMultipleTable" var="rootCertificate" value="#{rootCertificateListBean.allRootCertificates}" selection="#{rootCertificateListBean.selectedRootCertificates}" rowKey="#{rootCertificate.rootCertificateId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!rootCertificate.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{rootCertificateListBean.rootCertificatesMultiSelect}">
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+
+				<p:column headerText="根证书ID" priority="1">
+					<h:outputText value="#{rootCertificate.rootCertificateId}" />
+				</p:column>
+
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{rootCertificate.name}" />
+				</p:column>
+
+				<p:column headerText="PKCS密码" priority="1">
+					<h:outputText value="#{rootCertificate.password}" />
+				</p:column>
+
+				<p:column headerText="创建时间" priority="1">
+					<h:outputText value="#{rootCertificate.createTime}">
+					    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="过期时间" priority="1">
+					<h:outputText value="#{rootCertificate.expirationTime}">
+					    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{rootCertificate.enabledEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="使用" priority="1">
+					<p:commandButton icon="fa fa-fw fa-cloud-download" value="PEM" ajax="false">
+						<p:fileDownload value="#{rootCertificateListBean.getRootCertificateFile(rootCertificate)}" ajax="false" />
+					</p:commandButton>
+				</p:column>
+				
+				<p:column headerText="启用停用" priority="1">
+					<p:commandButton icon="fa fa-fw fa-toggle-on" value="启用" actionListener="#{rootCertificateListBean.enableAction(rootCertificate)}" update="rootCertificatesForm:messages rootCertificatesForm:rootCertificatesMultiple" rendered="#{!rootCertificate.enabled}">
+						<p:confirm header="启用根证书" message="此操作会停用已启用的根证书，并重启所有Tomcat服务器。是否确定启用所选根证书？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton icon="fa fa-fw fa-toggle-off" value="停用" actionListener="#{rootCertificateListBean.disableAction(rootCertificate)}" update="rootCertificatesForm:messages rootCertificatesForm:rootCertificatesMultiple" rendered="#{rootCertificate.enabled}">
+						<p:confirm header="停用根证书" message="此操作会重启所有Tomcat服务器。是否确定停用所选根证书？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+	
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{rootCertificateListBean.editRootCertificateAction(rootCertificate)}">
+						<p:ajax event="dialogReturn" listener="#{rootCertificateListBean.handleEditRootCertificateReturn}" update="rootCertificatesForm:messages rootCertificatesForm:rootCertificatesMultiple" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{rootCertificateListBean.deleteRootCertificateAction(rootCertificate)}" update="rootCertificatesForm:messages rootCertificatesForm:rootCertificatesMultiple" style="margin-left:10px">
+						<p:confirm header="删除根证书" message="是否确定删除所选根证书？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+
+			<p:contextMenu for="rootCertificatesMultiple" rendered="#{rootCertificateListBean.rootCertificatesMultiSelect}">
+				<p:menuitem icon="ui-icon-close" value="批量删除" actionListener="#{rootCertificateListBean.deleteRootCertificatesAction}" update="messages rootCertificatesMultiple">
+					<p:confirm header="删除根证书" message="是否确定删除所选根证书？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{rootCertificateListBean.rootCertificatesMultiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addRootCertificate" icon="ui-icon-plus" value="添加" actionListener="#{rootCertificateListBean.addRootCertificateAction}">
+						<p:ajax event="dialogReturn" listener="#{rootCertificateListBean.handleAddRootCertificateReturn}" update="messages rootCertificatesMultiple" />
+					</p:commandButton>
+					<p:commandButton id="editRootCertificate" icon="ui-icon-pencil" value="编辑" actionListener="#{rootCertificateListBean.editRootCertificateAction}" update="messages" style="margin-left:20px">
+						<p:ajax event="dialogReturn" listener="#{rootCertificateListBean.handleEditRootCertificateReturn}" update="messages rootCertificatesMultiple" />
+					</p:commandButton>
+					<p:commandButton id="deleteRootCertificates" icon="ui-icon-close" value="批量删除" actionListener="#{rootCertificateListBean.deleteRootCertificatesAction}" update="messages rootCertificatesMultiple" style="margin-left:20px">
+						<p:confirm header="删除根证书" message="是否确定删除所选根证书？" icon="ui-icon-alert" />
+					</p:commandButton>					
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

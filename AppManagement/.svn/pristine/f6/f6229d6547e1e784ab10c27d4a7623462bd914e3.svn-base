@@ -1,0 +1,55 @@
+#====================================================================================
+# \u5e94\u7528\u8bbe\u7f6e
+#   platformBundleId                 : \u5e73\u53f0\u6807\u8bc6\u7b26
+#   imageMagickPath                  : ImageMagick\u547d\u4ee4\u8def\u5f84
+#====================================================================================
+platformBundleId=${pom.config.platformBundleId}
+imageMagickPath=${pom.config.imageMagickPath}
+#====================================================================================
+# \u8def\u5f84\u8bbe\u7f6e
+#   paths.tomcatDataPath             : Tomcat \u6570\u636e\u76ee\u5f55
+#   paths.nginxDataPath              : nginx \u6570\u636e\u76ee\u5f55
+#   paths.caCertificates             : \u8bc1\u4e66\u9881\u53d1\u673a\u6784\u8def\u5f84
+#   paths.clientCertificates         : \u5ba2\u6237\u7aef\u8bc1\u4e66\u8def\u5f84
+#   paths.webAppRootKey              : \u5e94\u7528\u6839\u8def\u5f84\u952e
+#   paths.webtemp                    : \u4e34\u65f6\u8def\u5f84
+#   paths.webCaRootCertificate       : CA\u6839\u8bc1\u4e66
+#   paths.platformTemplatesPath      : \u5e73\u53f0\u6a21\u7248\u8def\u5f84
+#   paths.platformResourcesPath      : \u5e73\u53f0\u8d44\u6e90\u8def\u5f84
+#   paths.image                      : \u56fe\u50cf\u8def\u5f84
+#   paths.users                      : \u7528\u6237\u8def\u5f84
+#   paths.promotions                 : \u63a8\u5e7f\u8def\u5f84
+#   paths.rootCertificates           : \u6839\u8bc1\u4e66\u8def\u5f84
+#   paths.certificates               : \u8bc1\u4e66\u8def\u5f84
+#   paths.thumbnailUrl               : \u7f29\u7565\u56feURL
+#   paths.userAvatarThumbnailSize    : \u7528\u6237\u5934\u50cf\u7f29\u7565\u56fe\u5c3a\u5bf8
+#   paths.promotionIconThumbnailSize : \u63a8\u5e7f\u56fe\u6807\u7f29\u7565\u56fe\u5c3a\u5bf8
+#====================================================================================
+paths.tomcatDataPath=${pom.config.tomcatDataPath}
+paths.nginxDataPath=${pom.config.nginxDataPath}
+paths.caCertificates=caCertificates
+paths.clientCertificates=clientCertificates
+paths.webAppRootKey=${pom.config.webAppRootKey}
+paths.webTemp=temp
+paths.webCaRootCertificate=WEB-INF/caRootCertificate
+paths.platformTemplatesPath=WEB-INF/platformTemplates
+paths.platformResourcesPath=platformResources
+paths.image=image
+paths.users=users
+paths.promotions=promotions
+paths.rootCertificates=rootCertificates
+paths.certificates=certificates
+paths.thumbnailUrl=https://${pom.config.nginxHost}/img/
+paths.userAvatarThumbnailSize=w0_h100
+paths.promotionIconThumbnailSize=w0_h100
+#====================================================================================
+# \u8bc1\u4e66\u8bbe\u7f6e
+#   certificate.rootValidDays        : \u6839\u8bc1\u4e66\u6709\u6548\u5929\u6570
+#   certificate.rootCreateCommand    : \u6839\u8bc1\u4e66\u521b\u5efa\u547d\u4ee4
+#   certificate.validDays            : \u8bc1\u4e66\u6709\u6548\u5929\u6570
+#   certificate.createCommand    	: \u8bc1\u4e66\u521b\u5efa\u547d\u4ee4
+#====================================================================================
+certificate.rootValidDays=3650
+certificate.rootCreateCommand=${pom.config.rootCreateCommand}
+certificate.validDays=365
+certificate.createCommand=${pom.config.createCommand}

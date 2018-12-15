@@ -1,0 +1,26 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.ModuleDao;
+import com.cccollector.app.model.Module;
+import com.cccollector.app.service.ModuleService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 模块服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("moduleService")
+public class ModuleServiceImpl extends GenericServiceHibernateImpl<Integer, Module> implements ModuleService {
+	
+	@SuppressWarnings("unused")
+	@Autowired
+	private ModuleDao moduleDao;
+}

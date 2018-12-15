@@ -1,0 +1,52 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+
+import com.cccollector.app.model.FailedLogin;
+import com.cccollector.app.service.FailedLoginService;
+import com.cccollector.universal.dao.QueryField;
+
+/**
+ * 失败登录列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class FailedLoginListBean {
+
+	/**
+	 * 失败登录服务
+	 */
+	@ManagedProperty(value = "#{failedLoginService}")
+	private FailedLoginService failedLoginService;
+
+	public void setFailedLoginService(FailedLoginService _failedLoginService) {
+		failedLoginService = _failedLoginService;
+	}
+
+	/**
+	 * 全部失败登录
+	 */
+	private List<FailedLogin> allFailedLogins;
+
+	public List<FailedLogin> getAllFailedLogins() {
+		if (allFailedLogins == null) {	
+			// 排序
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("loginTime", Boolean.FALSE));
+			
+			allFailedLogins = failedLoginService.loadAll(null, orderQueryFieldList);
+		}
+		return allFailedLogins;
+	}
+}

@@ -1,0 +1,319 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.context.RequestContext;
+import org.primefaces.event.SelectEvent;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.StreamedContent;
+
+import com.cccollector.app.model.RootCertificate;
+import com.cccollector.app.service.RootCertificateService;
+import com.cccollector.universal.dao.QueryField;
+
+/**
+ * 根证书列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class RootCertificateListBean {
+
+	/**
+	 * 根证书服务
+	 */
+	@ManagedProperty(value = "#{rootCertificateService}")
+	private RootCertificateService rootCertificateService;
+
+	public void setRootCertificateService(RootCertificateService _rootCertificateService) {
+		rootCertificateService = _rootCertificateService;
+	}
+	
+	/**
+	 * 根证书是否多选
+	 */
+	private boolean rootCertificatesMultiSelect;
+
+	public boolean getRootCertificatesMultiSelect() {
+		return rootCertificatesMultiSelect;
+	}
+
+	public void setRootCertificatesMultiSelect(boolean _rootCertificatesMultiSelect) {
+		rootCertificatesMultiSelect = _rootCertificatesMultiSelect;
+	}
+
+	/**
+	 * 全部根证书
+	 */
+	private List<RootCertificate> allRootCertificates;
+
+	public List<RootCertificate> getAllRootCertificates() {
+		if (allRootCertificates == null) {
+			// 排序
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+			orderQueryFieldList.add(new QueryField("rootCertificateId", Boolean.FALSE));
+			
+			allRootCertificates = rootCertificateService.loadAll(null, orderQueryFieldList);
+		}
+		return allRootCertificates;
+	}	
+
+	/**
+	 * 获取根证书文件
+	 */
+	public StreamedContent getRootCertificateFile(RootCertificate rootCertificate) {
+		try {
+			FileInputStream fileInputStream = new FileInputStream(rootCertificateService.getDataRootCertificatesPath() + rootCertificate.rootCertificateFilePath());
+			StreamedContent rootCertificateFile = new DefaultStreamedContent(fileInputStream, "application/octet-stream", rootCertificate.rootCertificateFileName());
+			return rootCertificateFile;
+		} catch (Exception e) {}
+		return null;
+	}
+	
+	/**
+	 * 选中的根证书
+	 */
+	private List<RootCertificate> selectedRootCertificates;
+
+	public List<RootCertificate> getSelectedRootCertificates() {
+		return selectedRootCertificates;
+	}
+
+	public void setSelectedRootCertificates(List<RootCertificate> _selectedRootCertificates) {
+		selectedRootCertificates = _selectedRootCertificates;
+	}
+
+	/**
+	 * 选择根证书
+	 */
+	public void selectRootCertificateAction(SelectEvent event) {
+		try {
+			RootCertificate rootCertificate = (RootCertificate) event.getObject();
+			FacesContext.getCurrentInstance().getExternalContext().redirect("certificateList.xhtml?rootCertificateId=" + rootCertificate.getRootCertificateId());
+		} catch (Exception e) {}
+	}
+
+	/**
+	 * 添加根证书
+	 */
+	public void addRootCertificateAction() {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add("");
+		params.put("rootCertificateId", param);
+		
+		// 显示编辑根证书对话框
+		RequestContext.getCurrentInstance().openDialog("rootCertificateEdit", options, params);
+	}
+	
+	/**
+	 * 处理添加根证书返回
+	 */
+	public void handleAddRootCertificateReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			// 清空选中的根证书
+			selectedRootCertificates = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "添加根证书成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "添加根证书失败，请重新尝试！"));
+		}
+		
+		// 刷新全部根证书数据
+		allRootCertificates = null;
+	}
+	
+	/**
+	 * 编辑根证书
+	 */
+	public void editRootCertificateAction(RootCertificate rootCertificate) {
+		// 对话框选项
+		Map<String, Object> options = new HashMap<String, Object>();
+		options.put("width", 360);
+		options.put("resizable", false);
+		options.put("modal", true);
+		options.put("includeViewParams", true);
+		
+		// 传递的参数
+		Map<String, List<String>> params = new HashMap<String, List<String>>();
+		List<String> param = new ArrayList<String>();
+		param.add(rootCertificate.getRootCertificateId().toString());
+		params.put("rootCertificateId", param);
+		
+		// 显示编辑根证书对话框
+		RequestContext.getCurrentInstance().openDialog("rootCertificateEdit", options, params);
+	}
+	
+	/**
+	 * 编辑根证书
+	 */
+	public void editRootCertificateAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedRootCertificates != null && selectedRootCertificates.size() > 0) {
+			if (selectedRootCertificates.size() == 1) {
+				// 对话框选项
+				Map<String, Object> options = new HashMap<String, Object>();
+				options.put("width", 360);
+				options.put("resizable", false);
+				options.put("modal", true);
+				options.put("includeViewParams", true);
+				
+				// 传递的参数
+				Map<String, List<String>> params = new HashMap<String, List<String>>();
+				List<String> param = new ArrayList<String>();
+				param.add(selectedRootCertificates.get(0).getRootCertificateId().toString());
+				params.put("rootCertificateId", param);
+				
+				// 显示编辑根证书对话框
+				RequestContext.getCurrentInstance().openDialog("rootCertificateEdit", options, params);
+			} else {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "只能选择一个根证书进行编辑！"));
+			}
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个根证书进行编辑！"));
+		}
+	}
+	
+	/**
+	 * 处理编辑根证书返回
+	 */
+	public void handleEditRootCertificateReturn(SelectEvent event) {
+		Boolean success = (Boolean) event.getObject();
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "编辑根证书成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "编辑根证书失败，请重新尝试！"));
+		}
+		
+		// 刷新全部根证书数据
+		allRootCertificates = null;
+	}
+	
+	/**
+	 * 启用根证书
+	 */
+	public void enableAction(RootCertificate rootCertificate) {
+		// 如果已启用，则返回
+		if (rootCertificate.getEnabled()) {
+			return;
+		}
+		
+		// 启用根证书
+		boolean success = rootCertificateService.enableRootCertificate(rootCertificate);
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "启用根证书成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "启用根证书失败，请重新尝试！"));
+		}
+		
+		// 刷新全部根证书数据
+		allRootCertificates = null;
+	}
+	
+	/**
+	 * 停用根证书
+	 */
+	public void disableAction(RootCertificate rootCertificate) {
+		// 如果已停用，则返回
+		if (!rootCertificate.getEnabled()) {
+			return;
+		}
+		
+		// 停用根证书
+		boolean success = rootCertificateService.disableRootCertificate(rootCertificate);
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (success == true) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "停用根证书成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "停用根证书失败，请重新尝试！"));
+		}
+		
+		// 刷新全部根证书数据
+		allRootCertificates = null;
+	}
+
+	/**
+	 * 删除根证书
+	 */
+	public void deleteRootCertificateAction(RootCertificate rootCertificate) {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		// 根证书如果否包含子对象，则不能被删除
+		if (rootCertificateService.hasChildren(rootCertificate)) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的根证书中包含子对象，请清空子对象再进行删除！"));
+			return;
+		}
+		
+		// 根证书如果已启用，则不能被删除
+		if (rootCertificate.getEnabled()) {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的根证书已启用，请停用后再进行删除！"));
+			return;			
+		}
+		
+		// 删除根证书
+		rootCertificateService.delete(rootCertificate);
+		selectedRootCertificates = null;
+		facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除根证书成功！"));
+		
+		// 刷新全部根证书数据
+		allRootCertificates = null;
+	}
+	
+	/**
+	 * 批量删除根证书
+	 */
+	public void deleteRootCertificatesAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (selectedRootCertificates != null && selectedRootCertificates.size() > 0) {
+			for (RootCertificate rootCertificate : selectedRootCertificates) {
+				// 根证书如果否包含子对象，则不能被删除
+				if (rootCertificateService.hasChildren(rootCertificate)) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的根证书中包含子对象，请清空子对象再进行删除！"));
+					return;
+				}
+				
+				// 根证书如果已启用，则不能被删除
+				if (rootCertificate.getEnabled() == true) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "要删除的根证书已启用，请停用后再进行删除！"));
+					return;			
+				}
+			}
+			
+			// 删除根证书
+			rootCertificateService.deleteAll(selectedRootCertificates);
+			selectedRootCertificates = null;
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "提示信息", "删除根证书成功！"));
+		} else {
+			facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "错误提示", "请选择一个或多个根证书进行删除！"));
+		}
+		
+		// 刷新全部根证书数据
+		allRootCertificates = null;
+	}
+}

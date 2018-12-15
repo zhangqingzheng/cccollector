@@ -1,0 +1,314 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="title">
+		角色和权限列表 - 
+	</ui:define>
+	<ui:define name="subtitle">
+		<span style="display:#{roleListBean.job != null ? '' : 'none'}"><a href="jobList.xhtml?departmentId=#{roleListBean.modelId4}" class="subitem">#{roleListBean.job.name}</a><span class="subitem fontSize18">岗位</span></span>
+		<span style="display:#{roleListBean.department != null and roleListBean.job == null ? '' : 'none'}"><a href="departmentList.xhtml" class="subitem">#{roleListBean.department.name}</a><span class="subitem fontSize18">部门</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="jobId" value="#{roleListBean.modelId2}" />
+			<f:viewParam name="departmentId" value="#{roleListBean.modelId4}" />
+			<f:viewParam name="jobId" value="#{permissionListBean.modelId2}" />
+			<f:viewParam name="departmentId" value="#{permissionListBean.modelId4}" />
+			<f:viewParam name="multiSelect" value="#{roleListBean.multiSelect}" />
+		</f:metadata>
+
+		<h:form id="rolesAndPermissionsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:remoteCommand name="screenTypeRemoteCommand" />
+			<p:inputText id="screenType" widgetVar="screenTypeHidden" value="#{roleListBean.screenType}" style="display:none" />
+			
+			<p:inputSwitch id="multiSelect" value="#{roleListBean.multiSelect}" onLabel="管理" offLabel="浏览">
+				<p:ajax update="rolesAndPermissionsForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="rolesSingle" var="role" value="#{roleListBean.allModels}" selectionMode="single" rowKey="#{role.roleId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!role.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{!roleListBean.multiSelect}">
+	
+				<p:column headerText="角色ID" priority="1">
+					<h:outputText value="#{role.roleId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{role.name}" />
+				</p:column>
+	
+				<p:column headerText="备注" priority="1">
+					<h:outputText value="#{role.remarks}" />
+				</p:column>
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{role.enabledEnum.name()}" />
+				</p:column>
+			</p:dataTable>
+			
+			<p:fieldset legend="添加角色到岗位" style="margin:20px 0px" rendered="#{roleListBean.multiSelect and roleListBean.job != null}">
+				<h:panelGrid columns="2" style="background-color:white">
+					<p:outputLabel for="rolesJobSelect" value="选择角色:" style="font-weight:bold" />
+					<p:selectOneMenu id="rolesJobSelect" value="#{roleListBean.selectedNotUsedRoleId}">
+						<p:ajax listener="#{roleListBean.addRoleAction}" partialSubmit="true" update="rolesAndPermissionsForm:messages rolesJobSelect rolesAndPermissionsForm:rolesMultiple" />
+						<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+						<f:selectItems value="#{roleListBean.notUsedRoles}" var="role" itemLabel="#{role.name}" itemValue="#{role.roleId}"/>
+					</p:selectOneMenu>
+				</h:panelGrid>
+			</p:fieldset>
+			
+			<p:fieldset legend="添加角色到部门" style="margin:20px 0px" rendered="#{roleListBean.multiSelect and roleListBean.department != null and roleListBean.job == null}">
+				<h:panelGrid columns="2" style="background-color:white">
+					<p:outputLabel for="rolesDepartmentSelect" value="选择角色:" style="font-weight:bold" />
+					<p:selectOneMenu id="rolesDepartmentSelect" value="#{roleListBean.selectedNotUsedRoleId}">
+						<p:ajax listener="#{roleListBean.addRoleAction}" partialSubmit="true" update="rolesAndPermissionsForm:messages rolesDepartmentSelect rolesAndPermissionsForm:rolesMultiple" />
+						<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+						<f:selectItems value="#{roleListBean.notUsedRoles}" var="role" itemLabel="#{role.name}" itemValue="#{role.roleId}"/>
+					</p:selectOneMenu>
+				</h:panelGrid>
+			</p:fieldset>
+
+			<p:dataTable id="rolesMultiple" var="role" value="#{roleListBean.allModels}" selection="#{roleListBean.selectedModels}" rowKey="#{role.roleId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!role.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{roleListBean.multiSelect}">
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="角色ID" priority="1">
+					<h:outputText value="#{role.roleId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{role.name}" />
+				</p:column>
+	
+				<p:column headerText="备注" priority="1">
+					<h:outputText value="#{role.remarks}" />
+				</p:column>
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{role.enabledEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{roleListBean.editModelAction(role)}" rendered="#{roleListBean.department == null}">
+						<p:ajax event="dialogReturn" listener="#{roleListBean.handleEditModelReturn}" update="rolesAndPermissionsForm:messages rolesAndPermissionsForm:rolesMultiple" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{roleListBean.deleteRoleAction(role)}" update="rolesAndPermissionsForm:messages rolesAndPermissionsForm:rolesMultiple" style="margin-left:10px" rendered="#{roleListBean.department == null}">
+						<p:confirm header="删除角色" message="是否确定删除所选角色？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="从岗位中删除" actionListener="#{roleListBean.removeRoleAction(role)}" update="rolesAndPermissionsForm:messages rolesAndPermissionsForm:rolesMultiple rolesAndPermissionsForm:rolesJobSelect" rendered="#{roleListBean.job != null}">
+						<p:confirm header="从岗位中删除角色" message="是否确定从岗位中删除所选角色？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="从部门中删除" actionListener="#{roleListBean.removeRoleAction(role)}" update="rolesAndPermissionsForm:messages rolesAndPermissionsForm:rolesMultiple rolesAndPermissionsForm:rolesDepartmentSelect" rendered="#{roleListBean.department != null and roleListBean.job == null}">
+						<p:confirm header="从部门中删除角色" message="是否确定从部门中删除所选角色？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="rolesMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{roleListBean.addModelAction}"  rendered="#{roleListBean.department == null}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{roleListBean.editSelectedModelAction}" update="messages"  rendered="#{roleListBean.department == null}" />
+				<p:menuitem icon="ui-icon-unlocked" value="可用" actionListener="#{roleListBean.modifyRolesEnabledAction(true)}" update="messages rolesMultiple">
+					<p:confirm header="修改角色" message="是否确定修改所选角色为可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-locked" value="不可用" actionListener="#{roleListBean.modifyRolesEnabledAction(false)}" update="messages rolesMultiple">
+					<p:confirm header="修改角色" message="是否确定修改所选角色为不可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-close" value="批量删除" actionListener="#{roleListBean.deleteRolesAction}" update="messages rolesMultiple"  rendered="#{roleListBean.department == null}" >
+					<p:confirm header="删除角色" message="是否确定删除所选角色？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+			
+			<p:contextMenu for="rolesMultiple" rendered="#{roleListBean.multiSelect and roleListBean.job != null}">
+				<p:menuitem icon="ui-icon-close" value="批量从岗位中删除" actionListener="#{roleListBean.removeRolesAction}" update="messages rolesJobSelect rolesMultiple">
+					<p:confirm header="从岗位中删除角色" message="是否确定从岗位中删除所选角色？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+			
+			<p:contextMenu for="rolesMultiple" rendered="#{roleListBean.multiSelect and roleListBean.department != null and roleListBean.job == null}">
+				<p:menuitem icon="ui-icon-close" value="批量从部门中删除" actionListener="#{roleListBean.removeRolesAction}" update="messages rolesDepartmentSelect rolesMultiple">
+					<p:confirm header="从部门中删除角色" message="是否确定从部门中删除所选角色？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{roleListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addRole" icon="ui-icon-plus" value="添加" actionListener="#{roleListBean.addModelAction}" rendered="#{roleListBean.department == null}">
+						<p:ajax event="dialogReturn" listener="#{roleListBean.handleAddModelReturn}" update="messages rolesMultiple" />
+					</p:commandButton>
+					<p:commandButton id="editRole" icon="ui-icon-pencil" value="编辑" actionListener="#{roleListBean.editSelectedModelAction}" update="messages" style="margin-left:20px" rendered="#{roleListBean.department == null}">
+						<p:ajax event="dialogReturn" listener="#{roleListBean.handleEditModelReturn}" update="messages rolesMultiple" />
+					</p:commandButton>
+					<p:commandButton id="deleteRoles" icon="ui-icon-close" value="批量删除" actionListener="#{roleListBean.deleteRolesAction}" update="messages rolesMultiple" style="margin-left:20px" rendered="#{roleListBean.department == null}">
+						<p:confirm header="删除角色" message="是否确定删除所选角色？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton id="deleteRolesFromJob" icon="ui-icon-close" value="批量从岗位中删除" actionListener="#{roleListBean.removeRolesAction}" update="messages rolesJobSelect rolesMultiple" rendered="#{roleListBean.job != null}">
+						<p:confirm header="从岗位中删除角色" message="是否确定从岗位中删除所选角色？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton id="deleteRolesFromDepartment" icon="ui-icon-close" value="批量从部门中删除" actionListener="#{roleListBean.removeRolesAction}" update="messages rolesDepartmentSelect rolesMultiple" rendered="#{roleListBean.department != null and roleListBean.job == null}">
+						<p:confirm header="从部门中删除角色" message="是否确定从部门中删除所选角色？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+				<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+					<h:panelGrid columns="1" style="text-align:center;width:100%">
+						<h:panelGroup>
+							<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+							<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+						</h:panelGroup>
+					</h:panelGrid>
+				</p:confirmDialog>
+			</h:panelGrid>
+		</h:form>
+		<h:form id="permissionsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:remoteCommand name="screenTypeRemoteCommand" />
+			<p:inputText id="screenType" widgetVar="screenTypeHidden" value="#{permissionListBean.screenType}" style="display:none" />
+			
+			<p:inputSwitch id="multiSelect" value="#{permissionListBean.multiSelect}" onLabel="管理" offLabel="浏览">
+				<p:ajax update="permissionsForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="permissionsSingle" var="permission" value="#{permissionListBean.allModels}" selectionMode="single" rowKey="#{permission.permissionId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!permission.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{!permissionListBean.multiSelect}">
+	
+				<p:column headerText="权限ID" priority="1">
+					<h:outputText value="#{permission.permissionId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{permission.name}" />
+				</p:column>
+	
+				<p:column headerText="类别" priority="1">
+					<h:outputText value="#{permission.typeEnum.name()}" />
+				</p:column>
+	
+				<p:column headerText="特定ID" priority="2">
+					<h:outputText value="#{permission.specificIds}" />
+				</p:column>
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{permission.enabledEnum.name()}" />
+				</p:column>
+			</p:dataTable>
+			
+			<p:fieldset legend="添加权限到岗位" style="margin:20px 0px" rendered="#{permissionListBean.multiSelect and permissionListBean.job != null}">
+				<h:panelGrid columns="2" style="background-color:white">
+					<p:outputLabel for="permissionsJobSelect" value="选择权限:" style="font-weight:bold" />
+					<p:selectOneMenu id="permissionsJobSelect" value="#{permissionListBean.selectedNotUsedPermissionId}">
+						<p:ajax listener="#{permissionListBean.addPermissionAction}" partialSubmit="true" update="permissionsForm:messages permissionsJobSelect permissionsForm:permissionsMultiple" />
+						<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+						<f:selectItems value="#{permissionListBean.notUsedPermissions}" var="permission" itemLabel="#{permission.name}" itemValue="#{permission.permissionId}"/>
+					</p:selectOneMenu>
+				</h:panelGrid>
+			</p:fieldset>
+			
+			<p:fieldset legend="添加权限到部门" style="margin:20px 0px" rendered="#{permissionListBean.multiSelect and permissionListBean.department != null and permissionListBean.job == null}">
+				<h:panelGrid columns="2" style="background-color:white">
+					<p:outputLabel for="permissionsDepartmentSelect" value="选择权限:" style="font-weight:bold" />
+					<p:selectOneMenu id="permissionsDepartmentSelect" value="#{permissionListBean.selectedNotUsedPermissionId}">
+						<p:ajax listener="#{permissionListBean.addPermissionAction}" partialSubmit="true" update="permissionsForm:messages permissionsDepartmentSelect permissionsForm:permissionsMultiple" />
+						<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+						<f:selectItems value="#{permissionListBean.notUsedPermissions}" var="permission" itemLabel="#{permission.name}" itemValue="#{permission.permissionId}"/>
+					</p:selectOneMenu>
+				</h:panelGrid>
+			</p:fieldset>
+
+			<p:dataTable id="permissionsMultiple" var="permission" value="#{permissionListBean.allModels}" selection="#{permissionListBean.selectedModels}" rowKey="#{permission.permissionId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!permission.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{permissionListBean.multiSelect}">
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="权限ID" priority="1">
+					<h:outputText value="#{permission.permissionId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{permission.name}" />
+				</p:column>
+	
+				<p:column headerText="类别" priority="1">
+					<h:outputText value="#{permission.typeEnum.name()}" />
+				</p:column>
+	
+				<p:column headerText="特定ID" priority="2">
+					<h:outputText value="#{permission.specificIds}" />
+				</p:column>
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{permission.enabledEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{permissionListBean.editModelAction(permission)}" rendered="#{permissionListBean.department == null}">
+						<p:ajax event="dialogReturn" listener="#{permissionListBean.handleEditModelReturn}" update="permissionsForm:messages permissionsForm:permissionsMultiple" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{permissionListBean.deletePermissionAction(permission)}" update="permissionsForm:messages permissionsForm:permissionsMultiple" style="margin-left:10px" rendered="#{permissionListBean.department == null}">
+						<p:confirm header="删除权限" message="是否确定删除所选权限？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="从岗位中删除" actionListener="#{permissionListBean.removePermissionAction(permission)}" update="permissionsForm:messages permissionsForm:permissionsMultiple permissionsForm:permissionsJobSelect" rendered="#{permissionListBean.job != null}">
+						<p:confirm header="从岗位中删除权限" message="是否确定从岗位中删除所选权限？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="从部门中删除" actionListener="#{permissionListBean.removePermissionAction(permission)}" update="permissionsForm:messages permissionsForm:permissionsMultiple permissionsForm:permissionsDepartmentSelect" rendered="#{permissionListBean.department != null and permissionListBean.job == null}">
+						<p:confirm header="从部门中删除权限" message="是否确定从部门中删除所选权限？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+				
+			</p:dataTable>
+			
+			<p:contextMenu for="permissionsMultiple"  rendered="#{permissionListBean.department == null}">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{permissionListBean.addModelAction}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{permissionListBean.editSelectedModelAction}" update="messages" />
+				<p:menuitem icon="ui-icon-unlocked" value="可用" actionListener="#{permissionListBean.modifyPermissionsEnabledAction(true)}" update="messages permissionsMultiple">
+					<p:confirm header="修改权限" message="是否确定修改所选权限为可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-locked" value="不可用" actionListener="#{permissionListBean.modifyPermissionsEnabledAction(false)}" update="messages permissionsMultiple">
+					<p:confirm header="修改权限" message="是否确定修改所选权限为不可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-close" value="批量删除" actionListener="#{permissionListBean.deletePermissionsAction}" update="messages permissionsMultiple">
+					<p:confirm header="删除权限" message="是否确定删除所选权限？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+			
+			<p:contextMenu for="permissionsMultiple" rendered="#{permissionListBean.multiSelect and permissionListBean.job != null}">
+				<p:menuitem icon="ui-icon-close" value="批量从岗位中删除" actionListener="#{permissionListBean.removePermissionsAction}" update="messages permissionsJobSelect permissionsMultiple">
+					<p:confirm header="从岗位中删除权限" message="是否确定从岗位中删除所选权限？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+			
+			<p:contextMenu for="permissionsMultiple" rendered="#{permissionListBean.multiSelect and permissionListBean.department != null and permissionListBean.job == null}">
+				<p:menuitem icon="ui-icon-close" value="批量从部门中删除" actionListener="#{permissionListBean.removePermissionsAction}" update="messages permissionsDepartmentSelect permissionsMultiple">
+					<p:confirm header="从部门中删除权限" message="是否确定从部门中删除所选权限？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{permissionListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addPermission" icon="ui-icon-plus" value="添加" actionListener="#{permissionListBean.addModelAction}" rendered="#{permissionListBean.department == null}">
+						<p:ajax event="dialogReturn" listener="#{permissionListBean.handleAddModelReturn}" update="messages permissionsMultiple" />
+					</p:commandButton>
+					<p:commandButton id="editPermission" icon="ui-icon-pencil" value="编辑" actionListener="#{permissionListBean.editSelectedModelAction}" update="messages" style="margin-left:20px" rendered="#{permissionListBean.department == null}">
+						<p:ajax event="dialogReturn" listener="#{permissionListBean.handleEditModelReturn}" update="messages permissionsMultiple" />
+					</p:commandButton>
+					<p:commandButton id="deletePermissions" icon="ui-icon-close" value="批量删除" actionListener="#{permissionListBean.deletePermissionsAction}" update="messages permissionsMultiple" style="margin-left:20px" rendered="#{permissionListBean.department == null}">
+						<p:confirm header="删除权限" message="是否确定删除所选权限？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton id="deletepermissionsFromJob" icon="ui-icon-close" value="批量从岗位中删除" actionListener="#{permissionListBean.removePermissionsAction}" update="messages permissionsJobSelect permissionsMultiple" rendered="#{permissionListBean.job != null}">
+						<p:confirm header="从岗位中删除权限" message="是否确定从岗位中删除所选权限？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton id="deletepermissionsFromDepartment" icon="ui-icon-close" value="批量从部门中删除" actionListener="#{permissionListBean.removePermissionsAction}" update="messages permissionsDepartmentSelect permissionsMultiple" rendered="#{permissionListBean.department != null and permissionListBean.job == null}">
+						<p:confirm header="从部门中删除权限" message="是否确定从部门中删除所选权限？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+				<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+					<h:panelGrid columns="1" style="text-align:center;width:100%">
+						<h:panelGroup>
+							<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+							<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+						</h:panelGroup>
+					</h:panelGrid>
+				</p:confirmDialog>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

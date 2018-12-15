@@ -1,0 +1,59 @@
+<!DOCTYPE html [
+    <!ENTITY nbsp "&#160;">
+    <!ENTITY bull "&#8226;">
+    <!ENTITY copy "&#169;">
+]>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"	
+				template="/templateMainBase.xhtml">
+	<ui:define name="companyName">
+		${pom.config.companyName}
+	</ui:define>
+	
+	<ui:define name="appName">
+		${pom.config.appName}
+	</ui:define>
+	
+	<ui:define name="menu">
+		<c:if test="#{templateBean.loginOrAnonymousAuthentication}">	
+			<c:if test="#{templateBean.hasModulesAny('Platform','App')}">
+				<span id="SubMenu-App" class="MenuSideMainLink bordersOfMenuSide" onclick="Showcase.openSubMenu(this);">
+					<h:graphicImage name="images/menu1.svg" />
+					<h:graphicImage styleClass="hiddenIcons" name="images/menu1Highlight.svg" />
+					<span class="MainLinkText">平台应用管理</span>
+				</span>
+				<div class="SubMenuLinkContainer">
+					<c:if test="#{templateBean.hasModule('Platform')}"><a class="SubMenuLink" href="#{request.contextPath}/view/platformList.xhtml">&bull; 平台管理</a></c:if>
+					<c:if test="#{templateBean.hasModule('App')}"><a class="SubMenuLink" href="#{request.contextPath}/view/appList.xhtml">&bull; 应用管理</a></c:if>
+				</div>
+			</c:if>
+			
+			<c:if test="#{templateBean.hasModulesAny('Department','User')}">
+				<span id="SubMenu-UserLogin" class="MenuSideMainLink bordersOfMenuSide" onclick="Showcase.openSubMenu(this);">
+					<h:graphicImage name="images/menu2.svg" />
+					<h:graphicImage styleClass="hiddenIcons" name="images/menu2Highlight.svg" />
+					<span class="MainLinkText">部门用户管理</span>
+				</span>
+				<div class="SubMenuLinkContainer">
+					<c:if test="#{templateBean.hasModule('Department')}"><a class="SubMenuLink" href="#{request.contextPath}/view/departmentList.xhtml">&bull; 部门管理</a></c:if>
+					<c:if test="#{templateBean.hasModule('User')}"><a class="SubMenuLink" href="#{request.contextPath}/view/userList.xhtml">&bull; 用户管理</a></c:if>
+				</div>
+			</c:if>
+
+			<c:if test="#{templateBean.hasModulesAny('RootCertificate')}">
+				<span id="SubMenu-Certificate" class="MenuSideMainLink bordersOfMenuSide" onclick="Showcase.openSubMenu(this);">
+					<h:graphicImage name="images/menu3.svg" />
+					<h:graphicImage styleClass="hiddenIcons" name="images/menu3Highlight.svg" />
+					<span class="MainLinkText">证书管理</span>
+				</span>
+				<div class="SubMenuLinkContainer">
+					<c:if test="#{templateBean.hasModule('RootCertificate')}"><a class="SubMenuLink" href="#{request.contextPath}/view/rootCertificateList.xhtml">&bull; 根证书管理</a></c:if>
+				</div>
+			</c:if>
+		</c:if>
+	</ui:define>
+</ui:composition>

@@ -1,0 +1,66 @@
+/**
+ * 
+ */
+package com.cccollector.app.service;
+
+ import java.util.List;
+
+import com.cccollector.app.model.User;
+import com.cccollector.universal.service.GenericService;
+
+/**
+ * 用户服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public interface UserService extends GenericService<Integer, User> {
+
+	/**
+	 * 获取平台标识符
+	 */
+	public String getPlatformBundleId();
+	
+	/**
+	 * 获取ImageMagick命令路径
+	 */
+	public String getImageMagickPath();
+	
+	/**
+	 * 获取临时目录
+	 */
+	public String getTempPath();
+
+	/**
+	 * 获取数据目录
+	 */
+	public String getDataPath();
+
+	/**
+	 * 获取图像目录
+	 */
+	public String getImagePath();
+	
+	/**
+	 * 获取用户目录
+	 */
+	public String getUsersPath();
+
+	/**
+	 * 获取用户数据目录
+	 */
+	public String getDataUsersPath();
+
+	/**
+	 * 获取用户头像缩略图URL
+	 */
+	public String getAvatarThumbnailUsersUrl();
+    
+    /**
+	 * 根据搜索词查询所有用户
+	 * 
+	 * @param query 搜索词
+	 * @return 所有用户
+	 */
+    public List<User> loadUsersBySearchWord(String query);
+}

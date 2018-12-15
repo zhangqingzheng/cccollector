@@ -1,0 +1,50 @@
+/**
+ * 
+ */
+package com.cccollector.app.service;
+
+import com.cccollector.app.model.RootCertificate;
+import com.cccollector.universal.service.GenericService;
+
+/**
+ * 根证书服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public interface RootCertificateService extends GenericService<Integer, RootCertificate> {
+
+	/**
+	 * 获取根证书数据目录
+	 */
+	public String getDataRootCertificatesPath();
+	
+	/**
+	 * 获取可用的根证书
+	 */
+	public RootCertificate getEnabledRootCertificate();
+	
+	/**
+	 * 保存根证书
+	 * 
+	 * @param rootCertificate 待保存的根证书
+	 * @return 保存后的根证书的ID
+	 */
+	public Integer saveRootCertificate(RootCertificate rootCertificate);
+	
+	/**
+	 * 启用根证书
+	 * 
+	 * @param rootCertificate 待启用的根证书
+	 * @return 是否成功
+	 */
+	public boolean enableRootCertificate(RootCertificate rootCertificate);
+	
+	/**
+	 * 停用根证书
+	 * 
+	 * @param rootCertificate 待停用的根证书
+	 * @return 是否成功
+	 */
+	public boolean disableRootCertificate(RootCertificate rootCertificate);
+}

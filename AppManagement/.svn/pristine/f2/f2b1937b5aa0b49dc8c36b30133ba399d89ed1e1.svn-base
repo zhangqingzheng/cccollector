@@ -1,0 +1,26 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.ResourceDao;
+import com.cccollector.app.model.Resource;
+import com.cccollector.app.service.ResourceService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 资源服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("resourceService")
+public class ResourceServiceImpl extends GenericServiceHibernateImpl<Integer, Resource> implements ResourceService {
+	
+	@Autowired
+	@SuppressWarnings("unused")
+	private ResourceDao resourceDao;
+}

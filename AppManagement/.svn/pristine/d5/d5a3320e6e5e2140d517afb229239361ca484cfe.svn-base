@@ -1,0 +1,58 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="#{platformBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="title">
+		#{platformBean.platform.platformId == null ? '添加' : '编辑'}平台
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="platformList.xhtml?multiSelect=true" class="subitem"><h:outputText id="subtitle" value="#{platformBean.platform.name}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{platformBean.useDialog}" />
+			<f:viewParam name="platformId" value="#{platformBean.modelId}" />
+		</f:metadata>
+        
+		<h:form id="platformEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="platformId" value="平台ID:" style="font-weight:bold" rendered="#{platformBean.platform.platformId != null}" />
+				<p:outputLabel id="platformId" value="#{platformBean.platform.platformId}" rendered="#{platformBean.platform.platformId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" />
+				<p:inputText id="name" value="#{platformBean.platform.name}" required="true" requiredMessage="名称为必填项" size="50">
+					<f:validateLength maximum="100" />
+					<p:ajax immediate="true" update="subtitle" />
+				</p:inputText>
+				
+				<p:outputLabel for="bundleId" value="标识符:" style="font-weight:bold" />
+				<p:inputText id="bundleId" value="#{platformBean.platform.bundleId}" required="true" requiredMessage="标识符为必填项" size="50">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="tomcatServer" value="Tomcat服务器:" style="font-weight:bold" />
+				<p:inputText id="tomcatServer" value="#{platformBean.platform.tomcatServer}" required="true" requiredMessage="Tomcat服务器为必填项" size="50">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="remarks" value="备注:" style="font-weight:bold" />
+				<p:inputTextarea id="remarks" value="#{platformBean.platform.remarks}" autoResize="false" rows="5" cols="50">
+					<f:validateLength maximum="1000" />
+				</p:inputTextarea>
+				
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+				<p:inputSwitch id="enabled" value="#{platformBean.platform.enabled}" onLabel="是" offLabel="否" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{platformBean.saveAction}" update="messages" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

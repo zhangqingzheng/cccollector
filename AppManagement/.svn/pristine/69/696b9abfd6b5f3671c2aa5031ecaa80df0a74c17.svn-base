@@ -1,0 +1,51 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="#{binaryBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{binaryBean.useDialog}" />
+			<f:viewParam name="releaseId" value="#{binaryBean.modelId1}" />		
+			<f:viewParam name="editionId" value="#{binaryBean.modelId2}" />
+			<f:viewParam name="appId" value="#{binaryBean.modelId3}" />
+			<f:viewParam name="binaryId" value="#{binaryBean.modelId}" />
+			<f:viewAction action="#{binaryBean.validateModuleWithSpecificIdAction('App', binaryBean.binary.release.edition.app.appId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+	<ui:define name="title">
+		#{binaryBean.binary.binaryId == null ? '添加' : '编辑'}二进制文件
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="binaryList.xhtml?multiSelect=true&amp;releaseId=#{binaryBean.modelId1}&amp;editionId=#{binaryBean.modelId2}&amp;appId=#{binaryBean.modelId3}" class="subitem"><h:outputText id="subtitle" value="#{binaryBean.binary.typeEnum.name() }" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="binaryEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="binaryId" value="二进制文件ID:" style="font-weight:bold" rendered="#{binaryBean.binary.binaryId != null}" />
+				<p:outputLabel id="binaryId" value="#{binaryBean.binary.binaryId}" rendered="#{binaryBean.binary.binaryId != null}" />
+
+				<p:outputLabel for="type" value="类别:" style="font-weight:bold" />
+				<p:selectOneRadio id="type" value="#{binaryBean.binary.type}" required="true" requiredMessage="类别为必填项">
+					<f:selectItems value="#{binaryBean.binary.typeEnums}" var="typeEnum" itemLabel="#{typeEnum.name()}" itemValue="#{typeEnum.ordinal()}" />
+					<p:ajax immediate="true" update="subtitle" />
+				</p:selectOneRadio>
+				
+				<p:outputLabel id="binaryLabel" value="二进制文件:" style="font-weight:bold" />
+				<p:fileUpload id="fileUpload_1" fileUploadListener="#{binaryBean.handleFileUpload}" mode="advanced" auto="true" dragDropSupport="false" label="选择文件" />
+				
+				<p:outputLabel for="releaseName" value="所属发行:" style="font-weight:bold" />
+				<p:outputLabel id="releaseName" value="#{binaryBean.binary.release.showName}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{binaryBean.saveAction}" update="messages" rendered="#{binaryBean.hasModuleManage() and binaryBean.binary.status == 0}" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

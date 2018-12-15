@@ -1,0 +1,26 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.RoleDao;
+import com.cccollector.app.model.Role;
+import com.cccollector.app.service.RoleService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 角色服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("roleService")
+public class RoleServiceImpl extends GenericServiceHibernateImpl<Integer, Role> implements RoleService {
+	
+	@SuppressWarnings("unused")
+	@Autowired
+	private RoleDao roleDao;
+}

@@ -1,0 +1,218 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.BinaryDao;
+import com.cccollector.app.model.Binary;
+import com.cccollector.app.service.BinaryService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 二进制文件服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("binaryService")
+public class BinaryServiceImpl extends GenericServiceHibernateImpl<Integer, Binary> implements BinaryService {
+	
+	@Autowired
+	private BinaryDao binaryDao;
+	
+	/**
+	 * 平台标识符
+	 */
+	@Value("${platformBundleId}")
+	private String platformBundleId;
+	
+	/**
+	 * Tomcat数据目录
+	 */
+	@Value("${paths.tomcatDataPath}")
+	private String tomcatDataPath;
+	
+	/**
+	 * nginx数据目录
+	 */
+	@Value("${paths.nginxDataPath}")
+	private String nginxDataPath;
+	
+	/**
+	 * 应用根路径键
+	 */
+	@Value("${paths.webAppRootKey}")
+	private String webAppRootKey;
+	
+	/**
+	 * 临时路径
+	 */
+	@Value("${paths.webTemp}")
+	private String webTemp;
+	
+	/**
+	 * 发布路径
+	 */
+	@Value("${paths.publish}")
+	private String publish;
+	
+	private String getTempPath() {
+		return System.getProperty(webAppRootKey) + webTemp + File.separator;
+	}
+
+	@Override
+	public String getDataPath() {
+		return tomcatDataPath + platformBundleId + File.separator;
+	}
+	
+	public String getPublishPath() {
+		return nginxDataPath + platformBundleId + File.separator + publish + File.separator;
+	}
+
+	@Override
+	public void addBinary(Binary binary, String binaryFilePath) {
+		binary.setBinaryId(binary.getRelease().getReleaseId());
+		// 设置文件大小
+		File file = new File(binaryFilePath);
+		binary.setFileSize((int) file.length());
+		
+		// 保存二进制文件
+		binaryDao.save(binary);
+		
+		// 处理二进制文件
+		if (binaryFilePath != null) {
+			File tempFile = new File(binaryFilePath);
+			File binaryFile = new File(getDataPath() + binary.binaryFilePath());
+			binaryFile.getParentFile().mkdirs();
+			try {
+				Files.copy(tempFile.toPath(), binaryFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				tempFile.delete();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Override
+	public void updateBinary(Binary binary, String binaryFilePath) {
+		// 获取二进制文件最新数据
+		Binary binaryNew = binaryDao.loadById(binary.getBinaryId());
+		binaryNew.setType(binary.getType());
+		
+		// 处理二进制文件
+		if (binaryFilePath != null && binaryFilePath.startsWith(getTempPath())) {
+			File tempFile = new File(binaryFilePath);
+			File binaryFile = new File(getDataPath() + binary.binaryFilePath());	
+			binary.setFileSize(Integer.parseInt(String.valueOf(binaryFile.length())));
+			binaryFile.getParentFile().mkdirs();
+			try {
+				Files.copy(tempFile.toPath(), binaryFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				tempFile.delete();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			// 清除nginx缓存文件
+			File[] sizeFiles = new File(getBinaryPath()).listFiles();
+			if (sizeFiles != null) {
+				for (File sizeFile : sizeFiles) {
+					File fileBinaryFile = new File(sizeFile, binaryNew.binaryFilePath());
+					fileBinaryFile.delete();
+				}
+			}
+		}
+	}
+
+	@Override
+	public void deleteBinary(Binary binary) {
+		// 删除二进制文件
+		File binaryFile = new File(getDataPath() + binary.binaryFilePath());
+		if (binaryFile.exists()) {
+			binaryFile.delete();
+		}
+		
+		// 清除nginx缓存文件
+		File[] sizeFiles = new File(getBinaryPath()).listFiles();
+		if (sizeFiles != null) {
+			for (File sizeFile : sizeFiles) {
+				File fileBinaryFile = new File(sizeFile, binary.binaryFilePath());
+				fileBinaryFile.delete();
+			}
+		}
+		
+		// 删除二进制文件
+		binaryDao.delete(binary);
+		
+	}
+
+	@Override
+	public void publishBinary(Binary binary) {
+		Binary binaryNew = binaryDao.loadById(binary.getBinaryId());
+		
+		if (binaryNew.getStatus() == Binary.StatusEnum.未发布.ordinal()) {
+			try {
+				// 文件存在
+				File binaryFile = new File(getDataPath() + binaryNew.binaryFilePath());
+				if (!binaryFile.exists()) {
+					return;
+				}
+				// 构造发布目录文件，创建发布目录文件夹
+				String binaryPath = binaryFile.getAbsolutePath().replace(getDataPath(), "");
+				File binaryPublishFile = new File(getPublishPath() + binaryPath);
+				binaryPublishFile.getParentFile().mkdirs();
+				// 拷贝文件
+				Files.copy(binaryFile.toPath(), binaryPublishFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				
+				// 设置文件大小
+				binaryNew.setFileSize((int) binaryPublishFile.length());
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		// 设置状态
+		binaryNew.setStatus(Binary.StatusEnum.已发布.ordinal());
+	}
+
+	@Override
+	public void cancelPublishBinary(Binary binary) {
+		Binary binaryNew = binaryDao.loadById(binary.getBinaryId());
+		if (binaryNew.getStatus() != Binary.StatusEnum.已发布.ordinal()) {
+			return;
+		}
+		// 删除发布文件
+		File binaryPublishFile = new File(getPublishPath() + binaryNew.binaryFilePath());
+		binaryPublishFile.delete();
+		// 设置文件大小
+		File binaryFile = new File(getDataPath() + binaryNew.binaryFilePath());
+		binaryNew.setFileSize((int) binaryFile.length());
+		
+		// 设置状态
+		binaryNew.setStatus(Binary.StatusEnum.未发布.ordinal());
+	}
+
+	@Override
+	public void discardBinary(Binary binary) {
+		Binary binaryNew = binaryDao.loadById(binary.getBinaryId());
+		if (binaryNew.getStatus() != Binary.StatusEnum.已发布.ordinal()) {
+			return;
+		}
+		// 删除发布文件
+		File filePublishFile = new File(getPublishPath() + binaryNew.binaryFilePath());
+		filePublishFile.delete();
+		// 设置文件大小
+		File fileFile = new File(getDataPath() + binaryNew.binaryFilePath());
+		binaryNew.setFileSize((int) fileFile.length());
+		
+		// 设置状态
+		binaryNew.setStatus(Binary.StatusEnum.已废弃.ordinal());
+	}
+}

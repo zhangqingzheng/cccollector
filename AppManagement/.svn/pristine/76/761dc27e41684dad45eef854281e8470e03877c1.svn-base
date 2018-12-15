@@ -1,0 +1,55 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+
+import org.apache.cxf.jaxrs.swagger.Swagger2Feature;
+
+/**
+ * 首页Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class IndexBean {
+
+	/**
+	 * webServiceSwagger2Feature
+	 */
+	@ManagedProperty(value = "#{webServiceSwagger2Feature}")
+	private Swagger2Feature webServiceSwagger2Feature;
+
+	public void setWebServiceSwagger2Feature(Swagger2Feature _webServiceSwagger2Feature) {
+		webServiceSwagger2Feature = _webServiceSwagger2Feature;
+	}
+
+	/**
+	 * apiSwagger2Feature
+	 */
+	@ManagedProperty(value = "#{apiSwagger2Feature}")
+	private Swagger2Feature apiSwagger2Feature;
+
+	public void setApiSwagger2Feature(Swagger2Feature _apiSwagger2Feature) {
+		apiSwagger2Feature = _apiSwagger2Feature;
+	}
+
+	/**
+	 * 获取网络服务文档地址
+	 */
+	public String getWebServiceDocs() {
+		return webServiceSwagger2Feature.getSchemes()[0] + "://" + webServiceSwagger2Feature.getHost() + webServiceSwagger2Feature.getBasePath() + "/api-docs?url=" + webServiceSwagger2Feature.getBasePath() + "/swagger.json";
+	}
+
+	/**
+	 * 获取接口文档地址
+	 */
+	public String getApiDocs() {
+		return apiSwagger2Feature.getSchemes()[0] + "://" + apiSwagger2Feature.getHost() + apiSwagger2Feature.getBasePath() + "/api-docs?url=" + apiSwagger2Feature.getBasePath() + "/swagger.json";
+	}
+}

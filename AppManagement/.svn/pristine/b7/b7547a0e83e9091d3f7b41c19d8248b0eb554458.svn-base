@@ -1,0 +1,52 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+
+import com.cccollector.app.model.BlockIp;
+import com.cccollector.app.service.BlockIpService;
+import com.cccollector.universal.dao.QueryField;
+
+/**
+ * 禁用IP列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class BlockIpListBean {
+
+	/**
+	 * 禁用IP服务
+	 */
+	@ManagedProperty(value = "#{blockIpService}")
+	private BlockIpService blockIpService;
+
+	public void setBlockIpService(BlockIpService _blockIpService) {
+		blockIpService = _blockIpService;
+	}
+
+	/**
+	 * 全部禁用IP
+	 */
+	private List<BlockIp> allBlockIps;
+
+	public List<BlockIp> getAllBlockIps() {
+		if (allBlockIps == null) {	
+			// 排序
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("expiresTime", Boolean.FALSE));
+			
+			allBlockIps = blockIpService.loadAll(null, orderQueryFieldList);
+		}
+		return allBlockIps;
+	}
+}

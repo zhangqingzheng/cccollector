@@ -1,0 +1,50 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/template.xhtml">
+	<ui:define name="title">
+		失败登录列表 - 
+		<span class="subitem">全部</span>
+	</ui:define>
+
+	<ui:define name="implementation">		
+		<h:form id="failedLoginsForm">
+			<p:growl id="messages" showDetail="true" />
+
+			<p:dataTable id="failedLoginsSingle" var="failedLogin" value="#{failedLoginListBean.allFailedLogins}" selectionMode="single" rowKey="#{failedLogin.failedLoginId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px">
+	
+				<p:column headerText="失败登录ID" priority="1">
+					<h:outputText value="#{failedLogin.failedLoginId}" />
+				</p:column>
+	
+				<p:column headerText="类别" priority="1">
+					<h:outputText value="#{failedLogin.typeEnum.name()}" />
+				</p:column>			
+				
+				<p:column headerText="用户名" priority="1">
+					<h:outputText value="#{failedLogin.username}" />
+				</p:column>
+				
+				<p:column headerText="访问IP" priority="1">
+					<h:outputText value="#{failedLogin.accessIp}" />
+				</p:column>														
+				
+				<p:column headerText="失败登录平台ID" priority="1">
+					<h:outputText value="#{failedLogin.platformId}" />
+				</p:column>				
+	
+				<p:column headerText="失败登录平台名称" priority="2">
+					<h:outputText value="#{failedLogin.platformName}" />
+				</p:column>
+				
+				<p:column headerText="失败登录时间" priority="1">
+					<h:outputText value="#{failedLogin.loginTimeDate}">
+					    <f:convertDateTime  pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai"/>
+					</h:outputText>
+				</p:column>															
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

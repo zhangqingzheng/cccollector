@@ -1,0 +1,26 @@
+@charset "UTF-8";
+
+@media (min-width: 961px) {
+    #TITLESPAN {
+        font-size: 30px;
+    }
+}
+
+@media (max-width: 960px) {
+    #TITLESPAN {
+        font-size: 24px;
+    }
+    
+    .ContentSideSections{
+        padding:14px 15px;
+    }
+}
+
+.disabled {
+	background-color: #dddddd !important;
+	color: #999999 !important;
+}
+
+.unpublished {
+	color: #008000 !important;
+}

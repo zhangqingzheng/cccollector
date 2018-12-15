@@ -1,0 +1,267 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import com.cccollector.app.model.Department;
+import com.cccollector.app.model.Job;
+import com.cccollector.app.model.Platform;
+import com.cccollector.app.model.Role;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.dao.QueryField.PredicateEnum;
+import com.cccollector.universal.view.GenericListBean;
+
+/**
+ * 角色列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class RoleListBean extends BaseListBean<Role> {
+	public RoleListBean() {
+		modelDisplayName = "角色";
+		modelAttributeName = "role";
+		modelIdAttributeName = "roleId";
+		genericListBeanHandler = new GenericListBean.GenericListBeanHandlerRelatedAll<Role>() {
+
+			@Override
+			public Object loadRelatedModel(int index, int relatedModelId) {
+				if (index == 1) {
+					return platformService.loadById(relatedModelId);
+				}
+				if (index == 2) {
+					return jobService.loadById(relatedModelId);
+				}
+				if (index == 4) {
+					return departmentService.loadById(relatedModelId);
+				}
+				return null;
+			}
+
+			@Override
+			public List<Role> loadAllModelList() {
+				// 查询条件
+				List<QueryField> predicateQueryFieldList = null;
+				// 排序条件
+				List<QueryField> orderQueryFieldList = null;
+				
+				if (getPlatform() != null) {
+					predicateQueryFieldList = new ArrayList<QueryField>();
+					predicateQueryFieldList.add(new QueryField("platform", new QueryField("platformId", getPlatform().getPlatformId())));
+				}
+				if (getJob() != null) {
+					predicateQueryFieldList = new ArrayList<QueryField>();
+					predicateQueryFieldList.add(new QueryField("jobs", new QueryField("jobId", getJob().getJobId())));
+				}
+				if (getDepartment() != null && getJob() == null) {
+					predicateQueryFieldList = new ArrayList<QueryField>();
+					predicateQueryFieldList.add(new QueryField("departments", new QueryField("departmentId", getDepartment().getDepartmentId())));
+				}
+				orderQueryFieldList = new ArrayList<QueryField>();
+				orderQueryFieldList.add(new QueryField("position", Boolean.TRUE));
+				
+				return roleService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+			}
+		};
+	}
+	
+	/**
+	 * 所属平台
+	 */
+	public Platform getPlatform() {
+		return (Platform) relatedModel(1);
+	}
+
+	/**
+	 * 关联岗位
+	 */
+	public Job getJob() {
+		return (Job) relatedModel(2);
+	}
+
+	/**
+	 * 所属部门
+	 */
+	public Department getDepartment() {
+		return (Department) relatedModel(4);
+	}
+	
+	/**
+	 * 选中的未被岗位或部门使用的角色ID
+	 */
+	private Integer selectedNotUsedRoleId;
+
+	public Integer getSelectedNotUsedRoleId() {
+		return selectedNotUsedRoleId;
+	}
+
+	public void setSelectedNotUsedRoleId(Integer _selectedNotUsedRoleId) {
+		selectedNotUsedRoleId = _selectedNotUsedRoleId;
+	}
+
+	/**
+	 * 未被岗位或部门使用的角色
+	 */
+	public List<Role> getNotUsedRoles() {
+		// 查询条件
+		List<QueryField> predicateQueryFieldList = null; 
+		if (getDepartment() == null) {
+			return null;
+		}
+		if (getDepartment() != null && getJob() == null) {
+			predicateQueryFieldList = new ArrayList<QueryField>();
+			predicateQueryFieldList.add(new QueryField("departments", new QueryField("departmentId", getDepartment().getDepartmentId(), PredicateEnum.NOT_IN)));
+		} 
+		if (getJob() != null) {
+			predicateQueryFieldList = new ArrayList<QueryField>();
+			predicateQueryFieldList.add(new QueryField("jobs", new QueryField("jobId", getJob().getJobId(), PredicateEnum.NOT_IN)));
+		}
+		// 排序
+		List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+		orderQueryFieldList.add(new QueryField("position", Boolean.TRUE));
+		
+		return roleService.loadAll(predicateQueryFieldList, orderQueryFieldList);
+	}
+	
+	/**
+	 * 添加角色到岗位或部门
+	 */
+	public void addRoleAction() {
+		if (getJob() != null) {
+			// 添加角色到岗位
+			roleService.addRoleToJob(selectedNotUsedRoleId, getJob().getJobId());
+			addInfoMessage("添加角色到岗位成功！");
+		} else {
+			// 添加角色到部门
+			roleService.addRoleToDepartment(selectedNotUsedRoleId, getDepartment().getDepartmentId());
+			addInfoMessage("添加角色到部门成功！");
+		}
+		
+		// 清空选中的角色
+		setSelectedModels(null);
+		// 清空选中的角色ID
+		selectedNotUsedRoleId = null;
+		// 刷新全部角色数据
+		allModels = null;
+	}
+
+	/**
+	 * 从岗位或部门中删除角色
+	 */
+	public void removeRoleAction(Role role) {
+		if (getJob() != null) {
+			// 从岗位中删除角色
+			roleService.deleteRoleFromJob(role.getRoleId(), getJob().getJobId());
+			addInfoMessage("从岗位中删除角色成功！");
+		} else {
+			// 从部门中删除角色
+			roleService.deleteRoleFromDepartment(role.getRoleId(), getDepartment().getDepartmentId());
+			addInfoMessage("从部门中删除角色成功！");
+		}
+		
+		// 清空选中的角色
+		setSelectedModels(null);
+		// 刷新全部角色数据
+		allModels = null;
+	}
+
+	/**
+	 * 批量从岗位或部门中删除角色
+	 */
+	public void removeRolesAction() {
+		if (getSelectedModels() == null && getSelectedModels().size() == 0) {
+			addErrorMessage("请选择一个或多个角色进行删除！");
+		}
+		if (getJob() != null) {
+			// 从岗位中删除角色
+			for (Role role : getSelectedModels()) {
+				roleService.deleteRoleFromJob(role.getRoleId(), getJob().getJobId());
+			}
+			addInfoMessage("从岗位中删除角色成功！");
+		} else {
+			// 从部门中删除角色
+			for (Role role : getSelectedModels()) {
+				roleService.deleteRoleFromJob(role.getRoleId(), getDepartment().getDepartmentId());
+			}
+			addInfoMessage("从部门中删除角色成功！");
+		}
+		
+		// 清空选中的角色
+		setSelectedModels(null);
+		// 刷新全部角色数据
+		allModels = null;
+	}
+	
+	/**
+	 * 修改角色是否可用
+	 */
+	public void modifyRolesEnabledAction(boolean enabled) {
+		if (getSelectedModels() == null && getSelectedModels().size() == 0) {
+			addErrorMessage("请选择一个或多个角色进行修改！");
+		}
+		
+		// 修改角色是否可用
+		for (Role role : getSelectedModels()) {
+			role.setEnabled(enabled);
+			roleService.update(role, "enabled");
+		}
+		addInfoMessage("修改角色是否可用成功！");
+		
+		// 刷新全部角色数据
+		allModels = null;
+	}
+	
+	/**
+	 * 删除角色
+	 */
+    public void deleteRoleAction(Role role) {
+		// 角色如果否包含子对象，则不能被删除
+		if (roleService.hasChildren(role)) {
+			addErrorMessage("要删除的角色中包含子对象，请清空子对象再进行删除！");
+			return;
+		}
+		// 删除角色
+		roleService.delete(role);
+		addInfoMessage("删除角色成功！");
+		
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 刷新全部角色数据
+		allModels = null;
+	}
+	
+	/**
+	 * 批量删除角色
+	 */
+	public void deleteRolesAction() {
+		if (getSelectedModels() == null || getSelectedModels().size() == 0) {
+			addErrorMessage("请选择一个或多个角色进行删除！");
+			return;
+		}
+	
+		// 角色如果否包含子对象，则不能被删除
+		for (Role role : getSelectedModels()) {
+			if (roleService.hasChildren(role)) {
+				addErrorMessage("要删除的角色中包含子对象，请清空子对象再进行删除！");
+				return;
+			}
+		}
+		
+		// 删除角色
+		roleService.deleteAll(getSelectedModels());
+		addInfoMessage("删除角色成功！");
+		
+		// 清空选中的模型
+		setSelectedModels(null);
+		// 刷新全部角色数据
+		allModels = null;
+	}
+}

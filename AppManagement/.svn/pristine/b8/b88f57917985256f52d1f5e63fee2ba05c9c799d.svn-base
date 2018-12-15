@@ -1,0 +1,52 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+
+import com.cccollector.app.model.Login;
+import com.cccollector.app.service.LoginService;
+import com.cccollector.universal.dao.QueryField;
+
+/**
+ * 登录列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class LoginListBean {
+
+	/**
+	 * 登录服务
+	 */
+	@ManagedProperty(value = "#{loginService}")
+	private LoginService loginService;
+
+	public void setLoginService(LoginService _loginService) {
+		loginService = _loginService;
+	}
+
+	/**
+	 * 全部登录
+	 */
+	private List<Login> allLogins;
+
+	public List<Login> getAllLogins() {
+		if (allLogins == null) {	
+			// 排序
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("loginTime", Boolean.FALSE));
+			
+			allLogins = loginService.loadAll(null, orderQueryFieldList);
+		}
+		return allLogins;
+	}
+}

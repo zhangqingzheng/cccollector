@@ -1,0 +1,104 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+
+import org.hibernate.exception.ConstraintViolationException;
+import org.primefaces.context.RequestContext;
+import org.springframework.dao.DataIntegrityViolationException;
+
+import com.cccollector.app.model.Platform;
+import com.cccollector.app.service.PlatformService;
+
+/**
+ * 平台Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class PlatformBean {
+
+	/**
+	 * 平台服务
+	 */
+	@ManagedProperty(value = "#{platformService}")
+	private PlatformService platformService;
+
+	public void setPlatformService(PlatformService _platformService) {
+		platformService = _platformService;
+	}
+
+	/**
+	 * 平台ID
+	 */
+	private String platformId;
+
+	public String getPlatformId() {
+		return platformId;
+	}
+
+	public void setPlatformId(String _platformId) {
+		platformId = _platformId;
+		
+		// 新建或加载平台
+		if (platform == null) {
+			Integer id = 0;
+			try {
+				id = Integer.valueOf(platformId);
+			} catch (Exception e) {}
+			if (id == 0) {
+				platform = new Platform();
+				platform.setEnabled(true);
+			} else {
+				platform = platformService.loadById(id);
+			}
+		}
+	}
+
+	/**
+	 * 平台
+	 */
+	private Platform platform;
+
+	public Platform getPlatform() {
+		return platform;
+	}
+	
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (platform.getPlatformId() == null) {
+			Integer platformId = null;
+			try {
+				// 添加平台
+				platformId = platformService.save(platform);
+			} catch (ConstraintViolationException e) {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "标识符必须唯一，不能重复！", "标识符必须唯一，不能重复！"));
+				return;
+			}
+			RequestContext.getCurrentInstance().closeDialog(platformId != null ? Boolean.TRUE : Boolean.FALSE);
+		} else {
+			Platform platformUpdated = null;
+			try {
+				// 编辑平台
+				platformUpdated = platformService.update(platform);
+			} catch (DataIntegrityViolationException e) {
+				if (e.contains(ConstraintViolationException.class)) {
+					facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "标识符必须唯一，不能重复！", "标识符必须唯一，不能重复！"));
+					return;
+				}
+			}
+			RequestContext.getCurrentInstance().closeDialog(platformUpdated != null ? Boolean.TRUE : Boolean.FALSE);
+		}
+	}
+}

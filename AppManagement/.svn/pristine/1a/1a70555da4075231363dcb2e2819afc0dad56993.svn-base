@@ -1,0 +1,26 @@
+/**
+ * 
+ */
+package com.cccollector.app.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.cccollector.app.dao.DepartmentDao;
+import com.cccollector.app.model.Department;
+import com.cccollector.app.service.DepartmentService;
+import com.cccollector.universal.service.GenericServiceHibernateImpl;
+
+/**
+ * 部门服务实现类
+ *
+ * @author 谢朋
+ * Copyright © 2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Service("departmentService")
+public class DepartmentServiceImpl extends GenericServiceHibernateImpl<Integer, Department> implements DepartmentService {
+	
+	@SuppressWarnings("unused")
+	@Autowired
+	private DepartmentDao departmentDao;
+}

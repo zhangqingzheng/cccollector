@@ -1,0 +1,83 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.bean.ManagedProperty;
+
+import com.cccollector.app.service.DepartmentService;
+import com.cccollector.app.service.JobService;
+import com.cccollector.app.service.PlatformService;
+import com.cccollector.app.service.RoleService;
+import com.cccollector.app.service.UserDetailService;
+import com.cccollector.app.service.UserService;
+import com.cccollector.universal.view.GenericListBean;
+
+/**
+ * 基础列表Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public abstract class BaseListBean<T> extends GenericListBean<T> {
+	
+	/**
+	 * 平台服务
+	 */
+	@ManagedProperty(value = "#{platformService}")
+	protected PlatformService platformService;
+
+	public void setPlatformService(PlatformService _platformService) {
+		platformService = _platformService;
+	}
+	
+	/**
+	 * 角色服务
+	 */
+	@ManagedProperty(value = "#{roleService}")
+	protected RoleService roleService;
+	
+	public void setRoleService(RoleService _roleService) {
+		roleService = _roleService;
+	}
+	
+	/**
+	 * 部门服务
+	 */
+	@ManagedProperty(value = "#{departmentService}")
+	protected DepartmentService departmentService;
+
+	public void setDepartmentService(DepartmentService _departmentService) {
+		departmentService = _departmentService;
+	}
+	
+	/**
+	 * 岗位服务
+	 */
+	@ManagedProperty(value = "#{jobService}")
+	protected JobService jobService;
+	
+	public void setJobService(JobService _jobService) {
+		jobService = _jobService;
+	}
+	
+	/**
+	 * 用户服务 
+	 */
+	@ManagedProperty(value = "#{userService}")
+	protected UserService userService;
+	
+	public void setUserService(UserService _userService) {
+		userService = _userService;
+	}
+	
+	/**
+	 * 用户详情服务
+	 */
+	@ManagedProperty(value = "#{userDetailService}")
+	protected UserDetailService userDetailService;
+	
+	public void setUserDetailService(UserDetailService _userDetailService) {
+		userDetailService = _userDetailService;
+	}
+}

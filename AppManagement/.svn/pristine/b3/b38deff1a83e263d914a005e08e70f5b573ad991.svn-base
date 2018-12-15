@@ -1,0 +1,84 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import org.hibernate.exception.ConstraintViolationException;
+import org.primefaces.PrimeFaces;
+import org.springframework.core.NestedRuntimeException;
+
+import com.cccollector.app.model.Platform;
+
+/**
+ * 平台Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class PlatformBean extends BaseEditBean<Platform> {
+
+	public PlatformBean () {
+		genericEditBeanHandler = new GenericEditBeanHandlerModel<Platform>() {
+
+			@Override
+			public Platform loadModel(Integer modelId) {
+				Platform platform = null;
+				if (modelId == null) {
+					platform = new Platform();
+					platform.setEnabled(true);
+				} else {
+					platform = platformService.loadById(modelId);
+				}
+				return platform;
+			}
+		};
+	}
+
+	/**
+	 * 平台
+	 */
+	public Platform getPlatform() {
+		return getModel();
+	}
+	
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		Platform platform = getPlatform();
+		// 置空
+		if (platform.getRemarks().equals("")) {
+			platform.setRemarks(null);
+		}
+		
+		try {
+			if (platform.getPlatformId() == null) {
+				// 添加平台
+				platformService.save(platform);
+				addInfoMessageToFlash("添加平台成功！");
+			} else {
+				// 编辑平台
+				platformService.update(platform);
+				addInfoMessageToFlash("编辑平台成功！");
+			}
+		} catch (Exception e) {
+			if (e instanceof ConstraintViolationException || (e instanceof NestedRuntimeException && ((NestedRuntimeException) e).contains(ConstraintViolationException.class))) {
+				addValidatingMessage("标识符必须唯一，不能重复！");
+				return;
+			} else {
+				throw e;
+			}
+		}
+		
+		if (getUsingDialog()) {
+			PrimeFaces.current().dialog().closeDynamic(null);
+		} else {
+			handleNavigation("platformList.xhtml?multiSelect=true");
+		}
+	}
+}

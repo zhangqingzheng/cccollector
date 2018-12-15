@@ -1,0 +1,135 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="title">
+		版本列表 - 
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		<span><a href="appList.xhtml?platformId=#{editionListBean.modelId2 != null ? editionListBean.modelId2 : ''}" class="subitem">#{editionListBean.app.name}</a><span class="subitem fontSize18">应用</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="appId" value="#{editionListBean.modelId1}" />
+			<f:viewParam name="platformId" value="#{editionListBean.modelId2}" />
+		</f:metadata>
+
+		<h:form id="editionsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:remoteCommand name="screenTypeRemoteCommand" />
+			<p:inputText id="screenType" widgetVar="screenTypeHidden" value="#{editionListBean.screenType}" style="display:none" />
+			
+			<p:inputSwitch id="multiSelect" value="#{editionListBean.multiSelect}" onLabel="管理" offLabel="浏览">
+				<p:ajax update="editionsForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="editionsSingle" var="edition" value="#{editionListBean.allModels}" selectionMode="single" rowKey="#{edition.editionId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!edition.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{!editionListBean.multiSelect}">
+				<p:ajax event="rowSelect" listener="#{editionListBean.selectModelAction}" />
+	
+				<p:column headerText="版本ID" priority="1">
+					<h:outputText value="#{edition.editionId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{edition.name}" />
+				</p:column>
+	
+				<p:column headerText="标识符" priority="1">
+					<h:outputText value="#{edition.bundleId}" />
+				</p:column>
+	
+				<p:column headerText="备注" priority="2">
+					<h:outputText value="#{edition.remarks}" />
+				</p:column>
+		
+				<p:column headerText="操作系统类别" priority="1">
+					<h:outputText value="#{edition.osTypeEnum.name()}" />
+				</p:column>
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{edition.enabledEnum.name()}" />
+				</p:column>
+			</p:dataTable>
+
+			<p:dataTable id="editionsMultiple" var="edition" value="#{editionListBean.allModels}" selection="#{editionListBean.selectedModels}" rowKey="#{edition.editionId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!edition.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{editionListBean.multiSelect}">
+				<p:ajax event="rowDblselect" listener="#{editionListBean.selectModelAction}" />
+
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="版本ID" priority="1">
+					<h:outputText value="#{edition.editionId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{edition.name}" />
+				</p:column>
+	
+				<p:column headerText="标识符" priority="1">
+					<h:outputText value="#{edition.bundleId}" />
+				</p:column>
+	
+				<p:column headerText="备注" priority="2">
+					<h:outputText value="#{edition.remarks}" />
+				</p:column>
+		
+				<p:column headerText="操作系统类别" priority="1">
+					<h:outputText value="#{edition.osTypeEnum.name()}" />
+				</p:column>
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{edition.enabledEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{editionListBean.editModelAction(edition)}">
+						<p:ajax event="dialogReturn" listener="#{editionListBean.handleEditModelReturn}" update="editionsForm:messages editionsForm:editionsMultiple" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{editionListBean.deleteEditionAction(edition)}" update="editionsForm:messages editionsForm:editionsMultiple" style="margin-left:10px">
+						<p:confirm header="删除版本" message="是否确定删除所选版本？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="editionsMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{editionListBean.addModelAction}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{editionListBean.editSelectedModelAction}" update="messages" />
+				<p:menuitem icon="ui-icon-unlocked" value="可用" actionListener="#{editionListBean.modifyEditionsEnabledAction(true)}" update="messages editionsMultiple">
+					<p:confirm header="修改版本" message="是否确定修改所选版本为可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-locked" value="不可用" actionListener="#{editionListBean.modifyEditionsEnabledAction(false)}" update="messages editionsMultiple">
+					<p:confirm header="修改版本" message="是否确定修改所选版本为不可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-close" value="删除" actionListener="#{editionListBean.deleteEditionsAction}" update="messages editionsMultiple">
+					<p:confirm header="删除版本" message="是否确定删除所选版本？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{editionListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addEdition" icon="ui-icon-plus" value="添加" actionListener="#{editionListBean.addModelAction}">
+						<p:ajax event="dialogReturn" listener="#{editionListBean.handleAddModelReturn}" update="messages editionsMultiple" />
+					</p:commandButton>
+					<p:commandButton id="editEdition" icon="ui-icon-pencil" value="编辑" actionListener="#{editionListBean.editModelAction}" update="messages" style="margin-left:20px">
+						<p:ajax event="dialogReturn" listener="#{editionListBean.handleEditModelReturn}" update="messages editionsMultiple" />
+					</p:commandButton>
+					<p:commandButton id="deleteEditions" icon="ui-icon-close" value="删除" actionListener="#{editionListBean.deleteEditionsAction}" update="messages editionsMultiple" style="margin-left:20px">
+						<p:confirm header="删除版本" message="是否确定删除所选版本？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

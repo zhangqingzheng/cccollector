@@ -1,0 +1,208 @@
+/**
+ * 
+ */
+package com.cccollector.app.model;
+
+import java.io.File;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+/**
+ * 平台类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Entity
+@Table(name = "plat_platforms")
+public class Platform implements Serializable {
+
+	private static final long serialVersionUID = 4857775912574783912L;
+	
+	private Integer _platformId;
+
+	/**
+	 * 平台ID
+	 */
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public Integer getPlatformId() {
+		return _platformId;
+	}
+
+	public void setPlatformId(Integer platformId) {
+		_platformId = platformId;
+	}
+
+	/**
+	 * 平台URL路径
+	 */
+	@JsonIgnore
+	@Transient
+	public String getPlatformUrlPath() {
+		return "platforms/";
+	}
+
+	/**
+	 * 平台文件路径
+	 */
+	@JsonIgnore
+	@Transient
+	public String getPlatformFilePath() {
+		return "platforms" + File.separator;
+	}
+
+	private String _name;
+
+	/**
+	 * 名称
+	 */
+	@Column(nullable = false, length = 100)
+	public String getName() {
+		return _name;
+	}
+
+	public void setName(String name) {
+		_name = name;
+	}
+
+	private String _bundleId;
+
+	/**
+	 * 标识符
+	 */
+	@Column(nullable = false, length = 100)
+	public String getBundleId() {
+		return _bundleId;
+	}
+
+	public void setBundleId(String bundleId) {
+		_bundleId = bundleId;
+	}
+
+	private String _tomcatServer;
+
+	/**
+	 * Tomcat服务器
+	 */
+	@JsonIgnore
+	@Column(nullable = false, length = 100)
+	public String getTomcatServer() {
+		return _tomcatServer;
+	}
+
+	public void setTomcatServer(String tomcatServer) {
+		_tomcatServer = tomcatServer;
+	}
+
+	private String _remarks;
+
+	/**
+	 * 备注
+	 */
+	@JsonIgnore
+	@Column(nullable = true, length = 1000)
+	public String getRemarks() {
+		return _remarks;
+	}
+
+	public void setRemarks(String remarks) {
+		_remarks = remarks;
+	}
+
+	private Boolean _enabled;
+
+	/**
+	 * 是否可用
+	 */
+	@JsonIgnore
+	@Column(nullable = false)
+	public Boolean getEnabled() {
+		return _enabled;
+	}
+
+	public void setEnabled(Boolean enabled) {
+		_enabled = enabled;
+	}
+
+	/**
+	 * 是否可用枚举
+	 */
+	public static enum EnabledEnum {
+		否,
+		是
+	}
+
+	/**
+	 * 是否可用的枚举
+	 */
+	@JsonIgnore
+	@Transient
+	public EnabledEnum getEnabledEnum() {
+		int index = _enabled ? 1 : 0;
+		return EnabledEnum.values()[index];
+	}
+
+	private List<Module> _modules = new ArrayList<Module>();
+
+	/**
+	 * 包含的模块
+	 */
+	@JsonIgnore
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "platform")
+	@OrderBy("moduleId")
+	public List<Module> getModules() {
+		return _modules;
+	}
+
+	public void setModules(List<Module> modules) {
+		_modules = modules;
+	}
+	
+	private List<Role> _roles = new ArrayList<Role>();
+
+	/**
+	 * 包含的角色
+	 */
+	@JsonIgnore
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "platform")
+	@OrderBy("roleId")
+	public List<Role> getRoles() {
+		return _roles;
+	}
+
+	public void setRoles(List<Role> roles) {
+		_roles = roles;
+	}
+	
+	private List<App> _apps = new ArrayList<App>();
+
+	/**
+	 * 关联的应用
+	 */
+	@JsonIgnore
+	@ManyToMany(fetch = FetchType.LAZY, mappedBy = "platforms")
+	@OrderBy("name")
+	public List<App> getApps() {
+		return _apps;
+	}
+
+	public void setApps(List<App> apps) {
+		_apps = apps;
+	}	
+}

@@ -1,0 +1,592 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.regex.Pattern;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
+import javax.faces.bean.ViewScoped;
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+
+import org.primefaces.event.FileUploadEvent;
+import org.primefaces.model.DefaultStreamedContent;
+import org.primefaces.model.DualListModel;
+import org.primefaces.model.StreamedContent;
+
+import com.cccollector.app.model.Permission;
+import com.cccollector.app.model.Platform;
+import com.cccollector.app.model.Role;
+import com.cccollector.app.model.User;
+import com.cccollector.app.service.PermissionService;
+import com.cccollector.app.service.PlatformService;
+import com.cccollector.app.service.RoleService;
+import com.cccollector.app.service.UserService;
+import com.cccollector.universal.dao.QueryField;
+import com.cccollector.universal.util.ImageUtils;
+
+/**
+ * 用户Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class UserBean {
+
+	/**
+	 * 用户服务
+	 */
+	@ManagedProperty(value = "#{userService}")
+	private UserService userService;
+
+	public void setUserService(UserService _userService) {
+		userService = _userService;
+	}
+
+	/**
+	 * 角色服务
+	 */
+	@ManagedProperty(value = "#{roleService}")
+	private RoleService roleService;
+
+	public void setRoleService(RoleService _roleService) {
+		roleService = _roleService;
+	}	
+
+	/**
+	 * 权限服务
+	 */
+	@ManagedProperty(value = "#{permissionService}")
+	private PermissionService permissionService;
+
+	public void setPermissionService(PermissionService _permissionService) {
+		permissionService = _permissionService;
+	}	
+
+	/**
+	 * 平台服务
+	 */
+	@ManagedProperty(value = "#{platformService}")
+	private PlatformService platformService;
+
+	public void setPlatformService(PlatformService _platformService) {
+		platformService = _platformService;
+	}	
+	
+	/**
+	 * 用户ID
+	 */
+	private String userId;
+
+	public String getUserId() {
+		return userId;
+	}
+
+	public void setUserId(String _userId) {
+		userId = _userId;
+		
+		// 新建或加载用户
+		if (user == null) {
+			Integer id = 0;
+			try {
+				id = Integer.valueOf(userId);
+			} catch (Exception e) {}
+			if (id == 0) {
+				user = new User();
+				user.setHasAvatar(false);
+				user.setType(User.TypeEnum.正式.ordinal());				
+				user.setEnabled(true);
+			} else {
+				user = userService.loadById(id);
+				
+				// 处理头像
+				try {
+					String filePath = userService.getDataUsersPath() + user.avatarFilePath();
+					if (new File(filePath).exists()) {
+						avatarFilePath = filePath;
+						FileInputStream fileInputStream = new FileInputStream(avatarFilePath);
+						avatarImage = new DefaultStreamedContent(fileInputStream, "image/jpg");
+					}
+				} catch (Exception e) {}
+			}
+		}
+	}
+
+	/**
+	 * 用户
+	 */
+	private User user;
+
+	public User getUser() {
+		return user;
+	}
+
+	/**
+	 * 头像文件路径
+	 */
+	private String avatarFilePath;
+
+	public String getAvatarFilePath() {
+		return avatarFilePath;
+	}
+
+	/**
+	 * 头像图像
+	 */
+	private StreamedContent avatarImage;
+
+	public StreamedContent getAvatarImage() {
+		return avatarImage;
+	}
+	
+	/**
+	 * 处理头像上传
+	 */
+	public void handleAvatarFileUpload(FileUploadEvent fileUploadEvent) {
+		try {
+			new File(userService.getTempPath()).mkdirs();
+			String tempFileName = new Date().getTime() + "_" + new Random().nextInt(10000) + ".jpg";
+			avatarFilePath = userService.getTempPath() + tempFileName;
+			fileUploadEvent.getFile().write(avatarFilePath);
+			
+			// 获取头像图片宽高
+			SimpleImageInfo simpleImageInfo = new SimpleImageInfo(new File(avatarFilePath));
+			int width = simpleImageInfo.getWidth();
+			int height = simpleImageInfo.getHeight();
+
+			// 裁切方图
+			if (width != height) {
+				int square = Math.min(width, height);
+				String tempFileNameNew = new Date().getTime() + "_" + new Random().nextInt(10000) + ".jpg";
+				String avatarFilePathOld = avatarFilePath;
+				avatarFilePath = userService.getTempPath() + tempFileNameNew;
+				ImageUtils.cropImage(avatarFilePathOld, avatarFilePath, userService.getImageMagickPath(), square, square);
+				new File(avatarFilePathOld).delete();
+			}
+			
+			FileInputStream fileInputStream = new FileInputStream(avatarFilePath);
+			avatarImage = new DefaultStreamedContent(fileInputStream, "image/jpg");
+		} catch (Exception e) {
+			avatarFilePath = null;
+			avatarImage = null;
+		}
+	}
+	
+	/**
+	 * 处理头像删除
+	 */
+	public void handleAvatarDelete(ActionEvent actionEvent) {
+		avatarFilePath = null;
+		avatarImage = null;
+	}
+
+	/**
+	 * 选中的平台ID
+	 */
+	private Integer selectedPlatformId;
+	
+	public Integer getSelectedPlatformId() {
+		return selectedPlatformId;
+	}
+
+	public void setSelectedPlatformId(Integer _selectedPlatformId) {
+		selectedPlatformId = _selectedPlatformId;
+	}	
+
+	/**
+	 * 选中的平台改变	
+	 */
+	public void onSelectedPlatformIdChange() {
+		// 刷新pickList列表
+        getAllRoles();
+	}	
+	
+	/**
+	 * 全部平台
+	 */
+	private List<Platform> allPlatforms;
+
+	public List<Platform> getAllPlatforms() {
+		if (allPlatforms == null) {
+			// 排序
+			List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+			orderQueryFieldList.add(new QueryField("enabled", Boolean.FALSE));
+			orderQueryFieldList.add(new QueryField("name", Boolean.TRUE));
+			
+			allPlatforms = platformService.loadAll(null, orderQueryFieldList);
+		}
+		return allPlatforms;
+	}	
+	
+	/**
+	 * 所有平台下的源角色
+	 */
+    public List<Role> getAllSourceRoles() {
+		// 查询条件
+		List<QueryField> predicateQueryFieldList = null;
+        // 排序		
+        List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+		if (selectedPlatformId != null) {
+			predicateQueryFieldList = new ArrayList<QueryField>();
+			predicateQueryFieldList.add(new QueryField("platform", new QueryField("platformId", selectedPlatformId)));
+			orderQueryFieldList.add(new QueryField("roleId", Boolean.TRUE));
+			return	roleService.loadAll(predicateQueryFieldList, orderQueryFieldList);			
+		} else {
+			return new ArrayList<Role>();
+		}   	
+    }
+    
+	/**
+	 * 所有平台下的目标角色
+	 */
+    public List<Role> getAllTargetRoles() { 		
+        return new ArrayList<Role>();
+    }
+
+	/** 
+	 * 所有平台下的角色
+	 */
+    private DualListModel<Role> allRoles;
+    public DualListModel<Role> getAllRoles() { 
+    	allRoles = new  DualListModel<Role>(getAllSourceRoles(),getAllTargetRoles());
+        return allRoles;
+    }    
+    public void setAllRoles(DualListModel<Role> _allRoles) {
+    	allRoles = _allRoles;
+    }
+    
+	/**
+	 * 所有平台下的源权限
+	 */
+    public List<Permission> getAllSourcePermissions() { 
+        // 排序
+        List<QueryField> orderQueryFieldList = new ArrayList<QueryField>();
+		orderQueryFieldList.add(new QueryField("type", Boolean.TRUE));
+		
+		return	permissionService.loadAll(null, orderQueryFieldList);
+    }
+    
+	/**
+	 * 所有平台下的目标权限
+	 */
+    public List<Permission> getAllTargetPermissions() { 		
+        return new ArrayList<Permission>();
+    }
+
+	/** 
+	 * 所有平台下的权限
+	 */
+    private DualListModel<Permission> allPermissions;    
+    public DualListModel<Permission> getAllPermissions() { 
+		allPermissions = new  DualListModel<Permission>(getAllSourcePermissions(),getAllTargetPermissions());		
+        return allPermissions;
+    }    
+
+    public void setAllPermissions(DualListModel<Permission> _allPermissions) {
+    	allPermissions = _allPermissions;
+    }
+    
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		// 置空
+		if (user.getPassword().equals("")) {
+			user.setPassword(null);
+		}
+		if (user.getEmail().equals("")) {
+			user.setEmail(null);
+		}
+		if (user.getCellphone().equals("")) {
+			user.setCellphone(null);
+		}
+		if (user.getRemarks().equals("")) {
+			user.setRemarks(null);
+		}
+
+		FacesContext facesContext = FacesContext.getCurrentInstance();
+		if (user.getPassword() != null) {
+			// 验证密码
+			if (user.getPassword().length() < 8) {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "密码长度必须不少于8位, 请符合规则！", "密码长度必须不少于8位, 请符合规则！"));
+				return;				
+			}
+			boolean match = Pattern.matches("^.*[A-Z]+.*$", user.getPassword()) && Pattern.matches("^.*[a-z]+.*$", user.getPassword()) && Pattern.matches("^.*[0-9]+.*$", user.getPassword());			
+			if (!match) {
+				facesContext.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "密码必须包含大小写字母和数字, 请符合规则！", "密码必须包含大小写字母和数字, 请符合规则！"));
+				return;				
+			}
+			
+			// 设置密码盐
+			user.setSalt(createRandomSalt(40));
+			
+			// 设置密码
+			try {
+				MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+				messageDigest.reset();
+				String salt = userService.getPlatformBundleId() + user.getSalt();
+				messageDigest.update(salt.getBytes("UTF-8"));
+				byte[] hashed = messageDigest.digest(user.getPassword().getBytes("UTF-8"));
+				String passwordMD5 = new BigInteger(1, hashed).toString(16);
+				user.setPassword(passwordMD5);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		if (user.getUserId() == null) {
+			// 设置创建时间
+			user.setCreateTimeDate(new Date());
+			
+			// 添加用户
+			userService.save(user);
+			try {
+				facesContext.getExternalContext().redirect("userList.xhtml?multiSelect=true");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+			if (user.getPassword() == null) {
+				User userOld = userService.loadById(user.getUserId());;
+				user.setPassword(userOld.getPassword());
+			}
+			if (allRoles != null) {
+				user.setRoles(allRoles.getTarget());
+			}
+			if (allPermissions != null) {
+				user.setPermissions(allPermissions.getTarget());			
+			}
+			userService.update(user);
+			try {
+				facesContext.getExternalContext().redirect("userList.xhtml?multiSelect=true");	
+			}  catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		// 处理头像文件
+		File avatarFile = new File(userService.getDataUsersPath() + user.avatarFilePath());
+		if (avatarFilePath != null) {
+			if (avatarFilePath.startsWith(userService.getTempPath())) {
+				File tempFile = new File(avatarFilePath);
+				avatarFile.getParentFile().mkdirs();
+				try {
+					Files.copy(tempFile.toPath(), avatarFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+					tempFile.delete();
+					
+					// 设置是否有头像
+					user.setHasAvatar(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		} else {
+			if (avatarFile.exists()) {
+				avatarFile.delete();
+			}
+			
+			// 设置是否有头像
+			user.setHasAvatar(false);
+		}
+		
+		// 更新用户是否有头像
+		userService.update(user, "hasAvatar");
+		
+		// 清除nginx缓存文件
+		File[] sizeFiles = new File(userService.getImagePath()).listFiles();
+		if (sizeFiles != null) {	
+			for (File sizeFile : sizeFiles) {
+				File avatarImageFile = new File(sizeFile, userService.getUsersPath() + user.avatarFilePath());
+				avatarImageFile.delete();
+			}
+		}
+	}
+	
+	/**
+	 * 随机生成40位密码盐
+	 */
+	public static String createRandomSalt(int length) {
+		// 密码盐
+        String value = "";  
+        Random random = new Random();  
+           
+        for(int i = 0; i < length; i++) {  
+              
+            String charOrNum = random.nextInt(2) % 2 == 0 ? "char" : "num";  
+            //输出字母还是数字  
+            if( "char".equalsIgnoreCase(charOrNum) ) {  
+                //输出大写字母或小写字母 
+                int temp = random.nextInt(2) % 2 == 0 ? 65 : 97;  
+                value += (char)(random.nextInt(26) + temp);  
+            } else if( "num".equalsIgnoreCase(charOrNum) ) {  
+                value += String.valueOf(random.nextInt(10));  
+            }  
+        }  
+        return value;
+	}
+
+	/**
+	 * 图片信息处理
+	 */	
+	public static class SimpleImageInfo {
+	    private int height;
+	    private int width;
+	    private String mimeType;
+
+	    public SimpleImageInfo(File file) throws IOException {
+	        InputStream is = new FileInputStream(file);
+	        try {
+	            processStream(is);
+	        } finally {
+	            is.close();
+	        }
+	    }
+
+	    public SimpleImageInfo(InputStream is) throws IOException {
+	        processStream(is);
+	    }
+
+	    public SimpleImageInfo(byte[] bytes) throws IOException {
+	        InputStream is = new ByteArrayInputStream(bytes);
+	        try {
+	            processStream(is);
+	        } finally {
+	            is.close();
+	        }
+	    }
+
+	    private void processStream(InputStream is) throws IOException {
+	        int c1 = is.read();
+	        int c2 = is.read();
+	        int c3 = is.read();
+
+	        mimeType = null;
+	        width = height = -1;
+
+	        if (c1 == 'G' && c2 == 'I' && c3 == 'F') { // GIF
+	            is.skip(3);
+	            width = readInt(is,2,false);
+	            height = readInt(is,2,false);
+	            mimeType = "image/gif";
+	        } else if (c1 == 0xFF && c2 == 0xD8) { // JPG
+	            while (c3 == 255) {
+	                int marker = is.read();
+	                int len = readInt(is,2,true);
+	                if (marker == 192 || marker == 193 || marker == 194) {
+	                    is.skip(1);
+	                    height = readInt(is,2,true);
+	                    width = readInt(is,2,true);
+	                    mimeType = "image/jpeg";
+	                    break;
+	                }
+	                is.skip(len - 2);
+	                c3 = is.read();
+	            }
+	        } else if (c1 == 137 && c2 == 80 && c3 == 78) { // PNG
+	            is.skip(15);
+	            width = readInt(is,2,true);
+	            is.skip(2);
+	            height = readInt(is,2,true);
+	            mimeType = "image/png";
+	        } else if (c1 == 66 && c2 == 77) { // BMP
+	            is.skip(15);
+	            width = readInt(is,2,false);
+	            is.skip(2);
+	            height = readInt(is,2,false);
+	            mimeType = "image/bmp";
+	        } else {
+	            int c4 = is.read();
+	            if ((c1 == 'M' && c2 == 'M' && c3 == 0 && c4 == 42)
+	                    || (c1 == 'I' && c2 == 'I' && c3 == 42 && c4 == 0)) { //TIFF
+	                boolean bigEndian = c1 == 'M';
+	                int ifd = 0;
+	                int entries;
+	                ifd = readInt(is,4,bigEndian);
+	                is.skip(ifd - 8);
+	                entries = readInt(is,2,bigEndian);
+	                for (int i = 1; i <= entries; i++) {
+	                    int tag = readInt(is,2,bigEndian);
+	                    int fieldType = readInt(is,2,bigEndian);
+	                    int valOffset;
+	                    if ((fieldType == 3 || fieldType == 8)) {
+	                        valOffset = readInt(is,2,bigEndian);
+	                        is.skip(2);
+	                    } else {
+	                        valOffset = readInt(is,4,bigEndian);
+	                    }
+	                    if (tag == 256) {
+	                        width = valOffset;
+	                    } else if (tag == 257) {
+	                        height = valOffset;
+	                    }
+	                    if (width != -1 && height != -1) {
+	                        mimeType = "image/tiff";
+	                        break;
+	                    }
+	                }
+	            }
+	        }
+	        if (mimeType == null) {
+	            throw new IOException("Unsupported image type");
+	        }
+	    }
+	    
+	    private int readInt(InputStream is, int noOfBytes, boolean bigEndian) throws IOException {
+	        int ret = 0;
+	        int sv = bigEndian ? ((noOfBytes - 1) * 8) : 0;
+	        int cnt = bigEndian ? -8 : 8;
+	        for(int i=0;i<noOfBytes;i++) {
+	            ret |= is.read() << sv;
+	            sv += cnt;
+	        }
+	        return ret;
+	    }
+
+	    public int getHeight() {
+	        return height;
+	    }
+
+	    public void setHeight(int height) {
+	        this.height = height;
+	    }
+
+	    public int getWidth() {
+	        return width;
+	    }
+
+	    public void setWidth(int width) {
+	        this.width = width;
+	    }
+
+	    public String getMimeType() {
+	        return mimeType;
+	    }
+
+	    public void setMimeType(String mimeType) {
+	        this.mimeType = mimeType;
+	    }
+
+	    @Override
+	    public String toString() {
+	        return "MIME Type : " + mimeType + "\t Width : " + width + "\t Height : " + height;
+	    }
+	}
+}

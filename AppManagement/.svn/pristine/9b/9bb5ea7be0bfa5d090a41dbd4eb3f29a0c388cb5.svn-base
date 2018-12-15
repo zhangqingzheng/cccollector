@@ -1,0 +1,23 @@
+/**
+ * 
+ */
+package com.cccollector.app.service;
+
+import com.cccollector.app.model.Department;
+import com.cccollector.universal.service.GenericService;
+
+/**
+ * 部门服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public interface DepartmentService extends GenericService<Integer, Department> {
+	
+	/**
+	 * 添加部门
+	 * 
+	 * @param department 待添加的部门
+	 */
+	public void addDepartment(Department department);
+}

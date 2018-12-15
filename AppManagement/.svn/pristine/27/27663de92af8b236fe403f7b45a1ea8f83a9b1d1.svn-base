@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+	<h:head>
+		<title>#{departmentBean.department.departmentId == null ? '添加' : '编辑'}部门</title>
+	    <h:outputStylesheet name="css/showcase.css" />
+	</h:head>
+
+	<h:body style="background-color:#ffffff;">
+		<h:form id="departmentEditForm" style="margin:10px">
+			<f:metadata>
+				<f:viewParam name="parentDepartmentId" value="#{departmentBean.modelId1}" />
+				<f:viewParam name="departmentId" value="#{departmentBean.modelId}" />
+			</f:metadata>
+		
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="departmentId" value="部门ID:" style="font-weight:bold" rendered="#{departmentBean.department.departmentId != null}" />
+				<p:outputLabel id="departmentId" value="#{departmentBean.department.departmentId}" rendered="#{departmentBean.department.departmentId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" />
+				<p:inputText id="name" value="#{departmentBean.department.name}" required="true" requiredMessage="名称为必填项" size="30">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="hasBadge" value="是否有徽章:" style="font-weight:bold" />
+				<p:inputSwitch id="hasBadge" value="#{departmentBean.department.hasBadge}" onLabel="是" offLabel="否" />
+				
+				<p:outputLabel for="isIndependent" value="是否独立机构:" style="font-weight:bold" />
+				<p:inputSwitch id="isIndependent" value="#{departmentBean.department.isIndependent}" onLabel="是" offLabel="否" />
+				
+				<p:outputLabel for="remarks" value="备注:" style="font-weight:bold" />
+				<p:inputTextarea id="remarks" value="#{departmentBean.department.remarks}" autoResize="false" rows="10" cols="30">
+					<f:validateLength maximum="1000" />
+				</p:inputTextarea>
+				
+				<p:outputLabel for="parentDepartmentName" value="父部门:" style="font-weight:bold" />
+				<p:outputLabel id="parentDepartmentName" value="#{departmentBean.department.parentDepartment.name}" />
+				
+				<p:outputLabel for="code" value="排序代码:" style="font-weight:bold" rendered="#{departmentBean.department.departmentId != null}" />
+				<p:outputLabel id="code" value="#{departmentBean.department.code}" rendered="#{departmentBean.department.departmentId != null}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{departmentBean.saveAction}" update="messages" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</h:body>
+</html>

@@ -1,0 +1,64 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="title">
+		人员信息表 - 
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		<span class="subitem">全部</span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="usersForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:dataTable id="usersSingle" widgetVar="usersSingleTable" var="user" value="#{personnelInfoListBean.personnelInfo}" selectionMode="single" rowKey="#{user.userId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!user.enabled? 'disabled' : null}" style="margin:20px 0px">
+				<p:column headerText="用户ID" priority="1">
+					<h:outputText value="#{user.userId}" />
+				</p:column>
+	
+				<p:column headerText="用户名" priority="1">
+					<h:outputText value="#{user.username}" />
+				</p:column>			
+				
+				<p:column headerText="真实姓名" priority="1">
+					<h:outputText value="#{user.realName}" style="vertical-align:middle" />
+				</p:column>
+				
+				<p:column headerText="电子邮箱" priority="1">
+					<h:outputText value="#{user.email}" />
+				</p:column>
+				
+				<p:column headerText="手机号" priority="1">
+					<h:outputText value="#{user.cellphone}" />
+				</p:column>														
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{user.enabledEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="到期日期" priority="1">
+					<h:outputText value="#{user.expiresDate}">
+					    <f:convertDateTime  pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai"/>
+					</h:outputText>
+				</p:column>
+				
+				<p:column headerText="创建时间" priority="1">
+					<h:outputText value="#{user.createTimeDate}">
+					    <f:convertDateTime  pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai"/>
+					</h:outputText>
+				</p:column>	
+				
+				<p:column headerText="最近登录时间" priority="1">
+					<h:outputText value="#{user.lastLoginTimeDate}">
+					    <f:convertDateTime  pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai"/>
+					</h:outputText>
+				</p:column>
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

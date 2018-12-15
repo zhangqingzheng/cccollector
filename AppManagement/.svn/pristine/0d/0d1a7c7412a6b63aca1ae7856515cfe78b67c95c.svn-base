@@ -1,0 +1,121 @@
+/**
+ * 
+ */
+package com.cccollector.app.view;
+
+import java.io.Serializable;
+import java.util.List;
+
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
+
+import org.primefaces.event.SelectEvent;
+
+import com.cccollector.app.model.Department;
+import com.cccollector.app.model.Job;
+import com.cccollector.app.model.User;
+
+/**
+ * 岗位Bean类
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@ManagedBean
+@ViewScoped
+public class JobBean extends BaseEditBean<Job> implements Serializable {
+
+	private static final long serialVersionUID = 2008369727252496736L;
+
+	public JobBean() {
+		genericEditBeanHandler = new GenericEditBeanHandlerModelRelated<Job>() {
+			
+			@Override
+			public Job loadModel(Integer modelId) {
+				Job job = null;
+				if (modelId == null) {
+					job = new Job();
+					job.setDepartment(getDepartment());
+				} else {
+					job = jobService.loadById(modelId, "roles");
+				}
+				return job;
+			}
+			
+			@Override
+			public Object loadRelatedModel(int index, int relatedModelId) {
+				if (index == 1) {
+					return departmentService.loadById(relatedModelId);
+				}
+				return null;
+			}
+		};
+	}
+	
+	/**
+	 * 岗位
+	 */
+	public Job getJob() {
+		return getModel();
+	}
+
+	/**
+	 * 所属部门
+	 */
+	public Department getDepartment() {
+		return (Department) relatedModel(1);
+	}
+	
+	
+	
+	/**
+	 * 用户ID
+	 */
+	private Integer userId;
+
+	public Integer getUserId() {
+		return userId;
+	}
+
+	public void setUserId(Integer _userId) {
+		userId = _userId;
+	}
+	
+	/**
+	 * 全部用户
+	 */
+	private List<User> allUsers;
+	
+	/**
+	 * 处理用户自动完成
+	 */
+	public List<User> handleUserIdComplete(String query) {
+		allUsers = userService.loadUsersBySearchWord(query);
+		return allUsers;
+	}
+	
+	/**
+	 * 处理用户选中
+	 */
+	public void handleUserIdSelect(SelectEvent event) {
+		userId = Integer.parseInt(event.getObject().toString());
+	}
+	
+	/**
+	 * 保存
+	 */
+	public void saveAction() {
+		Job job = getJob();
+		if ( job.getJobId() == null) {
+			// 添加岗位
+			jobService.addJob(job, userId);
+			addInfoMessageToFlash("添加岗位成功！");
+		} else {
+			// 编辑岗位
+			jobService.update(job);
+			addInfoMessageToFlash("编辑岗位成功！");
+		}
+		
+		handleNavigation("jobList.xhtml?multiSelect=true&departmentId=" + getModelId1());	
+	}
+}

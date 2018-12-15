@@ -1,0 +1,100 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/template.xhtml">
+	<ui:define name="title">
+		岗位列表 - 
+		<span><a href="departmentList.xhtml" class="subitem">#{jobListBean.department.name}</a><span class="subitem fontSize18">部门</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<f:metadata>
+			<f:viewParam name="departmentId" value="#{jobListBean.modelId1}" />
+			<f:viewParam name="multiSelect" value="#{jobListBean.multiSelect}" />
+		</f:metadata>
+		
+		<h:form id="jobsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:remoteCommand name="screenTypeRemoteCommand" />
+			<p:inputText id="screenType" widgetVar="screenTypeHidden" value="#{jobListBean.screenType}" style="display:none" />
+			
+			<p:inputSwitch id="multiSelect" value="#{jobListBean.multiSelect}" onLabel="管理" offLabel="浏览">
+				<p:ajax update="jobsForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="jobsSingle" widgetVar="jobsSingleTable" var="job" value="#{jobListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selectionMode="single" rowKey="#{job.jobId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{!jobListBean.multiSelect}">
+				<p:column headerText="岗位ID" priority="1">
+					<h:outputText value="#{job.jobId}" />
+				</p:column>
+
+				<p:column headerText="用户" priority="1" filterBy="#{job.user.username}" filterMatchMode="contains">
+					<h:outputText value="#{job.user.username}" />
+				</p:column>
+				
+				<p:column headerText="名称" priority="1" filterBy="#{job.name}" filterMatchMode="contains">
+					<h:outputText value="#{job.name}" />
+				</p:column>
+	
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="fa fa-fw fa-list" value="管理角色" actionListener="#{jobListBean.manageRolesAction(job)}" update="jobsForm:messages" />
+				</p:column>
+			</p:dataTable>
+			
+			<p:dataTable id="jobsMultiple" widgetVar="jobsMultipleTable" var="job" value="#{jobListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selection="#{jobListBean.selectedModels}" rowKey="#{job.jobId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{jobListBean.multiSelect}">
+				<p:ajax event="rowDblselect" listener="#{jobListBean.selectModelAction}" />
+				
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+				
+				<p:column headerText="岗位ID" priority="1">
+					<h:outputText value="#{job.jobId}" />
+				</p:column>
+				
+				<p:column headerText="用户" priority="1" filterBy="#{job.user.username}" filterMatchMode="contains">
+					<h:outputText value="#{job.user.username}" />
+				</p:column>
+				
+				<p:column headerText="名称" priority="1" filterBy="#{job.name}" filterMatchMode="contains">
+					<h:outputText value="#{job.name}" />
+				</p:column>
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{jobListBean.editModelAction(job)}" />
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{jobListBean.deleteJobAction(job)}" update="jobsForm:messages jobsForm:jobsMultiple" style="margin-left:10px">
+						<p:confirm header="删除岗位" message="是否确定删除所选岗位？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="jobsMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{jobListBean.addModelAction}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{jobListBean.editSelectedModelAction}" update="messages" />
+				<p:menuitem icon="ui-icon-close" value="批量删除" actionListener="#{jobListBean.deleteJobsAction}" update="messages jobsMultiple">
+					<p:confirm header="删除岗位" message="是否确定删除所选岗位？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{jobListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addJob" icon="ui-icon-plus" value="添加" actionListener="#{jobListBean.addModelAction}" />
+					<p:commandButton id="editJob" icon="ui-icon-pencil" value="编辑" actionListener="#{jobListBean.editSelectedModelAction}" update="messages" style="margin-left:20px" />
+					<p:commandButton id="deleteJobs" icon="ui-icon-close" value="批量删除" actionListener="#{jobListBean.deleteJobsAction}" update="messages jobsMultiple" style="margin-left:20px">
+						<p:confirm header="删除岗位" message="是否确定删除所选岗位？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

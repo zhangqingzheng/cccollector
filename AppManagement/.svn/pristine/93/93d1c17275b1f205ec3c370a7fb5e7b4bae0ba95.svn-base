@@ -1,0 +1,192 @@
+/**
+ * 
+ */
+package com.cccollector.app.model;
+
+import java.io.Serializable;
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+/**
+ * 登陆类
+ *
+ * @author 谢朋
+ * Copyright © 2017年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+@Entity
+@Table(name = "user_logins")
+public class Login implements Serializable {
+	
+	private static final long serialVersionUID = -4591641018756223499L;
+
+	private Integer _loginId;
+
+	/**
+	 * 登陆ID
+	 */
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	public Integer getLoginId() {
+		return _loginId;
+	}
+
+	public void setLoginId(Integer loginId) {
+		_loginId = loginId;
+	}
+
+	private Integer _type;
+
+	/**
+	 * 类别
+	 */
+	@Column(nullable = false)
+	public Integer getType() {
+		return _type;
+	}
+
+	public void setType(Integer type) {
+		_type = type;
+	}
+
+	/**
+	 * 类别枚举
+	 */
+	public static enum TypeEnum {
+		网页,
+		Cookie
+	}
+
+	/**
+	 * 类别枚举数组
+	 */
+	@JsonIgnore
+	@Transient
+	public TypeEnum[] getTypeEnums() {
+		return TypeEnum.values();
+	}
+
+	/**
+	 * 类别的枚举
+	 */
+	@JsonIgnore
+	@Transient
+	public TypeEnum getTypeEnum() {
+		return TypeEnum.values()[_type];
+	}	
+
+	private String _username;
+
+	/**
+	 * 用户名
+	 */
+	@Column(nullable = false, length = 100)
+	public String getUsername() {
+		return _username;
+	}
+
+	public void setUsername(String username) {
+		_username = username;
+	}
+
+	private Integer _userId;	
+	
+	/**
+	 * 用户ID
+	 */
+	@Column(nullable = false)
+	public Integer getUserId() {
+		return _userId;
+	}
+
+	public void setUserId(Integer userId) {
+		_userId = userId;
+	}
+	
+	private String _accessIp;
+
+	/**
+	 * 访问IP
+	 */
+	@Column(nullable = false, length = 100)
+	public String getAccessIp() {
+		return _accessIp;
+	}
+
+	public void setAccessIp(String accessIp) {
+		_accessIp = accessIp;
+	}
+	
+	private Integer _platformId;	
+	
+	/**
+	 * 登录平台ID
+	 */
+	@Column(nullable = false)
+	public Integer getPlatformId() {
+		return _platformId;
+	}
+
+	public void setPlatformId(Integer platformId) {
+		_platformId = platformId;
+	}
+	
+	private String _platformName;
+
+	/**
+	 * 登录平台名称
+	 */
+	@Column(nullable = false, length = 100)
+	public String getPlatformName() {
+		return _platformName;
+	}
+
+	public void setPlatformName(String platformName) {
+		_platformName = platformName;
+	}	
+
+	private Integer _loginTime;
+
+	/**
+	 * 登录时间
+	 */
+	@JsonIgnore
+	@Column(nullable = false)
+
+	public Integer getLoginTime() {
+		return _loginTime;
+	}
+
+	public void setLoginTime(Integer loginTime) {
+		_loginTime = loginTime;
+	}
+	
+	/**
+	 * Date类型编辑时间
+	 */
+	@JsonIgnore
+	@Transient
+	public Date getLoginTimeDate() {
+		if (_loginTime != null) {
+			return new Date((long) _loginTime * 1000);
+		}
+		return null;
+	}
+	
+	@Transient
+	public void setLoginTimeDate(Date loginTimeDate) {
+		if (loginTimeDate != null) {
+			_loginTime = (int) (loginTimeDate.getTime() / 1000);
+		} else {
+			_loginTime = (int) (new Date().getTime() / 1000);
+		}
+	}		
+}

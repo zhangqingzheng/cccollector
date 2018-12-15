@@ -1,0 +1,29 @@
+/**
+ * 
+ */
+package com.cccollector.app.service;
+
+import com.cccollector.app.model.Certificate;
+import com.cccollector.universal.service.GenericService;
+
+/**
+ * 证书服务接口
+ *
+ * @author 谢朋
+ * Copyright © 2015-2018年 北京华星成汇文化发展有限公司. All rights reserved.
+ */
+public interface CertificateService extends GenericService<Integer, Certificate> {
+
+	/**
+	 * 获取证书目录
+	 */
+	public String getCertificatesPath();
+	
+	/**
+	 * 保存证书
+	 * 
+	 * @param certificate 待保存的证书
+	 * @return 保存后的证书的ID
+	 */
+	public Integer saveCertificate(Certificate certificate);
+}
