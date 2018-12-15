@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<b:beans xmlns:b="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+		http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd">
+
+	<!-- API -->
+	<b:bean id="apiRequestFilter" class="com.cccollector.news.api.impl.ApiRequestFilter">
+		<b:property name="userAppService" ref="userAppService" />
+		<b:property name="user_userAppApi" ref="user_userAppApi" />
+	</b:bean>
+	<b:bean id="apiSwagger2Feature" class="org.apache.cxf.jaxrs.swagger.Swagger2Feature">
+	    <b:property name="title" value="北京华星成汇新闻平台"/>
+	    <b:property name="description" value="客户端接口"/>
+	    <b:property name="contact" value="http://www.bjhxch.com"/>
+	    <b:property name="version" value="1.0.0"/>
+	    <b:property name="schemes" value="https"/>
+	    <b:property name="host" value="${pom.config.tomcatHost}"/>
+	    <b:property name="basePath" value="/News/services/api"/>
+	    <b:property name="prettyPrint" value="true"/>
+	</b:bean>
+	<jaxrs:server id="api" address="/api">
+		<jaxrs:serviceBeans>
+			<ref bean="newsSourceApi" />
+			<ref bean="articleApi" />
+			<ref bean="userAppApi" />
+			<ref bean="siteApi" />
+		</jaxrs:serviceBeans>
+		<jaxrs:providers>
+			<ref bean="jsonProvider" />
+			<ref bean="multipartProvider" />
+			<ref bean="apiRequestFilter" />
+		</jaxrs:providers>
+		<jaxrs:features>
+			<!-- ${pom.cxf.useApiSwagger} -->
+		</jaxrs:features>
+	</jaxrs:server>
+</b:beans>

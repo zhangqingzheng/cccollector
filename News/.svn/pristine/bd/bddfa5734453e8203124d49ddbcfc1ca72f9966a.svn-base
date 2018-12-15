@@ -1,0 +1,5 @@
+#====================================================================================
+# security\u8bbe\u7f6e
+#   pom.security.importSecurity      : \u5bfc\u5165\u5b89\u5168\u914d\u7f6e
+#====================================================================================
+pom.security.importSecurity=--><security:http><security:form-login /><security:anonymous /><security:logout /><security:csrf disabled="true" /><security:headers><security:frame-options policy="SAMEORIGIN" /></security:headers></security:http><!--

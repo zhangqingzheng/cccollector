@@ -1,0 +1,93 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="newsSourceId" value="#{glossaryBean.modelId1}" />
+			<f:viewParam name="glossaryId" value="#{glossaryBean.modelId}" />
+			<f:viewAction action="#{glossaryBean.validateModuleWithSpecificIdAction('NewsSource', glossaryBean.glossary.newsSource.newsSourceId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{glossaryBean.glossary.glossaryId == null ? '添加' : '编辑'}术语
+	</ui:define>
+
+	<ui:define name="subtitle">
+		 - <span><a href="glossaryList.xhtml?multiSelect=true&amp;newsSourceId=#{glossaryBean.modelId1}" class="subitem"><h:outputText id="subtitle" value="#{glossaryBean.glossary.title}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="glossaryEditForm">
+			<p:messages id="messages" />
+			
+			<p:tabView dynamic="true" cache="true">
+				<p:tab title="基本信息">
+					<h:panelGrid columns="2">
+						<p:outputLabel for="glossaryId" value="术语ID:" style="font-weight:bold" rendered="#{glossaryBean.glossary.glossaryId != null}" />
+						<p:outputLabel id="glossaryId" value="#{glossaryBean.glossary.glossaryId}" rendered="#{glossaryBean.glossary.glossaryId != null}" />
+						
+						<p:outputLabel for="title" value="标题:" style="font-weight:bold" />
+						<p:inputText id="title" value="#{glossaryBean.glossary.title}" required="true" requiredMessage="标题为必填项" size="80">
+							<f:validateLength maximum="200" />
+						</p:inputText>
+				
+						<p:outputLabel for="pictureRatio" value="图片比例:" style="font-weight:bold" rendered="#{glossaryBean.glossary.glossaryId == null}" />
+						<p:selectOneMenu id="pictureRatio" value="#{glossaryBean.glossary.pictureRatio}" required="true" requiredMessage="图片比例为必填项" rendered="#{glossaryBean.glossary.glossaryId == null}">
+							<f:selectItems value="#{glossaryBean.glossary.pictureRatioEnums}" var="pictureRatioEnum" itemLabel="#{pictureRatioEnum.name().replace('_', ':')}" itemValue="#{pictureRatioEnum.ordinal()}" />
+						</p:selectOneMenu>
+						
+		                <p:outputLabel for="pictureRatioName" value="图片比例:" style="font-weight:bold" rendered="#{glossaryBean.glossary.glossaryId != null}" />
+		                <p:outputLabel id="pictureRatioName" value="#{glossaryBean.glossary.pictureRatioEnum.name().replace('_', ':')}" rendered="#{glossaryBean.glossary.glossaryId != null}" />                
+						
+						<p:outputLabel for="picture" value="图片:" style="font-weight:bold" />
+						<h:panelGroup id="picture">
+							<p:fileUpload id="pictureFileUpload_1" fileUploadListener="#{glossaryBean.handlePictureFileUpload}" mode="advanced" auto="true" dragDropSupport="false" allowTypes="/(\.|\/)(jpe?g)$/" label="选择图片" invalidFileMessage="图片格式错误，只接受JPG格式！" update="picture" />
+							<p:graphicImage id="pictureGraphicImage_1" value="#{glossaryBean.pictureImage(1)}" stream="false" cache="false" width="100" />
+							<p:outputLabel id="pictureLabel_1" value="图片宽高：#{glossaryBean.pictureInfo(1).width} X #{glossaryBean.pictureInfo(1).height}" style="margin-top:10px;display:block" rendered="#{glossaryBean.pictureFilePath(1) != null}" />
+						</h:panelGroup>
+						
+						<p:outputLabel for="pictureUpdateTime" value="图片更新时间:" style="font-weight:bold" rendered="#{glossaryBean.glossary.glossaryId != null}" />
+						<p:outputLabel id="pictureUpdateTime" value="#{glossaryBean.glossary.pictureUpdateTime}" rendered="#{glossaryBean.glossary.glossaryId != null}">
+							<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+						</p:outputLabel>					
+						
+						<p:outputLabel for="displayPriority" value="显示优先级:" style="font-weight:bold" />
+						<p:selectOneRadio id="displayPriority" value="#{glossaryBean.glossary.displayPriority}" required="true" requiredMessage="显示优先级为必填项" >
+							<f:selectItems value="#{glossaryBean.glossary.displayPriorityEnums}" var="displayPriorityEnum" itemLabel="#{displayPriorityEnum.name()}" itemValue="#{displayPriorityEnum.ordinal()}" />
+						</p:selectOneRadio>
+						
+						<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+						<p:inputSwitch id="enabled" value="#{glossaryBean.glossary.enabled}" onLabel="是" offLabel="否" />
+					
+						<p:outputLabel for="newsSourceName" value="所属新闻源:" style="font-weight:bold" />
+						<p:outputLabel id="newsSourceName" value="#{glossaryBean.glossary.newsSource.name}" />
+						
+						<f:facet name="footer">
+							<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{glossaryBean.saveAction}" update="glossaryEditForm:messages" rendered="#{glossaryBean.hasModuleManage()}" />
+						</f:facet>
+					</h:panelGrid>
+				</p:tab>
+				<p:tab title="分类标签">
+					<h:panelGrid columns="1">
+						<p:pickList value="#{glossaryBean.categoryTagDualListModel}" var="categoryTag" itemLabel="#{categoryTag.nameWithLevel}" itemValue="#{categoryTag.categoryTagId}" showSourceFilter="true" showTargetFilter="true" filterMatchMode="contains">
+							<f:facet name="sourceCaption">未选择</f:facet>
+							<f:facet name="targetCaption">已选择</f:facet>
+							<p:column>
+								<h:outputText value="#{categoryTag.nameWithLevel}" title="#{categoryTag.nameWithParents}" />
+							</p:column>
+						</p:pickList>
+						
+						<f:facet name="footer">
+							<p:commandButton id="saveCategoryTagButton" icon="ui-icon-disk" value="保存" actionListener="#{glossaryBean.saveAction}" update="glossaryEditForm:messages" rendered="#{glossaryBean.hasModuleManage()}" />
+						</f:facet>
+					</h:panelGrid>
+				</p:tab>
+			</p:tabView>
+		</h:form>
+	</ui:define>
+</ui:composition>

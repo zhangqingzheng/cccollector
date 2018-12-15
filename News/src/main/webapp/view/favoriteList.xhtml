@@ -1,0 +1,63 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="userAppId" value="#{favoriteListBean.modelId1}" />
+			<f:viewParam name="contentType" value="#{favoriteListBean.modelId2}" />
+			<f:viewParam name="contentId" value="#{favoriteListBean.modelId3}" />
+		    <f:viewParam name="newsSourceId" value="#{favoriteListBean.modelId4}" />
+			<f:viewAction action="#{favoriteListBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		收藏列表 - 
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span class="subitem" style="display:#{favoriteListBean.userApp == null and favoriteListBean.article == null ? '' : 'none'}">全部</span>
+		<span style="display:#{favoriteListBean.userApp != null ? '' : 'none'}"><a href="userAppList.xhtml" class="subitem">#{favoriteListBean.userApp.name}</a><span class="subitem fontSize18">用户应用</span></span>
+		<span style="display:#{favoriteListBean.article != null ? '' : 'none'}"><a href="articleList.xhtml?newsSourceId=#{favoriteListBean.modelId4}" class="subitem">#{favoriteListBean.article.title}</a><span class="subitem fontSize18">文章</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="favoritesForm">
+			<p:growl id="messages" showDetail="true" />
+
+			<p:dataTable id="favoritesSingle" widgetVar="favoritesSingleTable" var="favorite" value="#{favoriteListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selectionMode="single" rowKey="#{favorite.favoriteId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px">
+				<p:column headerText="收藏ID" priority="1">
+					<h:outputText value="#{favorite.favoriteId}" />
+				</p:column>
+					
+				<p:column headerText="关联内容类别" priority="1" filterBy="#{favorite.modelId2}" filterMatchMode="exact" rendered="#{favoriteListBean.modelId2 == null and favoriteListBean.modelId3 == null}">
+					<f:facet name="filter">	
+						<p:selectOneMenu onchange="PF('favoritesSingleTable').filter()">
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{favoriteListBean.contentTypeEnums}" var="contentTypeEnum" itemLabel="#{contentTypeEnum.name()}" itemValue="#{contentTypeEnum.ordinal()}" />
+						</p:selectOneMenu>						
+					</f:facet>
+					<h:outputText value="#{favorite.contentTypeEnum.name()}" />
+				</p:column>
+
+				<p:column headerText="关联内容" priority="1" rendered="#{favoriteListBean.modelId2 == null and favoriteListBean.modelId3 == null}">
+					<h:outputText value="#{favorite.relativeContentName}" />
+				</p:column>
+			
+				<p:column headerText="创建时间" priority="1">
+					<h:outputText value="#{favorite.createTimeDate}" >
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="所属用户应用" priority="1" filterBy="#{favorite.userApp.name}" filterMatchMode="contains" rendered="#{favoriteListBean.userApp == null}">
+					<h:outputText value="#{favorite.userApp.name}" />
+				</p:column>
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

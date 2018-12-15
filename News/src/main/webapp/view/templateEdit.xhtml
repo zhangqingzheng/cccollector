@@ -1,0 +1,70 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				xmlns:pe="http://primefaces.org/ui/extensions"
+				template="#{templateSiteBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="siteVersionId" value="#{templateSiteBean.modelId1}" />
+			<f:viewParam name="siteId" value="#{templateSiteBean.modelId2}" />
+			<f:viewParam name="useDialog" value="#{templateSiteBean.useDialog}" />
+			<f:viewParam name="templateId" value="#{templateSiteBean.modelId}" />
+			<f:viewAction action="#{templateSiteBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{templateSiteBean.template.templateId == null ? '添加' : '编辑'}模板
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="templateList.xhtml?multiSelect=true&amp;siteVersionId=#{templateSiteBean.modelId1}&amp;siteId=#{templateSiteBean.modelId2}" class="subitem"><h:outputText id="subtitle" value="#{templateSiteBean.template.name}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="templateEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="templateId" value="模板ID:" style="font-weight:bold" rendered="#{templateSiteBean.template.templateId != null}" />
+				<p:outputLabel id="templateId" value="#{templateSiteBean.template.templateId}" rendered="#{templateSiteBean.template.templateId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" />
+				<p:inputText id="name" value="#{templateSiteBean.template.name}" required="true" requiredMessage="名称为必填项" size="50">
+					<f:validateLength maximum="100" />
+					<p:ajax immediate="true" update="subtitle" />
+				</p:inputText>
+				
+				<p:outputLabel for="type" value="类别:" style="font-weight:bold" rendered="#{templateSiteBean.template.templateId == null}" />
+				<p:selectOneRadio id="type" value="#{templateSiteBean.template.type}" required="true" requiredMessage="类别为必填项" rendered="#{templateSiteBean.template.templateId == null}" >
+					<f:selectItems value="#{templateSiteBean.template.typeEnums}" var="typeEnum" itemLabel="#{typeEnum.name().replace('_', '+')}" itemValue="#{typeEnum.ordinal()}" />
+					<p:ajax listener="#{templateSiteBean.changeTypeAction}" update="subtitle subtype" />
+				</p:selectOneRadio>
+				<p:outputLabel for="typeName" value="类别:" style="font-weight:bold" rendered="#{templateSiteBean.template.templateId != null}" />
+				<p:outputLabel id="typeName" value="#{templateSiteBean.template.typeEnum.name().replace('_', '+')}" rendered="#{templateSiteBean.template.templateId != null}" />
+
+				<p:outputLabel for="subtype" value="子类别:" style="font-weight:bold" rendered="#{templateSiteBean.template.templateId == null}" />
+				<p:selectOneRadio id="subtype" value="#{templateSiteBean.template.subtype}" required="true" requiredMessage="子类别为必填项" rendered="#{templateSiteBean.template.templateId == null}">
+					<f:selectItems value="#{templateSiteBean.template.type == 0 ? templateSiteBean.template.columnSubtypeEnums : (templateSiteBean.template.type == 1 ? templateSiteBean.template.articleSubtypeEnums : templateSiteBean.template.otherSubtypeEnums)}" var="subtypeEnum" itemLabel="#{subtypeEnum.name().replace('_', '+')}" itemValue="#{subtypeEnum.ordinal()}"/>
+				</p:selectOneRadio>
+				<p:outputLabel for="subtypeName" value="子类别:" style="font-weight:bold" rendered="#{templateSiteBean.template.templateId != null}" />
+				<p:outputLabel id="subtypeName" value="#{templateSiteBean.template.subtypeEnumName}" rendered="#{templateSiteBean.template.templateId != null}" />	
+				
+				<p:outputLabel for="remarks" value="校验表达式:" style="font-weight:bold" />
+				<p:inputTextarea id="remarks" value="#{templateSiteBean.template.validateExpression}" autoResize="false" rows="5" cols="40" />
+				
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+				<p:inputSwitch id="enabled" value="#{templateSiteBean.template.enabled}" onLabel="是" offLabel="否" />
+				
+				<p:outputLabel for="siteVersionId" value="所属站点版本:" style="font-weight:bold" />
+				<p:outputLabel id="siteVersionId" value="#{templateSiteBean.template.siteVersion.name}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{templateSiteBean.saveAction}" update="messages" rendered="#{templateSiteBean.hasModuleManage()}" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

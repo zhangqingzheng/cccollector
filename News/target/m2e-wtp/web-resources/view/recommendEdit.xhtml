@@ -1,0 +1,130 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{recommendBean.useDialog}" />
+			<f:viewParam name="recommendGroupId" value="#{recommendBean.modelId1}" />
+			<f:viewParam name="newsSourceId" value="#{recommendBean.modelId2}" />
+			<f:viewParam name="recommendId" value="#{recommendBean.modelId}" />
+			<f:viewAction action="#{recommendBean.validateModuleWithSpecificIdAction('NewsSource', recommendBean.recommend.recommendGroup.newsSource.newsSourceId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{recommendBean.recommend.recommendId == null ? '添加' : '编辑'}推荐
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="recommendList.xhtml?multiSelect=true&amp;recommendGroupId=#{recommendBean.modelId1}&amp;newsSourceId=#{recommendBean.modelId2}" class="subitem"><h:outputText id="subtitle" value="#{recommendBean.recommend.contentTypeEnum.name()}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="recommendEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="recommendId" value="推荐ID:" style="font-weight:bold" rendered="#{recommendBean.recommend.recommendId != null}" />
+				<p:outputLabel id="recommendId" value="#{recommendBean.recommend.recommendId}" rendered="#{recommendBean.recommend.recommendId != null}" />
+				
+				<p:outputLabel for="contentType" value="关联内容类别:" style="font-weight:bold" rendered="#{recommendBean.recommend.recommendId == null}" />
+				<p:selectOneRadio id="contentType" value="#{recommendBean.recommend.contentType}" required="true" requiredMessage="关联内容类别为必填项" rendered="#{recommendBean.recommend.recommendId == null}">
+					<p:ajax update="subtitle contentId title picture contentKeyValues" listener="#{recommendBean.handleContentTypeSelect}" immediate="true" />
+					<f:selectItems value="#{recommendBean.recommend.contentTypeEnums}" var="contentTypeEnum" itemLabel="#{contentTypeEnum.name()}" itemValue="#{contentTypeEnum.ordinal()}"/>
+				</p:selectOneRadio>
+				<p:outputLabel for="contentTypeName" value="关联内容类别:" style="font-weight:bold" rendered="#{recommendBean.recommend.recommendId != null}" />
+				<p:outputLabel id="contentTypeName" value="#{recommendBean.recommend.contentTypeEnum.name()}" rendered="#{recommendBean.recommend.recommendId != null}" />
+				
+				<p:outputLabel for="contentId" value="关联内容:" style="font-weight:bold" rendered="#{recommendBean.recommend.recommendId == null}" />
+				<p:autoComplete id="contentId" value="#{recommendBean.recommend.contentId}" completeMethod="#{recommendBean.handleContentComplete}" var="content" itemLabel="#{recommendBean.recommend.contentType == 0 ? content.name : (recommendBean.recommend.contentType == 1 ? content.article.title : content.nickName)}" itemValue="#{recommendBean.recommend.contentType == 0 ? content.columnId : (recommendBean.recommend.contentType == 1 ? content.distributionId : content.userId)}" dropdown="true" forceSelection="true" required="true" requiredMessage="关联内容为必填项" size="75" rendered="#{recommendBean.recommend.recommendId == null}">
+					<p:ajax event="itemSelect" listener="#{recommendBean.handleContentIdSelect}" immediate="true" update="title picture contentKeyValues" />
+					<p:column headerText="名称" rendered="#{recommendBean.recommend.contentType == 0}">
+						<h:outputText value="#{content.nameWithLevel}" />
+					</p:column>
+					
+					<p:column headerText="ID" style="width:10%" rendered="#{recommendBean.recommend.contentType == 0}">
+						<h:outputText value="#{content.columnId}" />
+					</p:column>
+					
+					<p:column headerText="标题" rendered="#{recommendBean.recommend.contentType == 1}">
+						<h:outputText value="#{content.article.title}" />
+					</p:column>
+					
+					<p:column headerText="发布时间" style="width:20%" rendered="#{recommendBean.recommend.contentType == 1}">
+						<h:outputText value="#{content.publishTimeDate}">
+							<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+						</h:outputText>
+					</p:column>
+					
+					<p:column headerText="栏目" style="width:20%" rendered="#{recommendBean.recommend.contentType == 1}">
+						<h:outputText value="#{content.column.name}" />
+					</p:column>
+					
+					<p:column headerText="分发ID" style="width:10%" rendered="#{recommendBean.recommend.contentType == 1}">
+						<h:outputText value="#{content.distributionId}" />
+					</p:column>
+					
+					<p:column headerText="昵称" rendered="#{recommendBean.recommend.contentType == 2}">
+						<h:outputText value="#{content.nickName}" />
+					</p:column>
+					
+					<p:column headerText="手机号" style="width:20%" rendered="#{recommendBean.recommend.contentType == 2}">
+						<h:outputText value="#{content.cellphone}" />
+					</p:column>
+					
+					<p:column headerText="电子邮箱" style="width:20%" rendered="#{recommendBean.recommend.contentType == 2}">
+						<h:outputText value="#{content.email}" />
+					</p:column>
+					
+					<p:column headerText="ID" style="width:10%" rendered="#{recommendBean.recommend.contentType == 2}">
+						<h:outputText value="#{content.userId}" />
+					</p:column>
+				</p:autoComplete>
+				<p:outputLabel for="contentName" value="关联内容:" style="font-weight:bold" rendered="#{recommendBean.recommend.recommendId != null}" />
+ 				<p:outputLabel id="contentName" value="#{recommendBean.recommend.relativeContentName}" rendered="#{recommendBean.recommend.recommendId != null}" />
+				
+				<p:outputLabel for="title" value="标题:" style="font-weight:bold" />
+				<p:inputText id="title" value="#{recommendBean.recommend.title}" required="true" requiredMessage="标题为必填项" size="80">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="link" value="链接:" style="font-weight:bold" />
+				<p:inputText id="link" value="#{recommendBean.recommend.link}" size="80">
+					<f:validateLength maximum="200" />
+				</p:inputText>
+
+				<p:outputLabel for="picture" value="图片:" style="font-weight:bold" />
+				<h:panelGroup id="picture">
+					<p:fileUpload id="pictureFileUpload_1" fileUploadListener="#{recommendBean.handlePictureFileUpload}" mode="advanced" auto="true" dragDropSupport="false" allowTypes="/(\.|\/)(jpe?g)$/" label="选择图片" invalidFileMessage="文件格式错误，只接受JPG格式！" update="picture" />
+					<p:graphicImage id="pictureGraphicImage_1" value="#{recommendBean.pictureImage(1)}" stream="false" cache="false" width="100" rendered="#{recommendBean.pictureFilePath(1) != null}" />
+					<p:outputLabel id="pictureLabel_1" value="图片宽高：#{recommendBean.pictureInfo(1).width} X #{recommendBean.pictureInfo(1).height}" style="margin-top:10px;display:block" rendered="#{recommendBean.pictureFilePath(1) != null}" />
+				</h:panelGroup>
+				
+				<p:outputLabel for="contentKeyValues" value="关联内容键值:" style="font-weight:bold" />
+				<p:outputLabel id="contentKeyValues" value="#{recommendBean.recommend.contentKeyValues}" />
+				
+				<p:outputLabel for="updateTime" value="更新时间:" style="font-weight:bold" rendered="#{recommendBean.recommend.recommendId != null}" />
+				<p:outputLabel id="updateTime" value="#{recommendBean.recommend.updateTimeDate}" rendered="#{recommendBean.recommend.recommendId != null}">
+					<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<p:outputLabel for="status" value="状态:" style="font-weight:bold" />
+				<p:outputLabel id="status" value="#{recommendBean.recommend.statusEnum.name()}" />
+				
+				<p:outputLabel for="validating" value="是否正在验证:" style="font-weight:bold" />
+				<p:outputLabel id="validating" value="#{recommendBean.recommend.validatingEnum.name()}" />	
+
+				<p:outputLabel for="recommendGroup" value="所属推荐组:" style="font-weight:bold" />
+				<p:outputLabel id="recommendGroup" value="#{recommendBean.recommend.recommendGroup.name}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{recommendBean.saveAction}" update="messages" rendered="#{recommendBean.hasModuleManage()}" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

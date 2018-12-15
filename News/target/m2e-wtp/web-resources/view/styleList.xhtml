@@ -1,0 +1,110 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="newsSourceId" value="#{styleListBean.modelId1}" />
+			<f:viewParam name="multiSelect" value="#{styleListBean.multiSelect}" />
+			<f:viewAction action="#{styleListBean.validateModuleWithSpecificIdAction('NewsSource', styleListBean.newsSource.newsSourceId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		样式列表 - 
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span><a href="newsSourceList.xhtml" class="subitem">#{styleListBean.newsSource.name}</a><span class="subitem fontSize18">新闻源</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="stylesForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:remoteCommand name="screenTypeRemoteCommand" />
+			<p:inputText id="screenType" widgetVar="screenTypeHidden" value="#{styleListBean.screenType}" style="display:none" />
+			
+			<p:inputSwitch id="multiSelect" value="#{styleListBean.multiSelect}" onLabel="管理" offLabel="浏览" rendered="#{styleListBean.hasModuleManage()}">
+				<p:ajax update="stylesForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="stylesSingle" widgetVar="stylesSingleTable" var="style" value="#{styleListBean.allModels}" selectionMode="single" rowKey="#{style.styleId}" resizableColumns="true"  emptyMessage="无数据" style="margin:10px 0px" rendered="#{!styleListBean.multiSelect}">
+				<p:column headerText="样式ID" priority="1">
+					<h:outputText value="#{style.styleId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{style.name}" />
+				</p:column>
+
+				<p:column headerText="模版类别" priority="1">
+					<h:outputText value="#{style.templateTypeEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="样式表文件" priority="1">
+					<p:link value="#{style.simplifyCssFilePath()}" href="#{styleListBean.loadCssLink(style)}" target="_blank" />
+				</p:column>																								
+			</p:dataTable>
+
+			<p:dataTable id="stylesMultiple" widgetVar="stylesMultipleTable" var="style" value="#{styleListBean.allModels}" selection="#{styleListBean.selectedModels}" rowKey="#{style.styleId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{styleListBean.hasModuleManage() and styleListBean.multiSelect}">
+				<p:ajax event="rowDblselect" listener="#{styleListBean.selectModelAction}" />
+				
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="样式ID" priority="1">
+					<h:outputText value="#{style.styleId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{style.name}" />
+				</p:column>
+
+				<p:column headerText="模版类别" priority="1">
+					<h:outputText value="#{style.templateTypeEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="样式表文件" priority="1">
+					<p:link value="#{style.simplifyCssFilePath()}" href="#{styleListBean.loadCssLink(style)}" target="_blank" />
+				</p:column>																								
+
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{styleListBean.editModelAction(style)}" />
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{styleListBean.deleteStyleAction(style)}" update="stylesForm:messages stylesForm:stylesMultiple">
+						<p:confirm header="删除样式" message="是否确定删除所选样式？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="stylesMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{styleListBean.addModelAction}" update="messages stylesMultiple" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{styleListBean.editSelectedModelAction}" update="messages stylesMultiple" />
+				<p:menuitem icon="ui-icon-close" value="批量删除" actionListener="#{styleListBean.deleteStylesAction}" update="messages stylesMultiple">
+					<p:confirm header="删除样式" message="是否确定删除所选样式？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+			
+			<h:panelGrid columns="1" rendered="#{styleListBean.hasModuleManage() and styleListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addStyle" icon="ui-icon-plus" value="添加" actionListener="#{styleListBean.addModelAction}" update="messages stylesMultiple" />
+					<p:commandButton id="editStyle" icon="ui-icon-pencil" value="编辑" actionListener="#{styleListBean.editSelectedModelAction}" update="messages stylesMultiple" style="margin-left:20px" />
+					<p:commandButton id="deleteStyles" icon="ui-icon-close" value="批量删除" actionListener="#{styleListBean.deleteStylesAction}" update="messages stylesMultiple" style="margin-left:20px">
+						<p:confirm header="删除样式" message="是否确定删除所选样式？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

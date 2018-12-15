@@ -1,0 +1,56 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="userAppId" value="#{followListBean.modelId1}" />
+			<f:viewParam name="followedUserAppId" value="#{followListBean.modelId2}" />
+			<f:viewAction action="#{followListBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		<span style="display:#{followListBean.followedUserApp == null ? '' : 'none'}">关注列表 - </span>
+		<span style="display:#{followListBean.followedUserApp != null ? '' : 'none'}">粉丝列表 - </span>
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span class="subitem" style="display:#{followListBean.userApp == null and followListBean.followedUserApp == null ? '' : 'none'}">全部</span>
+		<span style="display:#{followListBean.userApp != null ? '' : 'none'}"><a href="userAppList.xhtml" class="subitem">#{followListBean.userApp.name}</a><span class="subitem fontSize18">用户应用</span></span>
+		<span style="display:#{followListBean.followedUserApp != null ? '' : 'none'}"><a href="userAppList.xhtml" class="subitem">#{followListBean.followedUserApp.name}</a><span class="subitem fontSize18">用户应用</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="followsForm">
+			<p:growl id="messages" showDetail="true" />
+
+			<p:dataTable id="followsSingle" widgetVar="followsSingleTable" var="follow" value="#{followListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selectionMode="single" rowKey="#{follow.followId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px">
+				<p:column headerText="关注ID" priority="1">
+					<h:outputText value="#{follow.followId}" />
+				</p:column>
+
+				<p:column headerText="被关注用户应用" priority="1" filterBy="#{follow.followedUserApp.name}" filterMatchMode="contains" rendered="#{followListBean.followedUserApp == null}">
+					<h:outputText value="#{follow.followedUserApp.name}" />
+				</p:column>
+
+				<p:column headerText="是否互相关注" priority="1">
+					<h:outputText value="#{follow.mutualEnum.name()}" />
+				</p:column>
+
+				<p:column headerText="创建时间" priority="2">
+					<h:outputText value="#{follow.createTimeDate}" >
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="所属用户应用" priority="1" filterBy="#{follow.userApp.name}" filterMatchMode="contains" rendered="#{followListBean.userApp == null}">
+					<h:outputText value="#{follow.userApp.name}" />
+				</p:column>
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

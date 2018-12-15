@@ -1,0 +1,79 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				xmlns:pe="http://primefaces.org/ui/extensions"
+				template="#{templateMappingBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="siteVersionId" value="#{templateMappingBean.modelId1}" />
+			<f:viewParam name="siteId" value="#{templateMappingBean.modelId2}" />
+			<f:viewParam name="useDialog" value="#{templateMappingBean.useDialog}" />
+			<f:viewParam name="templateMappingId" value="#{templateMappingBean.modelId}" />
+			<f:viewAction action="#{templateMappingBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{templateMappingBean.templateMapping.templateMappingId == null ? '添加' : '编辑'}模板映射
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="templateMappingList.xhtml?multiSelect=true&amp;siteVersionId=#{templateMappingBean.modelId1}&amp;siteId=#{templateMappingBean.modelId2}" class="subitem"><h:outputText id="subtitle" value="#{templateMappingBean.templateMapping.templateMappingId}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="templateMappingEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="templateMappingId" value="模板映射ID:" style="font-weight:bold" rendered="#{templateMappingBean.templateMapping.templateMappingId != null}" />
+				<p:outputLabel id="templateMappingId" value="#{templateMappingBean.templateMapping.templateMappingId}" rendered="#{templateMappingBean.templateMapping.templateMappingId != null}" />
+
+				<p:outputLabel for="type" value="类别:" style="font-weight:bold" rendered="#{templateMappingBean.templateMapping.templateMappingId == null}" />
+				<p:selectOneRadio id="type" value="#{templateMappingBean.templateMapping.type}" required="true" requiredMessage="类别为必填项" rendered="#{templateMappingBean.templateMapping.templateMappingId == null}" >
+					<f:selectItems value="#{templateMappingBean.templateMapping.typeEnums}" var="typeEnum" itemLabel="#{typeEnum.name().replace('_', '+')}" itemValue="#{typeEnum.ordinal()}" />
+					<p:ajax listener="#{templateMappingBean.changeTypeAction}" update="sourceTemplateType targetTemplateType templateId" />
+				</p:selectOneRadio>
+				<p:outputLabel for="typeName" value="类别:" style="font-weight:bold" rendered="#{templateMappingBean.templateMapping.templateMappingId != null}" />
+				<p:outputLabel id="typeName" value="#{templateMappingBean.templateMapping.typeEnum.name().replace('_', '+')}" rendered="#{templateMappingBean.templateMapping.templateMappingId != null}" />
+
+				<p:outputLabel for="sourceTemplateType" value="源模版类别:" style="font-weight:bold" rendered="#{templateMappingBean.templateMapping.templateMappingId == null}" />
+				<p:selectOneMenu id="sourceTemplateType" value="#{templateMappingBean.templateMapping.sourceTemplateType}" required="true" requiredMessage="源模版类别为必填项" rendered="#{templateMappingBean.templateMapping.templateMappingId == null}">
+					<f:selectItems value="#{templateMappingBean.templateMapping.type == 0 ? templateMappingBean.templateMapping.columnSourceTemplateTypeEnums : (templateMappingBean.templateMapping.type == 1 ? templateMappingBean.templateMapping.articleSourceTemplateTypeEnums : templateMappingBean.templateMapping.otherSourceTemplateTypeEnums)}" var="sourceTemplateTypeEnum" itemLabel="#{sourceTemplateTypeEnum.name().replace('_', '+')}" itemValue="#{sourceTemplateTypeEnum.ordinal()}"/>
+				</p:selectOneMenu>
+				<p:outputLabel for="sourceTemplateTypeName" value="源模版类别:" style="font-weight:bold" rendered="#{templateMappingBean.templateMapping.templateMappingId != null}" />
+				<p:outputLabel id="sourceTemplateTypeName" value="#{templateMappingBean.templateMapping.sourceTemplateTypeEnumName}" rendered="#{templateMappingBean.templateMapping.templateMappingId != null}" />	
+				
+				<p:outputLabel for="targetTemplateType" value="目标模版类别:" style="font-weight:bold" rendered="#{templateMappingBean.templateMapping.templateMappingId == null}" />
+				<p:selectOneMenu id="targetTemplateType" value="#{templateMappingBean.templateMapping.targetTemplateType}" required="true" requiredMessage="目标模版类别为必填项" rendered="#{templateMappingBean.templateMapping.templateMappingId == null}">
+					<f:selectItems value="#{templateMappingBean.templateMapping.type == 0 ? templateMappingBean.templateMapping.columnTargetTemplateTypeEnums : (templateMappingBean.templateMapping.type == 1 ? templateMappingBean.templateMapping.articleTargetTemplateTypeEnums : templateMappingBean.templateMapping.otherTargetTemplateTypeEnums)}" var="targetTemplateTypeEnum" itemLabel="#{targetTemplateTypeEnum.name().replace('_', '+')}" itemValue="#{targetTemplateTypeEnum.ordinal()}"/>
+					<p:ajax update="templateId" />
+				</p:selectOneMenu>
+				<p:outputLabel for="targetTemplateTypeName" value="目标模版类别:" style="font-weight:bold" rendered="#{templateMappingBean.templateMapping.templateMappingId != null}" />
+				<p:outputLabel id="targetTemplateTypeName" value="#{templateMappingBean.templateMapping.targetTemplateTypeEnumName}" rendered="#{templateMappingBean.templateMapping.templateMappingId != null}" />		
+				
+				<p:outputLabel for="templateId" value="模板:" style="font-weight:bold" rendered="#{templateMappingBean.templateMapping.templateMappingId == null}" />
+                <p:selectOneMenu id="templateId" value="#{templateMappingBean.templateMapping.template.templateId}" required="true" requiredMessage="模板为必填项" rendered="#{templateMappingBean.templateMapping.templateMappingId == null}" >
+                    <f:selectItems value="#{templateMappingBean.allTemplates}" var="template" itemLabel="#{template.name}" itemValue="#{template.templateId}" />                                        
+                </p:selectOneMenu>
+                <p:outputLabel for="templateName" value="模板:" style="font-weight:bold" rendered="#{templateMappingBean.templateMapping.templateMappingId != null}" />
+				<p:outputLabel id="templateName" value="#{templateMappingBean.templateMapping.template.name}" rendered="#{templateMappingBean.templateMapping.templateMappingId != null}" /> 
+				
+				<p:outputLabel for="contentId" value="内容ID:" style="font-weight:bold" />
+				<p:inputText id="contentId" value="#{templateMappingBean.templateMapping.contentId}" required="false"/>
+				
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+				<p:inputSwitch id="enabled" value="#{templateMappingBean.templateMapping.enabled}" onLabel="是" offLabel="否" />
+				
+				<p:outputLabel for="siteVersionId" value="所属站点版本:" style="font-weight:bold" />
+				<p:outputLabel id="siteVersionId" value="#{templateMappingBean.templateMapping.siteVersion.name}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{templateMappingBean.saveAction}" update="messages" rendered="#{templateMappingBean.hasModuleManage()}" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

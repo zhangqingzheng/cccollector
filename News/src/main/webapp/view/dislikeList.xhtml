@@ -1,0 +1,63 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="userAppId" value="#{dislikeListBean.modelId1}" />
+			<f:viewParam name="contentType" value="#{dislikeListBean.modelId2}" />
+			<f:viewParam name="contentId" value="#{dislikeListBean.modelId3}" />
+		    <f:viewParam name="newsSourceId" value="#{dislikeListBean.modelId4}" />
+			<f:viewAction action="#{dislikeListBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		不喜欢列表 - 
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span class="subitem" style="display:#{dislikeListBean.userApp == null and dislikeListBean.article == null ? '' : 'none'}">全部</span>
+		<span style="display:#{dislikeListBean.userApp != null ? '' : 'none'}"><a href="userAppList.xhtml" class="subitem">#{dislikeListBean.userApp.name}</a><span class="subitem fontSize18">用户应用</span></span>
+		<span style="display:#{dislikeListBean.article != null ? '' : 'none'}"><a href="articleList.xhtml?newsSourceId=#{dislikeListBean.modelId4}" class="subitem">#{dislikeListBean.article.title}</a><span class="subitem fontSize18">文章</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="dislikesForm">
+			<p:growl id="messages" showDetail="true" />
+
+			<p:dataTable id="dislikesSingle" widgetVar="dislikesSingleTable" var="dislike" value="#{dislikeListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selectionMode="single" rowKey="#{dislike.dislikeId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px">
+				<p:column headerText="不喜欢ID" priority="1">
+					<h:outputText value="#{dislike.dislikeId}" />
+				</p:column>
+					
+				<p:column headerText="关联内容类别" priority="1" filterBy="#{dislike.modelId2}" filterMatchMode="exact" rendered="#{dislikeListBean.modelId2 == null and dislikeListBean.modelId3 == null}">
+					<f:facet name="filter">	
+						<p:selectOneMenu onchange="PF('dislikesSingleTable').filter()">
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{dislikeListBean.contentTypeEnums}" var="contentTypeEnum" itemLabel="#{contentTypeEnum.name()}" itemValue="#{contentTypeEnum.ordinal()}" />
+						</p:selectOneMenu>						
+					</f:facet>
+					<h:outputText value="#{dislike.contentTypeEnum.name()}" />
+				</p:column>
+
+				<p:column headerText="关联内容" priority="1" rendered="#{dislikeListBean.modelId2 == null and dislikeListBean.modelId3 == null}">
+					<h:outputText value="#{dislike.relativeContentName}" />
+				</p:column>
+			
+				<p:column headerText="创建时间" priority="1">
+					<h:outputText value="#{dislike.createTimeDate}" >
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="所属用户应用" priority="1" filterBy="#{dislike.userApp.name}" filterMatchMode="contains" rendered="#{dislikeListBean.userApp == null}">
+					<h:outputText value="#{dislike.userApp.name}" />
+				</p:column>
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

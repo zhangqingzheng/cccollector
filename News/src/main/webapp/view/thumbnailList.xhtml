@@ -1,0 +1,121 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+		    <f:viewParam name="distributionId" value="#{thumbnailListBean.modelId1}" />
+		    <f:viewParam name="articleId" value="#{thumbnailListBean.modelId2}" />
+			<f:viewParam name="newsSourceId" value="#{thumbnailListBean.modelId3}" />
+			<f:viewParam name="specifiedDistributionId" value="#{thumbnailListBean.modelId4}" />
+			<f:viewParam name="columnId" value="#{thumbnailListBean.modelId5}" />
+			<f:viewParam name="published" value="#{thumbnailListBean.modelId6}" />
+			<f:viewParam name="multiSelect" value="#{thumbnailListBean.multiSelect}" />
+			<f:viewAction action="#{thumbnailListBean.validateModuleWithSpecificIdAction('NewsSource', thumbnailListBean.distribution.article.newsSource.newsSourceId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		缩略图列表 - 
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span><a href="distributionList.xhtml?articleId=#{thumbnailListBean.modelId2}&amp;newsSourceId=#{thumbnailListBean.modelId3}#{thumbnailListBean.modelId4 == null or thumbnailListBean.modelId4 == '' ? '' : '&amp;specifiedDistributionId=' += thumbnailListBean.modelId4 += '&amp;published=' += thumbnailListBean.modelId6 += '&amp;columnId=' += thumbnailListBean.modelId5}" class="subitem">#{thumbnailListBean.distribution.article.title} @ #{thumbnailListBean.distribution.column.name}</a><span class="subitem fontSize18">分发</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="thumbnailsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:inputSwitch id="multiSelect" value="#{thumbnailListBean.multiSelect}" onLabel="管理" offLabel="浏览" rendered="#{thumbnailListBean.hasModuleManage()}">
+				<p:ajax update="thumbnailsForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="thumbnailsSingle" widgetVar="thumbnailsSingleTable" var="thumbnail" value="#{thumbnailListBean.allModels}" selectionMode="single" rowKey="#{thumbnail.thumbnailId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{!thumbnailListBean.multiSelect}">
+				<p:column headerText="缩略图ID" priority="1">
+					<h:outputText value="#{thumbnail.thumbnailId}" />
+				</p:column>
+
+				<p:column headerText="图片" priority="1">
+					<p:graphicImage value="#{thumbnailListBean.loadPictureThumbnail(thumbnail)}" stream="false" height="50" />
+				</p:column>																								
+				
+				<p:column headerText="宽度比例" priority="1">
+					<h:outputText value="#{thumbnail.widthRatio}" />
+				</p:column>
+				
+				<p:column headerText="高度比例" priority="1">
+					<h:outputText value="#{thumbnail.heightRatio}" />
+				</p:column>				
+				
+				<p:column headerText="存储路径" priority="1">
+					<h:outputText value="#{thumbnail.path}" />
+				</p:column>				
+			</p:dataTable>
+
+			<p:dataTable id="thumbnailsMultiple" widgetVar="thumbnailsMultipleTable" var="thumbnail" value="#{thumbnailListBean.allModels}" selection="#{thumbnailListBean.selectedModels}" rowKey="#{thumbnail.thumbnailId}" draggableRows="true" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{thumbnailListBean.hasModuleManage() and thumbnailListBean.multiSelect}">
+				<p:ajax event="rowDblselect" listener="#{thumbnailListBean.selectThumbnailAction}" />
+				<p:ajax event="rowReorder" listener="#{thumbnailListBean.moveThumbnailAction}" update="thumbnailsForm:messages thumbnailsForm:thumbnailsMultiple" />
+				
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="缩略图ID" priority="1">
+					<h:outputText value="#{thumbnail.thumbnailId}" />
+				</p:column>
+
+				<p:column headerText="图片" priority="1">
+					<p:graphicImage value="#{thumbnailListBean.loadPictureThumbnail(thumbnail)}" stream="false" height="50" />
+				</p:column>																								
+				
+				<p:column headerText="宽度比例" priority="1">
+					<h:outputText value="#{thumbnail.widthRatio}" />
+				</p:column>
+				
+				<p:column headerText="高度比例" priority="1">
+					<h:outputText value="#{thumbnail.heightRatio}" />
+				</p:column>				
+				
+				<p:column headerText="存储路径" priority="1">
+					<h:outputText value="#{thumbnail.path}" />
+				</p:column>				
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{thumbnailListBean.editThumbnailAction(thumbnail)}" style="margin-left:10px" />
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{thumbnailListBean.deleteThumbnailAction(thumbnail)}" update="thumbnailsForm:messages thumbnailsForm:thumbnailsMultiple" style="margin-left:10px" rendered="#{!thumbnailListBean.distribution.published}">
+						<p:confirm header="删除缩略图" message="是否确定删除所选缩略图？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="thumbnailsMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{thumbnailListBean.addThumbnailAction}" rendered="#{!thumbnailListBean.distribution.published}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{thumbnailListBean.editThumbnailAction}" update="messages" />
+				<p:menuitem icon="ui-icon-close" value="批量删除" actionListener="#{thumbnailListBean.deleteThumbnailsAction}" update="messages thumbnailsMultiple" rendered="#{!thumbnailListBean.distribution.published}">
+					<p:confirm header="删除缩略图" message="是否确定删除所选缩略图？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{thumbnailListBean.hasModuleManage() and thumbnailListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addThumbnail" icon="ui-icon-plus" value="添加" actionListener="#{thumbnailListBean.addThumbnailAction}" rendered="#{!thumbnailListBean.distribution.published}" />
+					<p:commandButton id="editThumbnail" icon="ui-icon-pencil" value="编辑" actionListener="#{thumbnailListBean.editThumbnailAction}" update="messages" style="margin-left:20px" />
+					<p:commandButton id="deleteThumbnails" icon="ui-icon-close" value="批量删除" actionListener="#{thumbnailListBean.deleteThumbnailsAction}" update="messages thumbnailsMultiple" style="margin-left:20px" rendered="#{!thumbnailListBean.distribution.published}">
+						<p:confirm header="删除缩略图" message="是否确定删除所选缩略图？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

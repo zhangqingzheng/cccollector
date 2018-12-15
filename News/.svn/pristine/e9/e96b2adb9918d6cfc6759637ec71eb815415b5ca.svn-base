@@ -1,0 +1,136 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="siteVersionId" value="#{columnReplacementListBean.modelId1}" />
+			<f:viewParam name="siteId" value="#{columnReplacementListBean.modelId2}" />
+			<f:viewParam name="multiSelect" value="#{columnReplacementListBean.multiSelect}" />
+			<f:viewAction action="#{columnReplacementListBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		栏目替代列表 - 
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		<span><a href="siteVersionList.xhtml?siteId=#{columnReplacementListBean.modelId2}" class="subitem">#{columnReplacementListBean.siteVersion.name}</a><span class="subitem fontSize18">站点版本</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="columnReplacementsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:inputSwitch id="multiSelect" value="#{columnReplacementListBean.multiSelect}" onLabel="管理" offLabel="浏览" rendered="#{columnReplacementListBean.hasModuleManage()}">
+				<p:ajax update="columnReplacementsForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="columnReplacementsSingle" widgetVar="columnReplacementsSingleTable" var="columnReplacement" value="#{columnReplacementListBean.allModels}" selectionMode="single" rowKey="#{columnReplacement.columnReplacementId}" resizableColumns="true"  emptyMessage="无数据" rowStyleClass="#{!columnReplacement.enabled? 'disabled' : null}" style="margin:10px 0px" rendered="#{!columnReplacementListBean.multiSelect}">
+				<p:column headerText="栏目替代ID" priority="1">
+					<h:outputText value="#{columnReplacement.columnReplacementId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{columnReplacement.name}" />
+				</p:column>
+
+				<p:column headerText="源栏目" priority="1">
+					<h:outputText value="#{columnReplacement.sourceColumn.newsSource.name} : #{columnReplacement.sourceColumn.name}" />
+				</p:column>
+
+				<p:column headerText="目标栏目" priority="1">
+					<h:outputText value="#{columnReplacement.targetColumn.newsSource.name} : #{columnReplacement.targetColumn.name}" />
+				</p:column>
+				
+				<p:column headerText="方式" priority="1">
+					<h:outputText value="#{columnReplacement.modeEnum.name()}" />
+				</p:column>	
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{columnReplacement.enabledEnum.name()}" />
+				</p:column>				
+			</p:dataTable>
+
+			<p:dataTable id="columnReplacementsMultiple" widgetVar="columnReplacementsMultipleTable" var="columnReplacement" value="#{columnReplacementListBean.allModels}" selection="#{columnReplacementListBean.selectedModels}" rowKey="#{columnReplacement.columnReplacementId}" draggableRows="true" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!columnReplacement.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{columnReplacementListBean.hasModuleManage() and columnReplacementListBean.multiSelect}">
+				<p:ajax event="rowDblselect" listener="#{columnReplacementListBean.selectModelAction}" />
+				<p:ajax event="rowReorder" listener="#{columnReplacementListBean.moveColumnReplacementAction}" update="columnReplacementsForm:messages columnReplacementsForm:columnReplacementsMultiple" />
+				
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="栏目替代ID" priority="1">
+					<h:outputText value="#{columnReplacement.columnReplacementId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{columnReplacement.name}" />
+				</p:column>
+
+				<p:column headerText="源栏目" priority="1">
+					<h:outputText value="#{columnReplacement.sourceColumn.newsSource.name} : #{columnReplacement.sourceColumn.name}" />
+				</p:column>
+
+				<p:column headerText="目标栏目" priority="1">
+					<h:outputText value="#{columnReplacement.targetColumn.newsSource.name} : #{columnReplacement.targetColumn.name}" />
+				</p:column>
+				
+				<p:column headerText="方式" priority="1">
+					<h:outputText value="#{columnReplacement.modeEnum.name()}" />
+				</p:column>	
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{columnReplacement.enabledEnum.name()}" />
+				</p:column>	
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{columnReplacementListBean.editModelAction(columnReplacement)}">
+						<p:ajax event="dialogReturn" listener="#{columnReplacementListBean.handleEditModelReturn}" update="columnReplacementsForm:messages columnReplacementsForm:columnReplacementsMultiple" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{columnReplacementListBean.deleteColumnReplacementAction(columnReplacement)}" update="columnReplacementsForm:messages columnReplacementsForm:columnReplacementsMultiple" style="margin-left:10px">
+						<p:confirm header="删除栏目替代" message="是否确定删除所选栏目替代？" icon="ui-icon-alert" />
+					</p:commandButton>				
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="columnReplacementsMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{columnReplacementListBean.addModelAction}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{columnReplacementListBean.editSelectedModelAction}" update="messages" />
+				<p:menuitem icon="ui-icon-unlocked" value="可用" actionListener="#{columnReplacementListBean.modifyColumnReplacementsEnabledAction(true)}" update="messages columnReplacementsMultiple">
+					<p:confirm header="修改栏目替代" message="是否确定修改所选栏目替代为可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-locked" value="不可用" actionListener="#{columnReplacementListBean.modifyColumnReplacementsEnabledAction(false)}" update="messages columnReplacementsMultiple">
+					<p:confirm header="修改栏目替代" message="是否确定修改所选栏目替代为不可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-close" value="批量删除" actionListener="#{columnReplacementListBean.deleteColumnReplacementsAction}" update="messages columnReplacementsMultiple">
+					<p:confirm header="删除栏目替代" message="是否确定删除所选栏目替代？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{columnReplacementListBean.hasModuleManage() and columnReplacementListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addColumnReplacement" icon="ui-icon-plus" value="添加" actionListener="#{columnReplacementListBean.addModelAction}">
+						<p:ajax event="dialogReturn" listener="#{columnReplacementListBean.handleAddModelReturn}" update="messages columnReplacementsMultiple" />
+					</p:commandButton>
+					<p:commandButton id="editColumnReplacement" icon="ui-icon-pencil" value="编辑" actionListener="#{columnReplacementListBean.editSelectedModelAction}" update="messages" style="margin-left:20px">
+						<p:ajax event="dialogReturn" listener="#{columnReplacementListBean.handleEditModelReturn}" update="messages columnReplacementsMultiple" />
+					</p:commandButton>					
+					<p:commandButton id="deleteColumnReplacements" icon="ui-icon-close" value="批量删除" actionListener="#{columnReplacementListBean.deleteColumnReplacementsAction}" update="messages columnReplacementsMultiple" style="margin-left:20px">
+						<p:confirm header="删除栏目替代" message="是否确定删除所选栏目替代？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

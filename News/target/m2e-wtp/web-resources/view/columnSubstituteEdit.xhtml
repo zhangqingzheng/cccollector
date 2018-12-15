@@ -1,0 +1,85 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				xmlns:pe="http://primefaces.org/ui/extensions"
+				template="#{columnSubstituteBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{columnSubstituteBean.useDialog}" />
+			<f:viewParam name="appId" value="#{columnSubstituteBean.modelId1}" />
+			<f:viewParam name="columnSubstituteId" value="#{columnSubstituteBean.modelId}" />
+			<f:viewAction action="#{columnSubstituteBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{columnSubstituteBean.columnSubstitute.columnSubstituteId == null ? '添加' : '编辑'}栏目替身
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="columnSubstituteList.xhtml?multiSelect=true&amp;appId=#{columnSubstituteBean.modelId1}" class="subitem"><h:outputText id="subtitle" value="#{columnSubstituteBean.columnSubstitute.name}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="columnSubstituteEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="columnSubstituteId" value="栏目替身ID:" style="font-weight:bold" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId != null}" />
+				<p:outputLabel id="columnSubstituteId" value="#{columnSubstituteBean.columnSubstitute.columnSubstituteId}" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" />
+				<p:inputText id="name" value="#{columnSubstituteBean.columnSubstitute.name}" required="true" requiredMessage="名称为必填项" size="30">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="sourceNewsSourceId" value="源新闻源:" style="font-weight:bold" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId == null}" />
+                <p:selectOneMenu id="sourceNewsSourceId" value="#{columnSubstituteBean.selectedSourceNewsSourceId}" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId == null}" >
+                	<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+                    <f:selectItems value="#{columnSubstituteBean.allSourceNewsSources}" var="sourceNewsSource" itemLabel="#{sourceNewsSource.name}" itemValue="#{sourceNewsSource.newsSourceId}" />
+                    <p:ajax update="sourceColumnId" />                                         
+                </p:selectOneMenu>
+				
+                <p:outputLabel for="sourceColumnId" value="源栏目:" style="font-weight:bold" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId == null}" />
+                <p:selectOneMenu id="sourceColumnId" value="#{columnSubstituteBean.columnSubstitute.sourceColumn.columnId}" required="true" requiredMessage="源栏目为必填项" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId == null}" >
+                    <f:selectItems value="#{columnSubstituteBean.allSourceColumns}" var="sourceColumn" itemLabel="#{sourceColumn.nameWithLevel}" itemValue="#{sourceColumn.columnId}" />                                        
+                </p:selectOneMenu>
+                <p:outputLabel for="sourceColumnName" value="源栏目:" style="font-weight:bold" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId != null}" />
+				<p:outputLabel id="sourceColumnName" value="#{columnSubstituteBean.columnSubstitute.sourceColumn.newsSource.name} : #{columnSubstituteBean.columnSubstitute.sourceColumn.name}" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId != null}" /> 
+				
+				<p:outputLabel for="targetNewsSourceId" value="目标新闻源:" style="font-weight:bold" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId == null}" />
+                <p:selectOneMenu id="targetNewsSourceId" value="#{columnSubstituteBean.selectedTargetNewsSourceId}" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId == null}" > 
+                	<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" /> 
+                    <f:selectItems value="#{columnSubstituteBean.allTargetNewsSources}" var="targetNewsSource" itemLabel="#{targetNewsSource.name}" itemValue="#{targetNewsSource.newsSourceId}" />
+                    <p:ajax update="targetColumnId" />                                         
+                </p:selectOneMenu>
+				
+                <p:outputLabel for="targetColumnId" value="目标栏目:" style="font-weight:bold" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId == null}" />
+                <p:selectOneMenu id="targetColumnId" value="#{columnSubstituteBean.columnSubstitute.targetColumn.columnId}" required="true" requiredMessage="目标栏目为必填项" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId == null}" >                                  
+                    <f:selectItems value="#{columnSubstituteBean.allTargetColumns}" var="targetColumn" itemLabel="#{targetColumn.nameWithLevel}" itemValue="#{targetColumn.columnId}" />                                        
+                </p:selectOneMenu>
+                <p:outputLabel for="targetColumnName" value="目标栏目:" style="font-weight:bold" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId != null}" />
+				<p:outputLabel id="targetColumnName" value="#{columnSubstituteBean.columnSubstitute.targetColumn.newsSource.name} : #{columnSubstituteBean.columnSubstitute.targetColumn.name}" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId != null}" /> 
+                
+                <p:outputLabel for="mode" value="方式:" style="font-weight:bold" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId == null}" />
+				<p:selectOneMenu id="mode" value="#{columnSubstituteBean.columnSubstitute.mode}" required="true" requiredMessage="方式为必填项" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId == null}">
+					<f:selectItems value="#{columnSubstituteBean.columnSubstitute.modeEnums}" var="modeEnum" itemLabel="#{modeEnum.name()}" itemValue="#{modeEnum.ordinal()}" />
+				</p:selectOneMenu>
+				<p:outputLabel for="modeName" value="方式:" style="font-weight:bold" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId != null}" />
+				<p:outputLabel id="modeName" value="#{columnSubstituteBean.columnSubstitute.modeEnum.name()}" rendered="#{columnSubstituteBean.columnSubstitute.columnSubstituteId != null}" /> 
+
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+				<p:inputSwitch id="enabled" value="#{columnSubstituteBean.columnSubstitute.enabled}" onLabel="是" offLabel="否" />
+                
+				<p:outputLabel for="appId" value="所属应用:" style="font-weight:bold" />
+				<p:outputLabel id="appId" value="#{columnSubstituteBean.columnSubstitute.app.name}" />                
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{columnSubstituteBean.saveAction}" update="messages" rendered="#{columnSubstituteBean.hasModuleManage()}" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

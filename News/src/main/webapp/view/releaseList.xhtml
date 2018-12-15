@@ -1,0 +1,52 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="editionId" value="#{releaseListBean.modelId1}" />
+			<f:viewParam name="appId" value="#{releaseListBean.modelId2}" />
+			<f:viewAction action="#{releaseListBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		发行列表 - 
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span><a href="editionList.xhtml?appId=#{releaseListBean.modelId2}" class="subitem">#{releaseListBean.edition.showName}</a><span class="subitem fontSize18">版本</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="releasesForm">
+			<p:growl id="messages" showDetail="true" />
+
+			<p:dataTable id="releasesSingle" var="release" value="#{releaseListBean.allModels}" selectionMode="single" rowKey="#{release.releaseId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{release.status == 0 ? 'unpublished' : (release.status == 2 ? 'disabled' : null)}" style="margin:20px 0px">
+				<p:column headerText="发行ID" priority="1">
+					<h:outputText value="#{release.releaseId}" />
+				</p:column>
+	
+				<p:column headerText="发行日期" priority="1">
+					<h:outputText value="#{release.releaseDate}">
+						<f:convertDateTime pattern="yyyy年M月d日" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="版本号" priority="1">
+					<h:outputText value="#{release.version}" />
+				</p:column>
+
+				<p:column headerText="操作系统最小版本号" priority="1">
+					<h:outputText value="#{release.osVersion}" />
+				</p:column>				
+				
+				<p:column headerText="状态" priority="2">
+					<h:outputText value="#{release.statusEnum.name()}" />
+				</p:column>				
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

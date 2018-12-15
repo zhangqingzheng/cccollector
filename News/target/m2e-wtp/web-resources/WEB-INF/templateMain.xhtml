@@ -1,0 +1,111 @@
+<!DOCTYPE html [
+    <!ENTITY nbsp "&#160;">
+    <!ENTITY bull "&#8226;">
+    <!ENTITY copy "&#169;">
+]>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"	
+				template="/templateMainBase.xhtml">
+	<ui:define name="companyName">
+		华星成汇
+	</ui:define>
+	
+	<ui:define name="appName">
+		新闻平台
+	</ui:define>
+	
+	<ui:define name="style">
+		<style type="text/css">
+			#CONTENTSIDE {background-color:#e9f2f8;}
+			#PFTopLinksCover {background-color:#e9f2f8;}
+		</style>
+	</ui:define>
+	
+	<ui:define name="menu">
+		<c:if test="#{templateBean.loginOrAnonymousAuthentication}">	
+			<c:forEach items="#{templateBean.allNewsSources}" var="newsSource">
+				<c:if test="#{templateBean.hasModule('NewsSource', newsSource.newsSourceId) and newsSource.enabled}">
+					<span id="SubMenu-NewsSource#{newsSource.newsSourceId}" class="MenuSideMainLink bordersOfMenuSide" onclick="Showcase.openSubMenu(this);">
+						<h:graphicImage name="images/menu1.svg" />
+						<h:graphicImage styleClass="hiddenIcons" name="images/menu1Highlight.svg" />
+						<span class="MainLinkText">#{newsSource.name}</span>
+					</span>
+					<div class="SubMenuLinkContainer">
+						<a class="SubMenuLink" href="#{request.contextPath}/view/columnList.xhtml?newsSourceId=${newsSource.newsSourceId}">&bull; 栏目</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/articleList.xhtml?newsSourceId=${newsSource.newsSourceId}">&bull; 全部文章</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/columnDistributionList.xhtml?newsSourceId=${newsSource.newsSourceId}&amp;published=0">&bull; 未发布文章</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/columnDistributionList.xhtml?newsSourceId=${newsSource.newsSourceId}&amp;published=1">&bull; 已发布文章</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/columnDistributionList.xhtml?newsSourceId=${newsSource.newsSourceId}&amp;published=2">&bull; 定时发布文章</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/glossaryList.xhtml?newsSourceId=${newsSource.newsSourceId}">&bull; 术语</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/recommendGroupList.xhtml?newsSourceId=${newsSource.newsSourceId}">&bull; 推荐组</a>
+					</div>
+				</c:if>
+			</c:forEach>
+			
+			<c:if test="#{templateBean.hasModulesAny('CommentReview','Report')}">
+				<span id="SubMenu-Review" class="MenuSideMainLink bordersOfMenuSide" onclick="Showcase.openSubMenu(this);">
+					<h:graphicImage name="images/menu2.svg" />
+					<h:graphicImage styleClass="hiddenIcons" name="images/menu2Highlight.svg" />
+					<span class="MainLinkText">内容审核</span>
+				</span>
+				<div class="SubMenuLinkContainer">
+					<c:if test="#{templateBean.hasModule('CommentReview')}"><a class="SubMenuLink" href="#{request.contextPath}/view/commentReviewList.xhtml">&bull; 评论审核</a></c:if>
+					<c:if test="#{templateBean.hasModule('Report')}"><a class="SubMenuLink" href="#{request.contextPath}/view/reportList.xhtml">&bull; 举报审核</a></c:if>
+				</div>
+			</c:if>
+
+			<c:if test="#{templateBean.hasModulesAny('UserApp','Follow','Favorite','Like','Dislike','Comment','Log')}">
+				<span id="SubMenu-User" class="MenuSideMainLink bordersOfMenuSide" onclick="Showcase.openSubMenu(this);">
+					<h:graphicImage name="images/menu3.svg" />
+					<h:graphicImage styleClass="hiddenIcons" name="images/menu3Highlight.svg" />
+					<span class="MainLinkText">用户管理</span>
+				</span>
+				<div class="SubMenuLinkContainer">
+					<c:if test="#{templateBean.hasModule('UserApp')}"><a class="SubMenuLink" href="#{request.contextPath}/view/userAppList.xhtml">&bull; 用户应用管理</a></c:if>
+					<c:if test="#{templateBean.hasModule('Follow')}"><a class="SubMenuLink" href="#{request.contextPath}/view/followList.xhtml">&bull; 关注管理</a></c:if>
+					<c:if test="#{templateBean.hasModule('Favorite')}"><a class="SubMenuLink" href="#{request.contextPath}/view/favoriteList.xhtml">&bull; 收藏管理</a></c:if>
+					<c:if test="#{templateBean.hasModule('Like')}"><a class="SubMenuLink" href="#{request.contextPath}/view/likeList.xhtml">&bull; 喜欢管理</a></c:if>
+					<c:if test="#{templateBean.hasModule('Dislike')}"><a class="SubMenuLink" href="#{request.contextPath}/view/dislikeList.xhtml">&bull; 不喜欢管理</a></c:if>
+					<c:if test="#{templateBean.hasModule('Comment')}"><a class="SubMenuLink" href="#{request.contextPath}/view/commentList.xhtml">&bull; 评论管理</a></c:if>
+					<c:if test="#{templateBean.hasModule('Log')}"><a class="SubMenuLink" href="#{request.contextPath}/view/logList.xhtml">&bull; 日志管理</a></c:if>
+				</div>
+			</c:if>
+
+			<c:if test="#{templateBean.hasModulesAny('App','NewsSource')}">
+				<span id="SubMenu-Config" class="MenuSideMainLink bordersOfMenuSide" onclick="Showcase.openSubMenu(this);">
+					<h:graphicImage name="images/menu4.svg" />
+					<h:graphicImage styleClass="hiddenIcons" name="images/menu4Highlight.svg" />
+					<span class="MainLinkText">设置管理</span>
+				</span>
+				<div class="SubMenuLinkContainer">
+					<c:if test="#{templateBean.hasModule('App')}"><a class="SubMenuLink" href="#{request.contextPath}/view/appList.xhtml">&bull; 应用管理</a></c:if>
+					<c:if test="#{templateBean.hasModule('Site')}"><a class="SubMenuLink" href="#{request.contextPath}/view/siteList.xhtml">&bull; 站点管理</a></c:if>
+					<c:if test="#{templateBean.hasModule('NewsSource')}"><a class="SubMenuLink" href="#{request.contextPath}/view/newsSourceList.xhtml">&bull; 新闻源管理</a></c:if>
+				</div>
+			</c:if>
+
+			<c:forEach items="#{templateBean.allNewsSources}" var="newsSource">
+				<c:if test="#{templateBean.hasModule('NewsSource', newsSource.newsSourceId) and !newsSource.enabled}">
+					<span id="SubMenu-NewsSource#{newsSource.newsSourceId}" class="MenuSideMainLink bordersOfMenuSide" onclick="Showcase.openSubMenu(this);">
+						<h:graphicImage name="images/menu1.svg" />
+						<h:graphicImage styleClass="hiddenIcons" name="images/menu1Highlight.svg" />
+						<span class="MainLinkText">#{newsSource.name}(不可用)</span>
+					</span>
+					<div class="SubMenuLinkContainer">
+						<a class="SubMenuLink" href="#{request.contextPath}/view/columnList.xhtml?newsSourceId=${newsSource.newsSourceId}">&bull; 栏目</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/articleList.xhtml?newsSourceId=${newsSource.newsSourceId}">&bull; 全部文章</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/columnDistributionList.xhtml?newsSourceId=${newsSource.newsSourceId}&amp;published=0">&bull; 未发布文章</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/columnDistributionList.xhtml?newsSourceId=${newsSource.newsSourceId}&amp;published=1">&bull; 已发布文章</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/columnDistributionList.xhtml?newsSourceId=${newsSource.newsSourceId}&amp;published=2">&bull; 定时发布文章</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/glossaryList.xhtml?newsSourceId=${newsSource.newsSourceId}">&bull; 术语</a>
+						<a class="SubMenuLink" href="#{request.contextPath}/view/recommendGroupList.xhtml?newsSourceId=${newsSource.newsSourceId}">&bull; 推荐组</a>
+					</div>
+				</c:if>
+			</c:forEach>
+		</c:if>
+	</ui:define>
+</ui:composition>

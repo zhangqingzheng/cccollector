@@ -1,0 +1,187 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:pe="http://primefaces.org/ui/extensions"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<script type="text/javascript">
+			function insertMedia(mediaSelectWidget, contentEditorWidget, styleTemplateType) {
+				var mediaId = mediaSelectWidget.getSelectedValue();
+				if (mediaId == 0) {
+					return;
+				}
+				var caption = mediaSelectWidget.getSelectedLabel().replace(mediaId + ':', '');
+				var picturePath = document.getElementById(mediaSelectWidget.id).title;
+				if (styleTemplateType == 3) {
+					var divHtml = '&lt;div style="width:100%;max-width:414px;display:inline-block;position:relative"&gt;&lt;img id="mediaId_' + mediaId + '" src="' + picturePath + '" style="width:40%;float:left;" alt="' + caption + '" border="0" /&gt;&lt;div style="display:inline-block;position:absolute;bottom:40px;"&gt;&lt;span class="title"&gt;' + caption + '&lt;/span&gt;&lt;/div&gt;&lt;div style="display:inline-block;position:absolute;bottom:0px;"&gt;&lt;span class="navButton"&gt;去看看&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;';
+					var divElement = CKEDITOR.dom.element.createFromHtml(divHtml);
+					contentEditorWidget.instance.insertElement(divElement);
+				} else {
+					var pHtml = '&lt;p style="text-align:center;"&gt;&lt;img id="mediaId_' + mediaId + '" src="' + picturePath + '" width="100%" alt="' + caption + '" border="0" /&gt;&lt;span class="caption"&gt;' + caption + '&lt;/span&gt;&lt;/p&gt;';
+					var pElement = CKEDITOR.dom.element.createFromHtml(pHtml);
+					contentEditorWidget.instance.insertElement(pElement);
+				}
+			}
+		</script>
+		<f:metadata>
+			<f:viewParam name="newsSourceId" value="#{articleBean.modelId1}" />
+			<f:viewParam name="columnId" value="#{articleBean.modelId2}" />
+			<f:viewParam name="published" value="#{articleBean.modelId3}" />
+			<f:viewParam name="articleId" value="#{articleBean.modelId}" />
+			<f:viewAction action="#{articleBean.validateModuleWithSpecificIdAction('NewsSource', articleBean.article.newsSource.newsSourceId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{articleBean.article.articleId == null ? '添加' : '编辑'}文章
+	</ui:define>
+
+	<ui:define name="subtitle">
+		 - <span><a href="articleList.xhtml?multiSelect=true&amp;newsSourceId=#{articleBean.modelId1}" class="subitem"><h:outputText id="subtitle" value="#{articleBean.article.title}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="articleEditForm">
+			<p:messages id="messages" />
+			
+			<p:tabView dynamic="true" cache="true">
+				<p:tab title="基本信息">
+					<h:panelGrid columns="2">
+						<p:outputLabel for="articleId" value="文章ID:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="articleId" value="#{articleBean.article.articleId}" rendered="#{articleBean.article.articleId != null}" />
+						
+						<p:outputLabel for="title" value="标题:" style="font-weight:bold" />
+						<p:inputText id="title" value="#{articleBean.article.title}" required="true" requiredMessage="标题为必填项" size="80">
+							<f:validateLength maximum="200" />
+							<p:ajax immediate="true" update="subtitle" />
+						</p:inputText>
+						
+						<p:outputLabel for="summary" value="摘要:" style="font-weight:bold" />
+						<p:inputTextarea id="summary" value="#{articleBean.article.summary}" autoResize="false" rows="10" cols="54">
+							<f:validateLength maximum="2000" />
+						</p:inputTextarea>
+						
+						<p:outputLabel for="author" value="作者:" style="font-weight:bold" />
+						<p:inputText id="author" value="#{articleBean.article.author}" size="80">
+							<f:validateLength maximum="200" />
+						</p:inputText>
+						
+						<p:outputLabel for="source" value="来源:" style="font-weight:bold" />
+						<p:inputText id="source" value="#{articleBean.article.source}" size="80">
+							<f:validateLength maximum="200" />
+						</p:inputText>
+						
+						<p:outputLabel for="keywords" value="关键字:" style="font-weight:bold" />
+						<p:inputText id="keywords" value="#{articleBean.article.keywords}" size="80">
+							<f:validateLength maximum="200" />
+						</p:inputText>
+		
+						<p:outputLabel for="styleTemplateType" value="预览样式:" style="font-weight:bold" />				
+						<p:selectOneMenu id="styleTemplateType" value="#{articleBean.selectedStyleTemplateType}">
+							<f:selectItems value="#{articleBean.allStyles}" var="style" itemLabel="#{style.name}" itemValue="#{style.templateType}" />	 
+							<p:ajax immediate="true" update="mediaId content" />
+						</p:selectOneMenu>	
+		
+						<p:outputLabel for="mediaId" value="插入多媒体:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />				
+						<p:selectOneMenu id="mediaId" widgetVar="mediaIdSelectOneMenu" value="#{articleBean.selectedMediaId}" title="#{articleBean.selectedMediaPictureFilePath}" rendered="#{articleBean.article.articleId != null}">
+							<f:selectItem itemLabel="选择多媒体" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{articleBean.allMedias}" var="media" itemLabel="#{media.mediaId}:#{media.caption}" itemValue="#{media.mediaId}" />	 
+							<p:ajax oncomplete="insertMedia(PF('mediaIdSelectOneMenu'), PF('contentEditor'), #{articleBean.selectedStyleTemplateType})" immediate="true" update="mediaId" />
+						</p:selectOneMenu>	
+						
+						<p:outputLabel for="content" value="内容:" style="font-weight:bold" />
+						<pe:ckEditor id="content" widgetVar="contentEditor" value="#{articleBean.article.content}" interfaceColor="#e5f1fa" customConfig="#{request.contextPath}/resources/ckeditor/config.js" contentsCss="#{articleBean.selectedStyleCssFilePath}" width="500" height="600" />
+		
+						<p:outputLabel for="path" value="存储路径:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="path" value="#{articleBean.article.path}" rendered="#{articleBean.article.articleId != null}" />
+		
+						<p:outputLabel for="suffix" value="存储后缀:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="suffix" value="#{articleBean.article.suffix}" rendered="#{articleBean.article.articleId != null}" />
+						
+						<p:outputLabel for="editor" value="编辑:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="editor" value="#{articleBean.article.editor}" rendered="#{articleBean.article.articleId != null}" />
+						
+						<p:outputLabel for="editorId" value="编辑ID:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="editorId" value="#{articleBean.article.editorId}" rendered="#{articleBean.article.articleId != null}" />
+						
+						<p:outputLabel for="editTime" value="编辑时间:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="editTime" value="#{articleBean.article.editTimeDate}" rendered="#{articleBean.article.articleId != null}">
+						    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+						</p:outputLabel>
+						
+						<p:outputLabel for="reviewer" value="审稿人:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null and articleBean.newsSource.reviewEnabled}" />
+						<p:outputLabel id="reviewer" value="#{articleBean.article.reviewer}" rendered="#{articleBean.article.articleId != null and articleBean.newsSource.reviewEnabled}" />
+						
+						<p:outputLabel for="reviewerId" value="审稿人ID:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null and articleBean.newsSource.reviewEnabled}" />
+						<p:outputLabel id="reviewerId" value="#{articleBean.article.reviewerId}" rendered="#{articleBean.article.articleId != null and articleBean.newsSource.reviewEnabled}" />
+						
+						<p:outputLabel for="reviewTime" value="审稿时间:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null and articleBean.newsSource.reviewEnabled}" />
+						<p:outputLabel id="reviewTime" value="#{articleBean.article.reviewTimeDate}" rendered="#{articleBean.article.articleId != null and articleBean.newsSource.reviewEnabled}">
+						    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+						</p:outputLabel>
+						
+						<p:outputLabel for="updateTime" value="更新时间:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="updateTime" value="#{articleBean.article.updateTimeDate}" rendered="#{articleBean.article.articleId != null}">
+						    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+						</p:outputLabel>
+		
+						<p:outputLabel for="pictureCount" value="包含图片数:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="pictureCount" value="#{articleBean.article.pictureCount}" rendered="#{articleBean.article.articleId != null}" />
+		
+						<p:outputLabel for="audioCount" value="包含音频数:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="audioCount" value="#{articleBean.article.audioCount}" rendered="#{articleBean.article.articleId != null}" />
+		
+						<p:outputLabel for="videoCount" value="包含视频数:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="videoCount" value="#{articleBean.article.videoCount}" rendered="#{articleBean.article.articleId != null}" />
+		
+						<p:outputLabel for="published" value="是否已发布:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="published" value="#{articleBean.article.publishedEnum.name()}" rendered="#{articleBean.article.articleId != null}" />
+		
+						<p:outputLabel for="viewCount" value="获得阅读数:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="viewCount" value="#{articleBean.article.viewCount}" rendered="#{articleBean.article.articleId != null}" />
+
+						<p:outputLabel for="favoriteCount" value="获得收藏数:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="favoriteCount" value="#{articleBean.article.favoriteCount}" rendered="#{articleBean.article.articleId != null}" />
+		
+						<p:outputLabel for="commentCount" value="获得评论数:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="commentCount" value="#{articleBean.article.commentCount}" rendered="#{articleBean.article.articleId != null}" />
+		
+						<p:outputLabel for="replyCount" value="获得回复数:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="replyCount" value="#{articleBean.article.replyCount}" rendered="#{articleBean.article.articleId != null}" />
+		
+						<p:outputLabel for="likeCount" value="获得喜欢数:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="likeCount" value="#{articleBean.article.likeCount}" rendered="#{articleBean.article.articleId != null}" />
+		
+						<p:outputLabel for="dislikeCount" value="获得不喜欢数:" style="font-weight:bold" rendered="#{articleBean.article.articleId != null}" />
+						<p:outputLabel id="dislikeCount" value="#{articleBean.article.dislikeCount}" rendered="#{articleBean.article.articleId != null}" />
+						
+						<f:facet name="footer">
+							<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{articleBean.saveAction}" update="articleEditForm:messages" rendered="#{articleBean.hasModuleManage()}" />
+							<p:commandButton id="mediaButton" icon="fa fa-fw fa-list" value="管理多媒体" actionListener="#{articleBean.manageMediasAction}" style="margin-left:10px" rendered="#{articleBean.hasModule('Media') and articleBean.article.articleId != null}" />
+							<p:commandButton id="reviewButton" icon="fa fa-fw fa-share" value="审稿通过" actionListener="#{articleBean.reviewAction}" style="margin-left:10px" rendered="#{articleBean.hasModuleManage() and articleBean.article.articleId != null and articleBean.newsSource.reviewEnabled and articleBean.article.reviewTime == null}" />
+							<p:commandButton id="revokeButton" icon="fa fa-fw fa-reply" value="撤销审稿" actionListener="#{articleBean.revokeAction}"  style="margin-left:10px" update="articleEditForm" rendered="#{articleBean.hasModuleManage() and articleBean.article.articleId != null and articleBean.newsSource.reviewEnabled and articleBean.article.reviewTime != null}" />
+						</f:facet>
+					</h:panelGrid>
+				</p:tab>
+				<p:tab title="分类标签">
+					<h:panelGrid columns="1">
+						<p:pickList value="#{articleBean.categoryTagDualListModel}" var="categoryTag" itemLabel="#{categoryTag.nameWithLevel}" itemValue="#{categoryTag.categoryTagId}" showSourceFilter="true" showTargetFilter="true" filterMatchMode="contains">
+							<f:facet name="sourceCaption">未选择</f:facet>
+							<f:facet name="targetCaption">已选择</f:facet>
+							<p:column>
+								<h:outputText value="#{categoryTag.nameWithLevel}" title="#{categoryTag.nameWithParents}" />
+							</p:column>
+						</p:pickList>
+						
+						<f:facet name="footer">
+							<p:commandButton id="saveCategoryTagButton" icon="ui-icon-disk" value="保存" actionListener="#{articleBean.saveAction}" update="articleEditForm:messages" rendered="#{articleBean.hasModuleManage()}" />
+						</f:facet>
+					</h:panelGrid>
+				</p:tab>
+			</p:tabView>
+		</h:form>
+	</ui:define>
+</ui:composition>

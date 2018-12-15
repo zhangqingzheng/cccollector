@@ -1,0 +1,92 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="userAppId" value="#{commentListBean.modelId1}" />
+			<f:viewParam name="contentType" value="#{commentListBean.modelId2}" />
+			<f:viewParam name="contentId" value="#{commentListBean.modelId3}" />
+		    <f:viewParam name="newsSourceId" value="#{commentListBean.modelId4}" />
+			<f:viewAction action="#{commentListBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		评论列表 - 
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span class="subitem" style="display:#{commentListBean.userApp == null and commentListBean.article == null ? '' : 'none'}">全部</span>
+		<span style="display:#{commentListBean.userApp != null ? '' : 'none'}"><a href="userAppList.xhtml" class="subitem">#{commentListBean.userApp.name}</a><span class="subitem fontSize18">用户应用</span></span>
+		<span style="display:#{commentListBean.article != null ? '' : 'none'}"><a href="articleList.xhtml?newsSourceId=#{commentListBean.modelId4}" class="subitem">#{commentListBean.article.title}</a><span class="subitem fontSize18">文章</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="commentsForm">
+			<p:growl id="messages" showDetail="true" />
+
+			<p:dataTable id="commentsSingle" widgetVar="commentsSingleTable" var="comment" value="#{commentListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selectionMode="single" rowKey="#{comment.commentId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px">
+				<p:ajax event="rowSelect" listener="#{commentListBean.selectCommentAction}" disabled="#{commentListBean.hasModule('Reply') == false}" update="commentsForm:messages" />
+	
+				<p:column headerText="评论ID" priority="1">
+					<h:outputText value="#{comment.commentId}" />
+				</p:column>
+
+				<p:column headerText="内容" priority="2" filterBy="#{comment.content}" filterMatchMode="contains">
+					<h:outputText value="#{comment.contentToHtml}" escape="false" />
+				</p:column>																								
+					
+				<p:column headerText="关联内容类别" priority="1" filterBy="#{comment.modelId2}" filterMatchMode="exact" rendered="#{commentListBean.modelId2 == null and commentListBean.modelId3 == null}">
+					<f:facet name="filter">	
+						<p:selectOneMenu onchange="PF('commentsSingleTable').filter()">
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{commentListBean.contentTypeEnums}" var="contentTypeEnum" itemLabel="#{contentTypeEnum.name()}" itemValue="#{contentTypeEnum.ordinal()}" />
+						</p:selectOneMenu>						
+					</f:facet>
+					<h:outputText value="#{comment.contentTypeEnum.name()}" />
+				</p:column>
+
+				<p:column headerText="关联内容" priority="1" rendered="#{commentListBean.modelId2 == null and commentListBean.modelId3 == null}">
+					<h:outputText value="#{comment.relativeContentName}" />
+				</p:column>
+			
+				<p:column headerText="楼层数" priority="1">
+					<h:outputText value="#{comment.floorNumber}" />
+				</p:column>
+
+				<p:column headerText="状态" priority="1" filterBy="#{comment.status}" filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu onchange="PF('commentsSingleTable').filter()">
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{commentListBean.statusEnums}" var="statusEnum" itemLabel="#{statusEnum.name()}" itemValue="#{statusEnum.ordinal()}" />
+						</p:selectOneMenu>
+					</f:facet>
+					<h:outputText value="#{comment.statusEnum.name()}" />
+				</p:column>
+								
+				<p:column headerText="回复 : 喜欢" priority="1">
+					<p:commandLink actionListener="#{commentListBean.selectCommentReplyAction(comment)}">
+						<h:outputText value="#{comment.replyCount} : " />
+					</p:commandLink>
+					<p:commandLink actionListener="#{commentListBean.selectCommentLikeAction(comment)}">
+						<h:outputText value="#{comment.likeCount}" />
+					</p:commandLink>
+				</p:column>
+			
+				<p:column headerText="创建时间" priority="1">
+					<h:outputText value="#{comment.createTimeDate}" >
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="所属用户应用" priority="1" filterBy="#{comment.userApp.name}" filterMatchMode="contains" rendered="#{commentListBean.userApp == null}">
+					<h:outputText value="#{comment.userApp.name}" />
+				</p:column>
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

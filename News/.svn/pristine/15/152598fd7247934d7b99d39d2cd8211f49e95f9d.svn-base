@@ -1,0 +1,278 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="newsSourceId" value="#{columnDistributionListBean.modelId1}" />
+			<f:viewParam name="appId" value="#{columnDistributionListBean.modelId2}" />
+			<f:viewParam name="columnId" value="#{columnDistributionListBean.selectedColumnId}" />
+			<f:viewParam name="published" value="#{columnDistributionListBean.published}" />
+			<f:viewParam name="multiSelect" value="#{columnDistributionListBean.multiSelect}" />
+			<f:viewAction action="#{columnDistributionListBean.validateModuleWithSpecificIdAction('Distribution', 'NewsSource', columnDistributionListBean.newsSource.newsSourceId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{columnDistributionListBean.publishedEnum.name()}文章列表 - 
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span><a href="newsSourceList.xhtml?appId=#{columnDistributionListBean.modelId2 != null ? columnDistributionListBean.modelId2 : ''}" class="subitem">#{columnDistributionListBean.newsSource.name}</a><span class="subitem fontSize18">新闻源</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		
+		<p:importConstants type="com.cccollector.news.model.Distribution" var="DistributionConstants" />
+		
+		<h:form id="distributionsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:remoteCommand name="screenTypeRemoteCommand" />
+			<p:inputText id="screenType" widgetVar="screenTypeHidden" value="#{columnDistributionListBean.screenType}" style="display:none" />
+		
+			<h:panelGrid columns="2">
+				<p:inputSwitch id="multiSelect" value="#{columnDistributionListBean.multiSelect}" onLabel="管理" offLabel="浏览" rendered="#{distributionListBean.hasModuleManage('Distribution')}">
+					<p:ajax update="distributionsForm" />
+				</p:inputSwitch>
+				
+				<p:selectOneMenu id="siteSelect" value="#{columnDistributionListBean.siteId}" style="margin-left:10px" rendered="#{columnDistributionListBean.published == 1 and columnDistributionListBean.allSites != null and columnDistributionListBean.allSites.size() > 0}">
+				    <p:ajax listener="#{columnDistributionListBean.selectSiteAction}" partialSubmit="true" update="distributionsForm" />
+					<f:selectItems value="#{columnDistributionListBean.allSites}" var="site" itemLabel="#{site.name}" itemValue="#{site.siteId}"/>	
+				</p:selectOneMenu>
+			</h:panelGrid>
+		
+			<p:dataTable id="distributionsSingle" widgetVar="distributionsSingleTable" var="distribution" value="#{columnDistributionListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selectionMode="single" rowKey="#{distribution.distributionId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{columnDistributionListBean.published == 1 and columnDistributionListBean.selectedColumnId != null and distribution.position != null? 'positioned' : null}" style="margin:20px 0px" rendered="#{!columnDistributionListBean.multiSelect}">
+				<p:ajax event="rowSelect" listener="#{columnDistributionListBean.selectDistributionAction}" disabled="#{columnDistributionListBean.hasModule('Distribution') == false}"/>
+	
+				<p:column headerText="文章ID : 分发ID" priority="1">
+					<h:outputText value="#{distribution.article.articleId} : #{distribution.distributionId}" />
+				</p:column>
+	
+				<p:column headerText="所属栏目" priority="1" filterBy="#{distribution.column.columnId}" filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu value="#{columnDistributionListBean.selectedColumnId}" onchange="PF('distributionsSingleTable').filter()">
+							<f:selectItem itemLabel="选择栏目" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{columnDistributionListBean.allColumns}" var="column" itemLabel="#{column.nameWithLevel}" itemValue="#{column.columnId}" />
+						</p:selectOneMenu>
+					</f:facet>
+					<h:outputText value="#{distribution.column.name}" title="#{distribution.column.nameWithParents}" />
+				</p:column>
+				
+				<p:column headerText="标题" priority="1" filterBy="#{distribution.article.title}" filterMatchMode="contains" rendered="#{columnDistributionListBean.published == 1 and columnDistributionListBean.allSites != null and columnDistributionListBean.allSites.size() > 0}">
+					<p:link value="#{distribution.article.title}" href="#{columnDistributionListBean.webAddress}#{distribution.staticPageUrl}" target="_blank" />
+				</p:column>
+
+				<p:column headerText="标题" priority="1" filterBy="#{distribution.article.title}" filterMatchMode="contains" rendered="#{columnDistributionListBean.published == 0 or (columnDistributionListBean.published == 1 and (columnDistributionListBean.allSites == null or columnDistributionListBean.allSites.size() == 0))}">
+					<h:outputText value="#{distribution.article.title}" />
+				</p:column>
+				
+				<p:column headerText="作者" priority="1" filterBy="#{distribution.article.author}" filterMatchMode="contains">
+					<h:outputText value="#{distribution.article.author}" />
+				</p:column>
+				
+				<p:column headerText="来源" priority="1" filterBy="#{distribution.article.source}" filterMatchMode="contains">
+					<h:outputText value="#{distribution.article.source}" />
+				</p:column>
+				
+				<p:column headerText="关键字" priority="2" filterBy="#{distribution.article.keywords}" filterMatchMode="contains">
+					<h:outputText value="#{distribution.article.keywords}" />
+				</p:column>
+				
+				<p:column headerText="编辑" priority="1" filterBy="#{distribution.article.editor}" filterMatchMode="contains" rendered="#{columnDistributionListBean.published == 0}">
+					<h:outputText id="editor" value="#{distribution.article.editor} (ID:#{distribution.article.editorId})" />
+					<p:tooltip for="editor" value="#{distribution.article.editTimeDate}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>
+				
+				<p:column headerText="审稿人" priority="1" filterBy="#{distribution.article.reviewer}" filterMatchMode="contains" rendered="#{columnDistributionListBean.newsSource.reviewEnabled and columnDistributionListBean.published == 0}">
+					<h:outputText id="reviewer" value="#{distribution.article.reviewer} (ID:#{distribution.article.reviewerId})" />
+					<p:tooltip for="reviewer" value="#{distribution.article.reviewTimeDate}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>
+				
+				<p:column headerText="更新时间" priority="1">
+					<h:outputText value="#{distribution.article.updateTimeDate}">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+				
+				<p:column headerText="验证时间" priority="1" rendered="#{columnDistributionListBean.published == 0}">
+					<h:outputText value="#{distribution.validateTimeDate}">
+					    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+				
+				<p:column headerText="发布人" priority="1" filterBy="#{distribution.publisher}" filterMatchMode="contains" rendered="#{columnDistributionListBean.published > 0}">
+					<h:outputText id="publisher" value="#{distribution.publisher} (ID:#{distribution.publisherId})" />
+					<p:tooltip for="publisher" value="#{distribution.publishTimeDate}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>
+				
+				<p:column headerText="定时发布时间" priority="1" rendered="#{columnDistributionListBean.published == 2}">
+					<h:outputText value="#{distribution.scheduledTimeDate}">
+					    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+				
+				<p:column headerText="是否首发" priority="1" rendered="#{columnDistributionListBean.published == 1}">
+				    <h:outputText value="#{distribution.firstPublishedEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="指定排序位置" priority="1" rendered="#{columnDistributionListBean.published == 1}">
+				    <h:outputText value="#{distribution.position == null ? null : distribution.position + 1}" />
+				</p:column>
+			</p:dataTable>
+				
+			<p:dataTable id="distributionsMultiple" widgetVar="distributionsMultipleTable" var="distribution" value="#{columnDistributionListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selection="#{columnDistributionListBean.selectedModels}" rowKey="#{distribution.distributionId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{columnDistributionListBean.published == 1 and columnDistributionListBean.selectedColumnId != null and distribution.position != null? 'positioned' : null}" style="margin:20px 0px" rendered="#{columnDistributionListBean.hasModuleManage('Distribution') and columnDistributionListBean.multiSelect}">
+				<p:ajax event="rowDblselect" listener="#{columnDistributionListBean.selectDistributionAction}" />
+				
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+				
+				<p:column headerText="文章ID : 分发ID" priority="1">
+					<h:outputText value="#{distribution.article.articleId} : #{distribution.distributionId}" />
+				</p:column>
+				
+				<p:column headerText="所属栏目" priority="1" filterBy="#{distribution.column.columnId}" filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu value="#{columnDistributionListBean.selectedColumnId}" onchange="PF('distributionsMultipleTable').filter()">
+							<f:selectItem itemLabel="选择栏目" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{columnDistributionListBean.allColumns}" var="column" itemLabel="#{column.nameWithLevel}" itemValue="#{column.columnId}" />
+						</p:selectOneMenu>
+					</f:facet>
+					<h:outputText value="#{distribution.column.name}" title="#{distribution.column.nameWithParents}" />
+				</p:column>
+				
+				<p:column headerText="标题" priority="1" filterBy="#{distribution.article.title}" filterMatchMode="contains" rendered="#{columnDistributionListBean.published == 1 and columnDistributionListBean.allSites != null and columnDistributionListBean.allSites.size() > 0}">
+					<p:link value="#{distribution.article.title}" href="#{columnDistributionListBean.webAddress}#{distribution.staticPageUrl}" target="_blank" />
+				</p:column>
+
+				<p:column headerText="标题" priority="1" filterBy="#{distribution.article.title}" filterMatchMode="contains" rendered="#{columnDistributionListBean.published == 0 or (columnDistributionListBean.published == 1 and (columnDistributionListBean.allSites == null or columnDistributionListBean.allSites.size() == 0))}">
+					<h:outputText value="#{distribution.article.title}" />
+				</p:column>
+				
+				<p:column headerText="作者" priority="1" filterBy="#{distribution.article.author}" filterMatchMode="contains">
+					<h:outputText value="#{distribution.article.author}" />
+				</p:column>
+				
+				<p:column headerText="来源" priority="1" filterBy="#{distribution.article.source}" filterMatchMode="contains">
+					<h:outputText value="#{distribution.article.source}" />
+				</p:column>
+				
+				<p:column headerText="关键字" priority="2" filterBy="#{distribution.article.keywords}" filterMatchMode="contains">
+					<h:outputText value="#{distribution.article.keywords}" />
+				</p:column>
+				
+				<p:column headerText="编辑" priority="1" filterBy="#{distribution.article.editor}" filterMatchMode="contains" rendered="#{columnDistributionListBean.published == 0}">
+					<h:outputText id="editor" value="#{distribution.article.editor} (ID:#{distribution.article.editorId})" />
+					<p:tooltip for="editor" value="#{distribution.article.editTimeDate}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>
+				
+				<p:column headerText="审稿人" priority="1" filterBy="#{distribution.article.reviewer}" filterMatchMode="contains" rendered="#{columnDistributionListBean.newsSource.reviewEnabled and columnDistributionListBean.published == 0}">
+					<h:outputText id="reviewer" value="#{distribution.article.reviewer} (ID:#{distribution.article.reviewerId})" />
+					<p:tooltip for="reviewer" value="#{distribution.article.reviewTimeDate}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>
+				
+				<p:column headerText="更新时间" priority="1">
+					<h:outputText value="#{distribution.article.updateTimeDate}">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+				
+				<p:column headerText="验证时间" priority="1" rendered="#{columnDistributionListBean.published == 0}">
+					<h:outputText value="#{distribution.validateTimeDate}">
+					    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+					<p:commandButton icon="ui-icon-refresh" actionListener="#{columnDistributionListBean.updateDistributionValidateTimeAction(distribution)}" update="distributionsForm:messages @namingcontainer" />
+				</p:column>
+				
+				<p:column headerText="发布人" priority="1" filterBy="#{distribution.publisher}" filterMatchMode="contains" rendered="#{columnDistributionListBean.published > 0}">
+					<h:outputText id="publisher" value="#{distribution.publisher} (ID:#{distribution.publisherId})" />
+					<p:tooltip for="publisher" value="#{distribution.publishTimeDate}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>
+				
+				<p:column headerText="定时发布时间" priority="1" rendered="#{columnDistributionListBean.published == 2}">
+					<h:outputText value="#{distribution.scheduledTimeDate}">
+					    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="是否首发" priority="1" rendered="#{columnDistributionListBean.published == 1}">
+					<p:inputSwitch value="#{distribution.firstPublished}" onLabel="是" offLabel="否">
+						<p:ajax listener="#{columnDistributionListBean.modifyDistributionFirstPublishedAction(distribution)}" update="distributionsForm:messages @namingcontainer" />
+					</p:inputSwitch>
+				</p:column>
+				
+				<p:column headerText="指定排序位置" priority="1" rendered="#{columnDistributionListBean.published == 1}">
+					<p:selectOneMenu value="#{distribution.position}" >
+						<p:ajax listener="#{columnDistributionListBean.modifyDistributionPositionAction(distribution)}" update="distributionsForm:messages @namingcontainer" />
+						<f:selectItem itemLabel="无" itemValue="#{null}" noSelectionOption="true" />
+						<c:forEach var="i" begin="1" end="#{DistributionConstants.PositionCount}">
+							<f:selectItem itemLabel="#{i}" itemValue="#{i - 1}"/>
+						</c:forEach>
+					</p:selectOneMenu>
+				</p:column>
+				
+				<p:column headerText="发布" priority="1">
+					<p:commandButton icon="fa fa-fw fa-share" value="发布" actionListener="#{columnDistributionListBean.publishDistributionAction(distribution)}" rendered="#{columnDistributionListBean.published == 0}">
+						<p:ajax event="dialogReturn" listener="#{columnDistributionListBean.handlePublishDistributionReturn}" update="distributionsForm:messages distributionsForm:distributionsMultiple" />
+					</p:commandButton>
+					<p:commandButton icon="fa fa-fw fa-reply" value="撤销发布" actionListener="#{columnDistributionListBean.unpublishDistributionAction(distribution)}" update="distributionsForm:messages distributionsForm:distributionsMultiple" rendered="#{columnDistributionListBean.published > 0}">
+						<p:confirm header="撤销发布分发" message="是否确定撤销发布所选分发？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="文章" actionListener="#{columnDistributionListBean.editArticleAction(distribution)}" />
+					<p:commandButton icon="ui-icon-pencil" value="分发" actionListener="#{columnDistributionListBean.editDistributionAction(distribution)}" style="margin-left:10px">
+						<p:ajax event="dialogReturn" listener="#{columnDistributionListBean.handleEditModelReturn}" update="distributionsForm:messages distributionsForm:distributionsMultiple" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="distributionsMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加文章" actionListener="#{columnDistributionListBean.addArticleAction}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑文章" actionListener="#{columnDistributionListBean.editArticleAction}" update="messages" />
+				<p:menuitem icon="ui-icon-refresh" value="批量更新验证时间" actionListener="#{columnDistributionListBean.updateDistributionsValidateTimeAction}" update="messages distributionsMultiple" rendered="#{columnDistributionListBean.published == 0}" />
+				<p:menuitem icon="fa fa-fw fa-share" value="批量发布" actionListener="#{columnDistributionListBean.publishDistributionsAction}" update="messages distributionsMultiple" rendered="#{columnDistributionListBean.published == 0}">
+					<p:confirm header="发布分发" message="是否确定发布所选分发？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{columnDistributionListBean.hasModuleManage('Distribution') and columnDistributionListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addArticle" icon="ui-icon-plus" value="添加文章" actionListener="#{columnDistributionListBean.addArticleAction}" />
+					<p:commandButton id="editArticle" icon="ui-icon-pencil" value="编辑文章" actionListener="#{columnDistributionListBean.editArticleAction}" update="messages" style="margin-left:20px" />
+					<p:commandButton id="editDistribution" icon="ui-icon-pencil" value="编辑分发" actionListener="#{columnDistributionListBean.editDistributionAction}" update="messages" style="margin-left:20px" >
+						<p:ajax event="dialogReturn" listener="#{columnDistributionListBean.handleEditModelReturn}" update="distributionsForm:messages distributionsForm:distributionsMultiple" />
+					</p:commandButton>
+					<p:commandButton id="updateDistributionsValidateTime" icon="ui-icon-refresh" value="批量更新验证时间" actionListener="#{columnDistributionListBean.updateDistributionsValidateTimeAction}" update="messages distributionsMultiple" style="margin-left:20px" rendered="#{columnDistributionListBean.published == 0}" />
+					<p:commandButton id="publishDistributions" icon="fa fa-fw fa-share" value="批量发布" actionListener="#{columnDistributionListBean.publishDistributionsAction}" update="messages distributionsMultiple" style="margin-left:20px" rendered="#{columnDistributionListBean.published == 0}">
+						<p:confirm header="发布分发" message="是否确定发布所选分发？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

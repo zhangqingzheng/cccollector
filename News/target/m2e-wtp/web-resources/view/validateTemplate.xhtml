@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+	<h:head>
+		<title>测试模板</title>
+	    <h:outputStylesheet name="css/showcase.css" />
+	    
+	    <script>
+			function openWindow()
+			{
+				var contentId ;
+				var distributionId_hinput = document.getElementById("validateTemplateForm:distributionId_hinput");
+				if(distributionId_hinput ){
+					contentId = distributionId_hinput .value;
+				}
+				
+				var columnId_hinput = document.getElementById("validateTemplateForm:columnId_input");
+				if(columnId_hinput ){
+					
+					var index = columnId_hinput.selectedIndex; // 选中索引
+
+					contentId = columnId_hinput.options[index].value;
+				}
+				
+				var categoryTagId_hinput = document.getElementById("validateTemplateForm:categoryTagId_input");
+				if(categoryTagId_hinput ){
+					var index = categoryTagId_hinput.selectedIndex; // 选中索引
+
+					contentId = categoryTagId_hinput.options[index].value;
+				}
+				
+				window.open('tempContentHtml.xhtml?contentId='+contentId+'&amp;contentType=#{templateVersionBean.template.type}&amp;siteVersionId=#{templateVersionBean.template.siteVersion.siteVersionId}&amp;templateVersionId=#{templateVersionBean.modelId}','');
+				
+			return true;
+			}
+		</script>
+	</h:head>
+ 
+	<h:body style="background-color:#ffffff;">
+		<h:form id="validateTemplateForm" style="margin:10px">
+			<f:metadata>
+				<f:viewParam name="templateId" value="#{templateVersionBean.modelId1}" />
+				<f:viewParam name="templateVersionId" value="#{templateVersionBean.modelId}" />
+			</f:metadata>
+
+			<p:messages id="messages" />
+
+			<h:panelGrid columns="2">
+				<p:outputLabel for="type" value="类别:" style="font-weight:bold" />
+				<p:outputLabel id="type" value="#{templateVersionBean.template.typeEnum.name()} : #{templateVersionBean.template.subtypeEnumName}" />
+			   
+			    <p:outputLabel for="columnId" value="栏目:" style="font-weight:bold" rendered="#{templateVersionBean.template.type == 0}" />
+                <p:selectOneMenu id="columnId" value="#{templateVersionBean.selectedContentId}" required="true" requiredMessage="栏目为必填项" rendered="#{templateVersionBean.template.type == 0}" >
+                    <f:selectItems value="#{templateVersionBean.allColumns}" var="column" itemLabel="#{column.nameWithParents}" itemValue="#{column.columnId}" />                                        
+                </p:selectOneMenu>
+                
+                <p:outputLabel for="distributionId" value="分发:" style="font-weight:bold" rendered="#{templateVersionBean.template.type == 1}" />
+                <p:autoComplete id="distributionId" value="#{templateVersionBean.selectedContentId}" completeMethod="#{templateVersionBean.handleDistributionComplete}" var="distribution" itemLabel="#{distribution.article.title}" itemValue="#{distribution.distributionId}" dropdown="true" forceSelection="true" required="true" requiredMessage="分发为必填项" size="30" rendered="#{templateVersionBean.template.type == 1}">
+					<p:column headerText="文章标题">
+						<h:outputText value="#{distribution.article.title}" />
+					</p:column>
+					
+					<p:column headerText="文章ID" style="width:10%">
+						<h:outputText value="#{distribution.article.articleId}" />
+					</p:column>
+					
+					<p:column headerText="分发ID" style="width:10%">
+						<h:outputText value="#{distribution.distributionId}" />
+					</p:column>
+				</p:autoComplete>
+                
+                <p:outputLabel for="categoryTagId" value="分类标签:" style="font-weight:bold" rendered="#{templateVersionBean.template.type == 2}" />
+                <p:selectOneMenu id="categoryTagId" value="#{templateVersionBean.selectedContentId}" required="true" requiredMessage="分类标签为必填项" rendered="#{templateVersionBean.template.type == 2}" >
+                    <f:selectItems value="#{templateVersionBean.allCategoryTags}" var="categoryTag" itemLabel="#{categoryTag.nameWithParents}" itemValue="#{categoryTag.categoryTagId}" />                                        
+                </p:selectOneMenu>
+
+				<f:facet name="footer">
+					<p:commandButton id="testButton" icon="ui-icon-disk" value="测试" update="messages">
+						<p:ajax oncomplete="openWindow()"></p:ajax>
+					</p:commandButton>
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</h:body>
+</html>

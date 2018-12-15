@@ -1,0 +1,61 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				xmlns:pe="http://primefaces.org/ui/extensions"
+				template="#{newsSourceBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{newsSourceBean.useDialog}" />
+			<f:viewParam name="newsSourceId" value="#{newsSourceBean.modelId}" />
+			<f:viewAction action="#{newsSourceBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{newsSourceBean.newsSource.newsSourceId == null ? '添加' : '编辑'}新闻源
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="newsSourceList.xhtml?multiSelect=true" class="subitem"><h:outputText id="subtitle" value="#{newsSourceBean.newsSource.name}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="newsSourceEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="newsSourceId" value="新闻源ID:" style="font-weight:bold" rendered="#{newsSourceBean.newsSource.newsSourceId != null}" />
+				<p:outputLabel id="newsSourceId" value="#{newsSourceBean.newsSource.newsSourceId}" rendered="#{newsSourceBean.newsSource.newsSourceId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" />
+				<p:inputText id="name" value="#{newsSourceBean.newsSource.name}" required="true" requiredMessage="名称为必填项" size="50">
+					<f:validateLength maximum="100" />
+					<p:ajax immediate="true" update="subtitle" />
+				</p:inputText>
+				
+				<p:outputLabel for="remarks" value="备注:" style="font-weight:bold" />
+				<p:inputTextarea id="remarks" value="#{newsSourceBean.newsSource.remarks}" autoResize="false" rows="5" cols="40">
+					<f:validateLength maximum="1000" />
+				</p:inputTextarea>
+				
+				<p:outputLabel for="reviewEnabled" value="是否审稿:" style="font-weight:bold" />
+				<p:inputSwitch id="reviewEnabled" value="#{newsSourceBean.newsSource.reviewEnabled}" onLabel="是" offLabel="否" />
+				
+				<p:outputLabel for="moderateEnabled" value="是否审核评论:" style="font-weight:bold" />
+				<p:inputSwitch id="moderateEnabled" value="#{newsSourceBean.newsSource.moderateEnabled}" onLabel="是" offLabel="否" />
+			
+				<p:outputLabel for="defaultSchedule" value="默认定时:" style="font-weight:bold" />
+				<p:calendar id="defaultSchedule" value="#{newsSourceBean.newsSource.defaultSchedule}" pattern="HH:mm" timeOnly="true" mask="true" effect="fold" size="30" />
+				
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+				<p:inputSwitch id="enabled" value="#{newsSourceBean.newsSource.enabled}" onLabel="是" offLabel="否" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{newsSourceBean.saveAction}" update="messages" rendered="#{newsSourceBean.hasModuleManage()}" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

@@ -1,0 +1,57 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="#{appBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{appBean.useDialog}" />
+			<f:viewParam name="appId" value="#{appBean.modelId}" />
+			<f:viewAction action="#{appBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{appBean.app.appId == null ? '添加' : '编辑'}应用
+	</ui:define>
+
+	<ui:define name="subtitle">
+		 - <span><a href="appList.xhtml?multiSelect=true" class="subitem"><h:outputText id="subtitle" value="#{appBean.app.name}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="appEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+			    <p:outputLabel for="appManagementAppId" value="对应应用:" style="font-weight:bold" rendered="#{appBean.app.appId == null}" />
+				<p:selectOneMenu id="appManagementAppId" value="#{appBean.appManagementAppId}" required="true" requiredMessage="对应应用为必填项" rendered="#{appBean.app.appId == null}" >
+					<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+					<f:selectItems value="#{appBean.notUsedAppManagementApps}" var="app" itemLabel="#{app.name}" itemValue="#{app.appId}"/>
+				</p:selectOneMenu>
+				
+				<p:outputLabel for="appId" value="应用ID:" style="font-weight:bold" rendered="#{appBean.app.appId != null}" />
+				<p:outputLabel id="appId" value="#{appBean.app.appId}" rendered="#{appBean.app.appId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" rendered="#{appBean.app.appId != null}" />
+				<p:outputLabel id="name" value="#{appBean.app.name}" rendered="#{appBean.app.appId != null}" />
+				
+				<p:outputLabel for="bundleId" value="标识符:" style="font-weight:bold" rendered="#{appBean.app.appId != null}" />
+				<p:outputLabel id="bundleId" value="#{appBean.app.bundleId}" rendered="#{appBean.app.appId != null}" />
+				
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" rendered="#{appBean.app.appId != null}" />
+				<p:outputLabel id="enabled" value="#{appBean.app.enabledEnum.name()}" rendered="#{appBean.app.appId != null}" />
+						
+				<p:outputLabel for="syncTime" value="同步时间:" style="font-weight:bold" rendered="#{appBean.app.appId != null}" />
+				<p:outputLabel id="syncTime" value="#{appBean.app.syncTime}" rendered="#{appBean.app.appId != null}">
+		    			<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{appBean.saveAction}" update="messages" rendered="#{appBean.hasModuleManage() and appBean.app.appId == null}" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

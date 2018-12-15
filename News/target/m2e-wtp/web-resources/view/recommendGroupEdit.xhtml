@@ -1,0 +1,86 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				xmlns:pe="http://primefaces.org/ui/extensions"
+				template="#{recommendGroupBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{recommendGroupBean.useDialog}" />
+			<f:viewParam name="newsSourceId" value="#{recommendGroupBean.modelId1}" />
+			<f:viewParam name="recommendGroupId" value="#{recommendGroupBean.modelId}" />
+			<f:viewAction action="#{recommendGroupBean.validateModuleWithSpecificIdAction('NewsSource', recommendGroupBean.recommendGroup.newsSource.newsSourceId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{recommendGroupBean.recommendGroup.recommendGroupId == null ? '添加' : '编辑'}推荐组
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="recommendGroupList.xhtml?multiSelect=true&amp;newsSourceId=#{recommendGroupBean.modelId1}" class="subitem"><h:outputText id="subtitle" value="#{recommendGroupBean.recommendGroup.name}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="recommendGroupEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="recommendGroupId" value="推荐组ID:" style="font-weight:bold" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId != null}" />
+				<p:outputLabel id="recommendGroupId" value="#{recommendGroupBean.recommendGroup.recommendGroupId}" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" />
+				<p:inputText id="name" value="#{recommendGroupBean.recommendGroup.name}" required="true" requiredMessage="名称为必填项" size="30">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+
+				<p:outputLabel for="templateType" value="模板类别:" style="font-weight:bold" />
+				<p:selectOneRadio id="templateType" value="#{recommendGroupBean.recommendGroup.templateType}" required="true" requiredMessage="模板类别为必填项" >
+					<f:selectItems value="#{recommendGroupBean.recommendGroup.templateTypeEnums}" var="templateTypeEnum" itemLabel="#{templateTypeEnum.name()}" itemValue="#{templateTypeEnum.ordinal()}" />
+				</p:selectOneRadio>
+				
+				<p:outputLabel for="pictureRatio" value="图片比例:" style="font-weight:bold" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId == null}" />
+				<p:selectOneMenu id="pictureRatio" value="#{recommendGroupBean.recommendGroup.pictureRatio}" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId == null}">
+					<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+					<f:selectItems value="#{recommendGroupBean.recommendGroup.pictureRatioEnums}" var="pictureRatioEnum" itemLabel="#{pictureRatioEnum.name().replace('_', ':')}" itemValue="#{pictureRatioEnum.ordinal()}" />
+				</p:selectOneMenu>
+				
+                <p:outputLabel for="pictureRatioName" value="图片比例:" style="font-weight:bold" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId != null}" />
+                <p:outputLabel id="pictureRatioName" value="#{recommendGroupBean.recommendGroup.pictureRatioEnum.name().replace('_', ':')}" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId != null}" />                
+
+				<p:outputLabel for="recommendCount" value="包含推荐数量:" style="font-weight:bold" />
+				<p:inputText id="recommendCount" value="#{recommendGroupBean.recommendGroup.recommendCount}" required="true" requiredMessage="包含推荐数量为必填项" size="30">
+					<f:validateLongRange minimum="1" maximum="100" />
+				</p:inputText>
+
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+				<p:inputSwitch id="enabled" value="#{recommendGroupBean.recommendGroup.enabled}" onLabel="是" offLabel="否" />
+              
+                <p:outputLabel for="ownerTypeId" value="所有者类别:" style="font-weight:bold" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId == null}" />
+                <p:selectOneRadio id="ownerTypeId" value="#{recommendGroupBean.recommendGroup.ownerType}" required="true" requiredMessage="所有者类别为必填项" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId == null}" >
+                    <f:selectItems value="#{recommendGroupBean.recommendGroup.ownerTypeEnums}" var="ownerTypeEnum" itemLabel="#{ownerTypeEnum.name()}" itemValue="#{ownerTypeEnum.ordinal()}"/>
+                    <p:ajax update="ownerId" /> 
+                </p:selectOneRadio>				
+				
+                <p:outputLabel for="ownerTypeName" value="所有者类别:" style="font-weight:bold" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId != null}" />
+                <p:outputLabel id="ownerTypeName" value="#{recommendGroupBean.recommendGroup.ownerTypeEnum.name()}" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId != null}" />                
+				
+                <p:outputLabel for="ownerId" value="所有者:" style="font-weight:bold" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId == null}" />
+                <p:selectOneMenu id="ownerId" value="#{recommendGroupBean.recommendGroup.ownerId}" required="true" requiredMessage="所有者为必填项" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId == null}" >                                  
+                    <f:selectItems value="#{recommendGroupBean.recommendGroup.ownerType == null ? null : recommendGroupBean.allColumns}" var="owner" itemLabel="#{recommendGroupBean.recommendGroup.ownerType == 0 ? owner.nameWithLevel : owner.name}" itemValue="#{owner.columnId}" />                                        
+                </p:selectOneMenu>
+				
+ 				<p:outputLabel for="ownerName" value="所有者:" style="font-weight:bold" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId != null}" />
+                <p:outputLabel id="ownerName" value="#{recommendGroupBean.recommendGroup.ownerName}" rendered="#{recommendGroupBean.recommendGroup.recommendGroupId != null}" />
+                
+				<p:outputLabel for="newsSourceName" value="所属新闻源:" style="font-weight:bold" />
+				<p:outputLabel id="newsSourceName" value="#{recommendGroupBean.recommendGroup.newsSource.name}" />                
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{recommendGroupBean.saveAction}" update="messages" rendered="#{recommendGroupBean.hasModuleManage()}" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

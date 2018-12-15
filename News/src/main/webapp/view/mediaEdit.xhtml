@@ -1,0 +1,91 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="articleId" value="#{mediaBean.modelId1}" />
+		    <f:viewParam name="newsSourceId" value="#{mediaBean.modelId2}" />
+			<f:viewParam name="published" value="#{mediaBean.modelId3}" />
+			<f:viewParam name="columnId" value="#{mediaBean.modelId4}" />
+			<f:viewParam name="mediaId" value="#{mediaBean.modelId}" />
+			<f:viewAction action="#{mediaBean.validateModuleWithSpecificIdAction('NewsSource', mediaBean.media.article.newsSource.newsSourceId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{mediaBean.media.mediaId == null ? '添加' : '编辑'}多媒体
+	</ui:define>
+
+	<ui:define name="subtitle">
+		 - <span><a href="mediaList.xhtml?multiSelect=true&amp;articleId=#{mediaBean.modelId1}&amp;newsSourceId=#{mediaBean.modelId2}" class="subitem"><h:outputText id="subtitle" value="#{mediaBean.media.typeEnum.name()}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="mediaEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="mediaId" value="多媒体ID:" style="font-weight:bold" rendered="#{mediaBean.media.mediaId != null}" />
+				<p:outputLabel id="mediaId" value="#{mediaBean.media.mediaId}" rendered="#{mediaBean.media.mediaId != null}" />
+
+				<p:outputLabel for="type" value="类别:" style="font-weight:bold" rendered="#{mediaBean.media.mediaId == null}" />
+				<p:selectOneRadio id="type" value="#{mediaBean.media.type}" required="true" requiredMessage="类别为必填项" rendered="#{mediaBean.media.mediaId == null}">
+					<f:selectItems value="#{mediaBean.media.typeEnums}" var="typeEnum" itemLabel="#{typeEnum.name()}" itemValue="#{typeEnum.ordinal()}" />
+					<p:ajax update="subtitle audioLabel audio videoLabel video" />
+				</p:selectOneRadio>
+				
+				<p:outputLabel for="typeName" value="类别:" style="font-weight:bold" rendered="#{mediaBean.media.mediaId != null}" />
+				<p:outputLabel id="typeName" value="#{mediaBean.media.typeEnum.name()}" rendered="#{mediaBean.media.mediaId != null}" />
+
+				<p:outputLabel for="picture" value="图片:" style="font-weight:bold" />
+				<h:panelGroup id="picture">
+					<p:fileUpload id="pictureFileUpload_1" fileUploadListener="#{mediaBean.handlePictureFileUpload}" mode="advanced" auto="true" dragDropSupport="false" allowTypes="/(\.|\/)(jpe?g)$/" label="选择图片" invalidFileMessage="文件格式错误，只接受JPG格式！" update="picture" />
+					<p:graphicImage id="pictureGraphicImage_1" value="#{mediaBean.pictureImage(1)}" stream="false" cache="false" width="300" style="border:0.5px solid #888888;box-shadow: 10px 10px 10px #888888" rendered="#{mediaBean.pictureFilePath(1) != null}" />
+					<p:outputLabel id="pictureLabel_1" value="图片宽高：#{mediaBean.pictureInfo(1).width} X #{mediaBean.pictureInfo(1).height}" style="margin-top:10px;display:block" rendered="#{mediaBean.pictureFilePath(1) != null}" />
+				</h:panelGroup>
+				
+				<p:outputLabel id="audioLabel" for="audio" value="音频:" style="font-weight:bold;display:#{mediaBean.media.type == 1 ? '' : 'none'}" />
+				<h:panelGroup id="audio" style="display:#{mediaBean.media.type == 1 ? '' : 'none'}">
+					<p:fileUpload id="fileUpload_1" fileUploadListener="#{mediaBean.handleFileUpload}" mode="advanced" auto="true" dragDropSupport="false" allowTypes="/(\.|\/)(m4a|mp3)$/" label="选择音频" invalidFileMessage="文件格式错误，只接受M4A和MP3格式！" update="audio" />
+					<audio id="audio_1" controls="controls" src="#{mediaBean.filePath(1) == null ? '' : mediaBean.loadFilePreview()}" style="display:#{mediaBean.filePath(1) == null ? 'none' : ''}" />
+				</h:panelGroup>
+				
+				<p:outputLabel id="videoLabel" for="video" value="视频:" style="font-weight:bold;display:#{mediaBean.media.type == 2 ? '' : 'none'}" />
+				<h:panelGroup id="video" style="display:#{mediaBean.media.type == 2 ? '' : 'none'}">
+					<p:fileUpload id="fileUpload_2" fileUploadListener="#{mediaBean.handleFileUpload}" mode="advanced" auto="true" dragDropSupport="false" allowTypes="/(\.|\/)(mp4)$/" label="选择视频" invalidFileMessage="文件格式错误，只接受MP4格式！" update="video" />
+					<video id="video_2" controls="controls" src="#{mediaBean.filePath(2) == null ? '' : mediaBean.loadFilePreview()}" width="300" height="200" style="display:#{mediaBean.filePath(2) == null ? 'none' : ''}" />
+				</h:panelGroup>
+				
+				<p:outputLabel for="caption" value="图片说明:" style="font-weight:bold" />
+				<p:inputTextarea id="caption" value="#{mediaBean.media.caption}" autoResize="false" rows="5" cols="30">
+					<f:validateLength maximum="1000" />
+				</p:inputTextarea>
+		
+				<p:outputLabel for="path" value="存储路径:" style="font-weight:bold" rendered="#{mediaBean.media.mediaId != null}" />
+				<p:outputLabel id="path" value="#{mediaBean.media.path}" rendered="#{mediaBean.media.mediaId != null}" />
+		
+				<p:outputLabel for="suffix" value="存储后缀:" style="font-weight:bold" rendered="#{mediaBean.media.mediaId != null}" />
+				<p:outputLabel id="suffix" value="#{mediaBean.media.suffix}" rendered="#{mediaBean.media.mediaId != null}" />
+
+				<p:outputLabel for="width" value="图片宽度:" style="font-weight:bold" rendered="#{mediaBean.media.mediaId != null}" />
+				<p:outputLabel id="width" value="#{mediaBean.media.width}" rendered="#{mediaBean.media.mediaId != null}" />
+
+				<p:outputLabel for="height" value="图片高度:" style="font-weight:bold" rendered="#{mediaBean.media.mediaId != null}" />
+				<p:outputLabel id="height" value="#{mediaBean.media.height}" rendered="#{mediaBean.media.mediaId != null}" />
+
+				<p:outputLabel for="duration" value="音视频时长:" style="font-weight:bold" rendered="#{mediaBean.media.mediaId != null}" />
+				<p:outputLabel id="duration" value="#{mediaBean.media.duration}" rendered="#{mediaBean.media.mediaId != null}" />
+						
+				<p:outputLabel for="articleName" value="所属文章:" style="font-weight:bold" />
+				<p:outputLabel id="articleName" value="#{mediaBean.media.article.title}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{mediaBean.saveAction}" update="mediaEditForm:messages" rendered="#{mediaBean.hasModuleManage()}" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

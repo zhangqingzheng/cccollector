@@ -1,0 +1,117 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+            <f:viewParam name="newsSourceId" value="#{categoryTagListBean.modelId1}" />
+			<f:viewParam name="multiSelect" value="#{categoryTagListBean.multiSelect}" />
+			<f:viewAction action="#{categoryTagListBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		分类标签列表 - 
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		<span><a href="newsSourceList.xhtml" class="subitem">#{categoryTagListBean.newsSource.name}</a><span class="subitem fontSize18">新闻源</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="categoryTagsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:inputSwitch id="multiSelect" value="#{categoryTagListBean.multiSelect}" onLabel="管理" offLabel="浏览" rendered="#{categoryTagListBean.hasModuleManage()}">
+				<p:ajax update="categoryTagsForm" />
+			</p:inputSwitch>
+			
+			<p:treeTable id="categoryTagsSingle" value="#{categoryTagListBean.rootCategoryTagTreeNode}" var="categoryTag" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!categoryTag.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{!categoryTagListBean.multiSelect}">
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{categoryTag.name}" />
+				</p:column>
+								
+				<p:column headerText="分类标签ID" priority="1">
+					<h:outputText value="#{categoryTag.categoryTagId}" />
+				</p:column>
+				
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{categoryTag.enabledEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="排序代码" priority="2">
+					<h:outputText value="#{categoryTag.code}" />
+				</p:column>
+ 			</p:treeTable>
+			
+			<p:treeTable id="categoryTagsMultiple" value="#{categoryTagListBean.rootCategoryTagTreeNode}" var="categoryTag" selectionMode="single" selection="#{categoryTagListBean.selectedCategoryTagTreeNode}" editable="true" editMode="cell" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!categoryTag.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{categoryTagListBean.hasModuleManage() and categoryTagListBean.multiSelect}">
+				<p:ajax event="cellEdit" listener="#{categoryTagListBean.onCellEdit}" update="categoryTagsForm:messages categoryTagsForm:categoryTagsMultiple" />
+
+				<p:column headerText="名称" priority="1">
+					<p:cellEditor>
+						<f:facet name="output"><h:outputText value="#{categoryTag.name}" /></f:facet>
+						<f:facet name="input"><p:inputText value="#{categoryTag.name}" style="width:100%" /></f:facet>
+					</p:cellEditor>
+				</p:column>
+
+				<p:column headerText="分类标签ID" priority="1">
+					<h:outputText value="#{categoryTag.categoryTagId}" />
+				</p:column>
+				
+				<p:column headerText="是否可用" priority="2">
+					<p:cellEditor>
+						<f:facet name="output"><h:outputText value="#{categoryTag.enabledEnum.name()}" /></f:facet>
+						<f:facet name="input">
+							<h:selectOneMenu value="#{categoryTag.enabled}" style="width:100%">
+								<f:selectItems value="#{categoryTag.enabledEnums}" var="enabledEnum" itemLabel="#{enabledEnum.name()}" itemValue="#{enabledEnum.ordinal() == 0 ? false : true}" />
+							</h:selectOneMenu>
+						</f:facet>
+					</p:cellEditor>
+				</p:column>
+				
+				<p:column headerText="排序代码" priority="2">
+					<h:outputText value="#{categoryTag.code}" />
+				</p:column>
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{categoryTagListBean.deleteCategoryTagAction(categoryTag)}" update="categoryTagsForm:messages categoryTagsForm:categoryTagsMultiple">
+						<p:confirm header="删除分类标签" message="是否确定删除所选分类标签？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+ 			</p:treeTable>
+			
+			<p:contextMenu for="categoryTagsMultiple">
+				<p:menuitem icon="ui-icon-close" value="添加" actionListener="#{categoryTagListBean.addCategoryTagAction}" update="messages categoryTagsMultiple" />
+				<p:menuitem icon="ui-icon-unlocked" value="可用" actionListener="#{categoryTagListBean.modifyCategoryTagEnabledAction(true)}" update="messages categoryTagsMultiple">
+					<p:confirm header="修改分类标签" message="是否确定修改所选分类标签为可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-locked" value="不可用" actionListener="#{categoryTagListBean.modifyCategoryTagEnabledAction(false)}" update="messages categoryTagsMultiple">
+					<p:confirm header="修改分类标签" message="是否确定修改所选分类标签为不可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-close" value="删除" actionListener="#{categoryTagListBean.deleteCategoryTagAction}" update="messages categoryTagsMultiple">
+					<p:confirm header="删除分类标签" message="是否确定删除所选分类标签？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{categoryTagListBean.hasModuleManage() and categoryTagListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addCategoryTag" icon="ui-icon-plus" value="添加" actionListener="#{categoryTagListBean.addCategoryTagAction}" update="messages categoryTagsMultiple" />
+					<p:commandButton id="deleteCategoryTag" icon="ui-icon-close" value="删除" actionListener="#{categoryTagListBean.deleteCategoryTagAction}" update="messages categoryTagsMultiple" style="margin-left:20px">
+						<p:confirm header="删除分类标签" message="是否确定删除所选分类标签？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

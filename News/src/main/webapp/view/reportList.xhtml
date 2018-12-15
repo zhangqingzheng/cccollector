@@ -1,0 +1,127 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewAction action="#{reportListBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		举报审核列表 -
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span class="subitem">全部</span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="reportsForm">
+			<p:growl id="messages" showDetail="true" />
+
+			<p:inputSwitch id="multiSelect" value="#{reportListBean.multiSelect}" onLabel="列表" offLabel="滚动" rendered="#{reportListBean.hasModuleManage()}">
+				<p:ajax update="reportsForm" />
+			</p:inputSwitch>			
+			
+			<p:inputSwitch id="showNotProcessed" value="#{reportListBean.showNotProcessed}" onLabel="未处理" offLabel="全部" style="margin-left:20px" rendered="#{reportListBean.hasModuleManage()}">
+				<p:ajax update="reportsForm" />
+			</p:inputSwitch>
+
+			<p:dataScroller id="reportsSingle" widgetVar="reportsSingleScroller" var="report" value="#{reportListBean.pageModel}" lazy="true" chunkSize="20" rendered="#{!reportListBean.multiSelect}">
+				<f:facet name="header">举报审核</f:facet>
+				
+				<p:layout style="height:300px;">
+					<p:layoutUnit position="center" minSize="500">
+						<h:panelGrid columns="2" class="#{report.status == 0 ? 'toBeProcessed' : (report.status == 1 ? '' : 'processed')}">
+							<p:outputLabel for="type" value="类别:" style="font-weight:bold" />
+							<p:outputLabel id="type" value="#{report.typeEnum.name()}" />
+							
+							<p:outputLabel for="userApp" value="所属用户应用:" style="font-weight:bold" />
+							<p:outputLabel id="userApp" value="#{report.userApp.name}" />
+							
+							<p:outputLabel for="createTime" value="创建时间:" style="font-weight:bold" />
+							<p:outputLabel id="createTime" value="#{report.createTimeDate}">
+							    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+							</p:outputLabel>
+							
+							<p:outputLabel for="status" value="状态:" style="font-weight:bold" />
+							<p:outputLabel id="status" value="#{report.statusEnum.name()}" />
+							
+							<p:outputLabel for="contentType" value="关联内容类别:" style="font-weight:bold" />
+							<p:outputLabel id="contentType" value="#{report.contentTypeEnum.name()}" />
+							
+							<p:outputLabel for="relativeContentName" value="关联内容:" style="font-weight:bold" />
+							<h:outputText id="relativeContentName" value="#{report.relativeContentName}" escape="false" />
+						
+							<f:facet name="footer">
+								<p:commandButton icon="fa fa-fw fa-check" value="审核通过" actionListener="#{reportListBean.passReportAction(report)}" update="reportsForm:messages @parent:@parent:@parent:@parent" style="margin-right:20px" rendered="#{report.status == 0}" />
+								<p:commandButton icon="fa fa-fw fa-ban" value="审核未通过" actionListener="#{reportListBean.notPassReportAction(report)}" update="reportsForm:messages @parent:@parent:@parent:@parent" style="margin-right:20px" rendered="#{report.status == 0}" />
+								<p:commandButton icon="fa fa-fw fa-undo" value="恢复" actionListener="#{reportListBean.recoverReportAction(report)}" update="reportsForm:messages @parent:@parent:@parent:@parent" rendered="#{report.status gt 0}" />
+							</f:facet>
+						</h:panelGrid>
+					</p:layoutUnit>
+				</p:layout>
+			</p:dataScroller>
+			
+			<p:dataTable id="reportsMultiple" widgetVar="reportsMultipleTable" var="report" value="#{reportListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selectionMode="single" rowKey="#{report.reportId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{report.status == 0 ? 'toBeProcessed' : (report.status == 1 ? '' : 'processed')}" style="margin:20px 0px" rendered="#{reportListBean.hasModuleManage() and reportListBean.multiSelect}">
+				<p:column headerText="举报ID" priority="1">
+					<h:outputText value="#{report.reportId}" />
+				</p:column>
+					
+				<p:column headerText="类别" priority="1" filterBy="#{report.type}" filterMatchMode="exact">
+					<f:facet name="filter">	
+						<p:selectOneMenu onchange="PF('reportsMultipleTable').filter()">
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{reportListBean.typeEnums}" var="typeEnum" itemLabel="#{typeEnum.name()}" itemValue="#{typeEnum.ordinal()}" />
+						</p:selectOneMenu>						
+					</f:facet>
+					<h:outputText value="#{report.typeEnum.name()}" />
+				</p:column>
+
+				<p:column headerText="关联内容类别" priority="1" filterBy="#{report.contentType}" filterMatchMode="exact">
+					<f:facet name="filter">	
+						<p:selectOneMenu onchange="PF('reportsMultipleTable').filter()">
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{reportListBean.contentTypeEnums}" var="contentTypeEnum" itemLabel="#{contentTypeEnum.name()}" itemValue="#{contentTypeEnum.ordinal()}" />
+						</p:selectOneMenu>						
+					</f:facet>
+					<h:outputText value="#{report.contentTypeEnum.name()}" />
+				</p:column>
+
+				<p:column headerText="关联内容" priority="1">
+					<h:outputText value="#{report.relativeContentName}" escape="false" />
+				</p:column>
+
+				<p:column headerText="所属用户应用" priority="1" filterBy="#{report.userApp.name}" filterMatchMode="contains">
+					<h:outputText value="#{report.userApp.name}" />
+				</p:column>
+			
+				<p:column headerText="创建时间" priority="1">
+					<h:outputText value="#{report.createTimeDate}" >
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm:ss" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="状态" priority="1" filterBy="#{report.status}" filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu onchange="PF('reportsMultipleTable').filter()">
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{reportListBean.statusEnums}" var="statusEnum" itemLabel="#{statusEnum.name()}" itemValue="#{statusEnum.ordinal()}" />
+						</p:selectOneMenu>
+					</f:facet>
+					<h:outputText value="#{report.statusEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="fa fa-fw fa-check" value="通过" actionListener="#{reportListBean.passReportAction(report)}" update="reportsForm:messages @parent:@parent" style="margin-right:5px" rendered="#{report.status == 0}" />
+					<p:commandButton icon="fa fa-fw fa-ban" value="未通过" actionListener="#{reportListBean.notPassReportAction(report)}" update="reportsForm:messages @parent:@parent" style="margin-right:5px" rendered="#{report.status == 0}" />
+					<p:commandButton icon="fa fa-fw fa-undo" value="恢复" actionListener="#{reportListBean.recoverReportAction(report)}" update="reportsForm:messages @parent:@parent" rendered="#{report.status gt 0}" />
+				</p:column>
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

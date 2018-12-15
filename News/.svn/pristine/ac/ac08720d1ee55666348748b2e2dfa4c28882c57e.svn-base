@@ -1,0 +1,100 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="#{distributionBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{distributionBean.useDialog}" />
+			<f:viewParam name="articleId" value="#{distributionBean.modelId1}" />
+			<f:viewParam name="newsSourceId" value="#{distributionBean.modelId2}" />
+			<f:viewParam name="specifiedDistributionId" value="#{distributionBean.modelId3}" />
+			<f:viewParam name="columnId" value="#{distributionBean.modelId4}" />
+			<f:viewParam name="published" value="#{distributionBean.modelId5}" />
+			<f:viewParam name="distributionId" value="#{distributionBean.modelId}" />
+			<f:viewAction action="#{distributionBean.validateModuleWithSpecificIdAction('NewsSource', distributionBean.distribution.article.newsSource.newsSourceId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{distributionBean.distribution.distributionId == null ? '添加' : '编辑'}分发
+	</ui:define>
+
+	<ui:define name="subtitle">
+		 - <span><a href="distributionList.xhtml?multiSelect=true&amp;articleId=#{distributionBean.modelId1}&amp;newsSourceId=#{distributionBean.modelId2}" class="subitem"><h:outputText id="subtitle" value="#{distributionBean.distribution.column.name}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+
+		<p:importConstants type="com.cccollector.news.model.Distribution" var="DistributionConstants" />
+
+		<h:form id="distributionEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="distributionId" value="分发ID:" style="font-weight:bold" rendered="#{distributionBean.distribution.distributionId != null}" />
+				<p:outputLabel id="distributionId" value="#{distributionBean.distribution.distributionId}" rendered="#{distributionBean.distribution.distributionId != null}" />
+				
+				<p:outputLabel for="columnName" value="所属栏目:" style="font-weight:bold" rendered="#{distributionBean.distribution.distributionId != null}" />
+				<p:outputLabel id="columnName" value="#{distributionBean.distribution.column.name}" rendered="#{distributionBean.distribution.distributionId != null}" />
+				
+				<p:outputLabel for="columnId" value="所属栏目:" style="font-weight:bold" rendered="#{distributionBean.distribution.distributionId == null}" />
+				<p:selectOneMenu id="columnId" value="#{distributionBean.distribution.column.columnId}" required="true" requiredMessage="所属栏目为必填项" rendered="#{distributionBean.distribution.distributionId == null}" >
+					<p:ajax listener="#{distributionBean.updateListThumbnailRatioAction}" update="subtitle listThumbnailRatio" />
+					<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+					<f:selectItems value="#{distributionBean.notUsedColumns}" var="column" itemLabel="#{column.nameWithLevel}" itemValue="#{column.columnId}" />
+				</p:selectOneMenu>
+				
+				<p:outputLabel for="listTemplateType" value="列表模板类别:" style="font-weight:bold" />
+				<p:selectOneMenu id="listTemplateType" value="#{distributionBean.distribution.listTemplateType}" required="true" requiredMessage="列表模板类别为必填项" >
+					<f:selectItems value="#{distributionBean.distribution.listTemplateTypeEnums}" var="listTemplateTypeEnum" itemLabel="#{listTemplateTypeEnum.name()}" itemValue="#{listTemplateTypeEnum.ordinal()}" />
+				</p:selectOneMenu>
+
+				<p:outputLabel for="listThumbnailRatio" value="列表缩略图比例:" style="font-weight:bold" />
+				<p:selectOneMenu id="listThumbnailRatio" value="#{distributionBean.distribution.listThumbnailRatio}" required="true" requiredMessage="列表缩略图比例为必填项" >
+					<f:selectItems value="#{distributionBean.distribution.listThumbnailRatioEnums}" var="listThumbnailRatioEnum" itemLabel="#{listThumbnailRatioEnum.name().replace('_', ':')}" itemValue="#{listThumbnailRatioEnum.ordinal()}" />
+				</p:selectOneMenu>
+				
+				<p:outputLabel for="bodyTemplateType" value="正文模板类别:" style="font-weight:bold" />
+				<p:selectOneMenu id="bodyTemplateType" value="#{distributionBean.distribution.bodyTemplateType}" required="true" requiredMessage="正文模板类别为必填项" >
+					<f:selectItems value="#{distributionBean.distribution.bodyTemplateTypeEnums}" var="bodyTemplateTypeEnum" itemLabel="#{bodyTemplateTypeEnum.name()}" itemValue="#{bodyTemplateTypeEnum.ordinal()}" />
+				</p:selectOneMenu>
+				
+				<p:outputLabel for="cropThumbnails" value="裁切缩略图:" style="font-weight:bold" rendered="#{!distributionBean.distribution.published}" />
+				<p:selectBooleanCheckbox id="cropThumbnails" value="#{distributionBean.cropThumbnails}" rendered="#{!distributionBean.distribution.published}" />
+				
+				<p:outputLabel for="validateTime" value="验证时间:" style="font-weight:bold" rendered="#{distributionBean.distribution.distributionId != null}" />
+				<p:outputLabel id="validateTime" value="#{distributionBean.distribution.validateTimeDate}" rendered="#{distributionBean.distribution.distributionId != null}">
+					<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<p:outputLabel for="publisher" value="发布人:" style="font-weight:bold" rendered="#{distributionBean.distribution.distributionId != null}" />
+				<p:outputLabel id="publisher" value="#{distributionBean.distribution.publisher}" rendered="#{distributionBean.distribution.distributionId != null}" />
+				
+				<p:outputLabel for="publisherId" value="发布人ID:" style="font-weight:bold" rendered="#{distributionBean.distribution.distributionId != null}" />
+				<p:outputLabel id="publisherId" value="#{distributionBean.distribution.publisherId}" rendered="#{distributionBean.distribution.distributionId != null}" />
+			
+				<p:outputLabel for="publishTime" value="发布时间:" style="font-weight:bold" rendered="#{distributionBean.distribution.distributionId != null}" />
+				<p:outputLabel id="publishTime" value="#{distributionBean.distribution.publishTimeDate}" rendered="#{distributionBean.distribution.distributionId != null}">
+					<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+			
+				<p:outputLabel for="scheduledTime" value="定时发布时间:" style="font-weight:bold" rendered="#{distributionBean.distribution.distributionId != null and distributionBean.newsSource.defaultSchedule != null}" />
+				<p:outputLabel id="scheduledTime" value="#{distributionBean.distribution.scheduledTimeDate}" rendered="#{distributionBean.distribution.distributionId != null and distributionBean.newsSource.defaultSchedule != null}">
+					<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+
+				<p:outputLabel for="firstPublished" value="是否首发:" style="font-weight:bold" rendered="#{distributionBean.distribution.distributionId != null}" />
+				<p:outputLabel id="firstPublished" value="#{distributionBean.distribution.firstPublishedEnum.name()}" rendered="#{distributionBean.distribution.distributionId != null}" />
+				
+				<p:outputLabel for="position" value="指定排序位置:" style="font-weight:bold" rendered="#{distributionBean.distribution.distributionId != null}" />
+				<p:outputLabel id="position" value="#{distributionBean.distribution.position == null? null : distributionBean.distribution.position + 1}" rendered="#{distributionBean.distribution.distributionId != null}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{distributionBean.saveAction}" update="messages" rendered="#{distributionBean.hasModuleManage()}" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

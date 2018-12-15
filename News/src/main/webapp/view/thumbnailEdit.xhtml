@@ -1,0 +1,70 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="#{thumbnailBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{thumbnailBean.useDialog}" />
+			<f:viewParam name="distributionId" value="#{thumbnailBean.modelId1}" />
+		    <f:viewParam name="articleId" value="#{thumbnailBean.modelId2}" />
+			<f:viewParam name="newsSourceId" value="#{thumbnailBean.modelId3}" />
+			<f:viewParam name="specifiedDistributionId" value="#{thumbnailBean.modelId4}" />
+			<f:viewParam name="columnId" value="#{thumbnailBean.modelId5}" />
+			<f:viewParam name="published" value="#{thumbnailBean.modelId6}" />
+			<f:viewParam name="thumbnailId" value="#{thumbnailBean.modelId}" />
+			<f:viewAction action="#{thumbnailBean.validateModuleWithSpecificIdAction('NewsSource', thumbnailBean.thumbnail.distribution.column.newsSource.newsSourceId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{thumbnailBean.thumbnail.thumbnailId == null ? '添加' : '编辑'}缩略图
+	</ui:define>
+
+	<ui:define name="subtitle">
+		 - <span><a href="thumbnailList.xhtml?multiSelect=true&amp;distributionId=#{thumbnailBean.modelId1}&amp;articleId=#{thumbnailBean.modelId2}&amp;newsSourceId=#{thumbnailBean.modelId3}" class="subitem"><h:outputText id="subtitle" value="#{thumbnailBean.thumbnail.distribution.article.title}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="thumbnailEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="thumbnailId" value="缩略图ID:" style="font-weight:bold" rendered="#{thumbnailBean.thumbnail.thumbnailId != null}" />
+				<p:outputLabel id="thumbnailId" value="#{thumbnailBean.thumbnail.thumbnailId}" rendered="#{thumbnailBean.thumbnail.thumbnailId != null}" />
+
+				<p:outputLabel for="mediaId" value="裁切多媒体:" style="font-weight:bold" />				
+				<p:selectOneMenu id="mediaId" value="#{thumbnailBean.selectedMediaId}">
+					<f:selectItem itemLabel="选择多媒体" itemValue="#{null}" noSelectionOption="true" />
+					<f:selectItems value="#{thumbnailBean.allMedias}" var="media" itemLabel="#{media.mediaId}:#{media.caption.length() > 30 ? media.caption.substring(0, 30) : media.caption}" itemValue="#{media.mediaId}" />	 
+					<p:ajax listener="#{thumbnailBean.cropMediaAction}" update="picture" />
+				</p:selectOneMenu>	
+		
+				<p:outputLabel for="picture" value="图片:" style="font-weight:bold" />
+				<h:panelGroup id="picture">
+					<p:fileUpload id="pictureFileUpload_1" fileUploadListener="#{thumbnailBean.handlePictureFileUpload}" mode="advanced" auto="true" dragDropSupport="false" allowTypes="/(\.|\/)(jpe?g)$/" label="选择图片" invalidFileMessage="文件格式错误，只接受JPG格式！" update="picture" />
+					<p:graphicImage id="pictureGraphicImage_1" value="#{thumbnailBean.pictureImage(1)}" stream="false" cache="false" width="100" rendered="#{thumbnailBean.pictureFilePath(1) != null}" />
+					<p:outputLabel id="pictureLabel_1" value="图片宽高：#{thumbnailBean.pictureInfo(1).width} X #{thumbnailBean.pictureInfo(1).height}" style="margin-top:10px;display:block" rendered="#{thumbnailBean.pictureFilePath(1) != null}" />
+				</h:panelGroup>
+
+				<p:outputLabel for="widthRatio" value="宽度比例:" style="font-weight:bold" />
+				<p:outputLabel id="widthRatio" value="#{thumbnailBean.thumbnail.widthRatio}" />
+
+				<p:outputLabel for="heightRatio" value="高度比例:" style="font-weight:bold" />
+				<p:outputLabel id="heightRatio" value="#{thumbnailBean.thumbnail.heightRatio}" />
+
+				<p:outputLabel for="path" value="存储路径:" style="font-weight:bold" rendered="#{thumbnailBean.thumbnail.thumbnailId != null}" />
+				<p:outputLabel id="path" value="#{thumbnailBean.thumbnail.path}" rendered="#{thumbnailBean.thumbnail.thumbnailId != null}" />
+						
+				<p:outputLabel for="distributionName" value="所属分发:" style="font-weight:bold" />
+				<p:outputLabel id="distributionName" value="#{thumbnailBean.thumbnail.distribution.article.title} @ #{thumbnailBean.thumbnail.distribution.column.name}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{thumbnailBean.saveAction}" update="thumbnailEditForm:messages" rendered="#{thumbnailBean.hasModuleManage()}" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

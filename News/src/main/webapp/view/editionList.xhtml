@@ -1,0 +1,51 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="appId" value="#{editionListBean.modelId1}" />
+			<f:viewAction action="#{editionListBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		版本列表 - 
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span><a href="appList.xhtml" class="subitem">#{editionListBean.app.name}</a><span class="subitem fontSize18">应用</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="editionsForm">
+			<p:growl id="messages" showDetail="true" />
+
+			<p:dataTable id="editionsSingle" var="edition" value="#{editionListBean.allModels}" selectionMode="single" rowKey="#{edition.editionId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!edition.enabled? 'disabled' : null}" style="margin:20px 0px">
+				<p:ajax event="rowSelect" listener="#{editionListBean.selectModelAction}" disabled="#{appListBean.hasModule('Release') == false}" />
+	
+				<p:column headerText="版本ID" priority="1">
+					<h:outputText value="#{edition.editionId}" />
+				</p:column>
+	
+				<p:column headerText="名称" priority="1">
+					<h:outputText value="#{edition.name}" />
+				</p:column>
+	
+				<p:column headerText="标识符" priority="1">
+					<h:outputText value="#{edition.bundleId}" />
+				</p:column>
+		
+				<p:column headerText="操作系统类别" priority="1">
+					<h:outputText value="#{edition.osTypeEnum.name()}" />
+				</p:column>
+	
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{edition.enabledEnum.name()}" />
+				</p:column>
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

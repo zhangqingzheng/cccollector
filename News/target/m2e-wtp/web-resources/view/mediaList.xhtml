@@ -1,0 +1,136 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="articleId" value="#{mediaListBean.modelId1}" />
+		    <f:viewParam name="newsSourceId" value="#{mediaListBean.modelId2}" />
+			<f:viewParam name="published" value="#{mediaListBean.modelId3}" />
+			<f:viewParam name="columnId" value="#{mediaListBean.modelId4}" />
+			<f:viewParam name="multiSelect" value="#{mediaListBean.multiSelect}" />
+			<f:viewAction action="#{mediaListBean.validateModuleWithSpecificIdAction('NewsSource', mediaListBean.article.newsSource.newsSourceId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		多媒体列表 - 
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span><a href="#{mediaListBean.articlePath}" class="subitem">#{mediaListBean.article.title}</a><span class="subitem fontSize18">文章</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="mediasForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:inputSwitch id="multiSelect" value="#{mediaListBean.multiSelect}" onLabel="管理" offLabel="浏览" rendered="#{mediaListBean.hasModuleManage()}">
+				<p:ajax update="mediasForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="mediasSingle" widgetVar="mediasSingleTable" var="media" value="#{mediaListBean.allModels}" selectionMode="single" rowKey="#{media.mediaId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{!mediaListBean.multiSelect}">
+				<p:column headerText="多媒体ID" priority="1">
+					<h:outputText value="#{media.mediaId}" />
+				</p:column>
+	
+				<p:column headerText="类别" priority="1">
+					<h:outputText value="#{media.typeEnum.name()}" />
+				</p:column>
+
+				<p:column headerText="图片说明" priority="2">
+					<h:outputText value="#{media.caption}" />
+				</p:column>																								
+
+				<p:column headerText="图片" priority="1">
+					<p:graphicImage value="#{mediaListBean.loadPictureThumbnail(media)}" stream="false" height="50" rendered="#{media.type == 0 or media.width > 0}" />
+				</p:column>																								
+				
+				<p:column headerText="图片宽高" priority="1">
+					<h:outputText value="#{media.width} X #{media.height}" />
+				</p:column>
+
+				<p:column headerText="音视频" priority="1">
+					<audio controls="controls" src="#{mediaListBean.loadFilePreview(media)}" style="display:#{media.type == 1 ? '' : 'none'}" />
+					<video controls="controls" src="#{mediaListBean.loadFilePreview(media)}" width="200" height="100" style="display:#{media.type == 2 ? '' : 'none'}" />
+				</p:column>																								
+
+				<p:column headerText="音视频时长" priority="1">
+					<h:outputText value="#{media.durationFormatString}" />
+				</p:column>	
+			</p:dataTable>
+
+			<p:dataTable id="mediasMultiple" widgetVar="mediasMultipleTable" var="media" value="#{mediaListBean.allModels}" selection="#{mediaListBean.selectedModels}" rowKey="#{media.mediaId}" draggableRows="true" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{mediaListBean.hasModuleManage() and mediaListBean.multiSelect}">
+				<p:ajax event="rowDblselect" listener="#{mediaListBean.selectModelAction}" />
+				<p:ajax event="rowReorder" listener="#{mediaListBean.moveMediaAction}" update="mediasForm:messages mediasForm:mediasMultiple" />
+				
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="多媒体ID" priority="1">
+					<h:outputText value="#{media.mediaId}" />
+				</p:column>
+	
+				<p:column headerText="类别" priority="1">
+					<h:outputText value="#{media.typeEnum.name()}" />
+				</p:column>
+
+				<p:column headerText="图片说明" priority="2">
+					<h:outputText value="#{media.caption}" />
+				</p:column>																								
+
+				<p:column headerText="图片" priority="1">
+					<p:graphicImage value="#{mediaListBean.loadPictureThumbnail(media)}" stream="false" height="50" rendered="#{media.type == 0 or media.width > 0}" />
+				</p:column>																								
+				
+				<p:column headerText="图片宽高" priority="1">
+					<h:outputText value="#{media.width} X #{media.height}" />
+				</p:column>
+
+				<p:column headerText="音视频" priority="1">
+					<audio controls="controls" src="#{mediaListBean.loadFilePreview(media)}" style="display:#{media.type == 1 ? '' : 'none'}" />
+					<video controls="controls" src="#{mediaListBean.loadFilePreview(media)}" width="200" height="100" style="display:#{media.type == 2 ? '' : 'none'}" />
+				</p:column>																								
+
+				<p:column headerText="音视频时长" priority="1">
+					<h:outputText value="#{media.durationFormatString}" />
+				</p:column>	
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{mediaListBean.editModelAction(media)}" />
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{mediaListBean.deleteMediaAction(media)}" update="mediasForm:messages mediasForm:mediasMultiple" style="margin-left:10px">
+						<p:confirm header="删除多媒体" message="是否确定删除所选多媒体？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="mediasMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{mediaListBean.addModelAction}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{mediaListBean.editSelectedModelAction}" update="messages" />
+				<p:menuitem icon="ui-icon-close" value="批量删除" actionListener="#{mediaListBean.deleteMediasAction}" update="messages mediasMultiple">
+					<p:confirm header="删除多媒体" message="是否确定删除所选多媒体？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{mediaListBean.hasModuleManage() and mediaListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addMedia" icon="ui-icon-plus" value="添加" actionListener="#{mediaListBean.addModelAction}" />
+					<p:commandButton id="editMedia" icon="ui-icon-pencil" value="编辑" actionListener="#{mediaListBean.editSelectedModelAction}" update="messages" style="margin-left:20px" />
+					<p:commandButton id="deleteMedias" icon="ui-icon-close" value="批量删除" actionListener="#{mediaListBean.deleteMediasAction}" update="messages mediasMultiple" style="margin-left:20px">
+						<p:confirm header="删除多媒体" message="是否确定删除所选多媒体？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

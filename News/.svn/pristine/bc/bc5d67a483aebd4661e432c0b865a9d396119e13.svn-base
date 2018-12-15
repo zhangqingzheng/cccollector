@@ -1,0 +1,159 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+            <f:viewParam name="siteVersionId" value="#{webFolderListBean.modelId1}" />
+            <f:viewParam name="siteId" value="#{webFolderListBean.modelId2}" />
+			<f:viewParam name="multiSelect" value="#{webFolderListBean.multiSelect}" />
+			<f:viewAction action="#{webFolderListBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		网络文件夹列表 - 
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		<span><a href="siteVersionList.xhtml?siteId=#{webFolderListBean.modelId2}" class="subitem">#{webFolderListBean.siteVersion.name}</a><span class="subitem fontSize18">站点版本</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="webFoldersForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:inputSwitch id="multiSelect" value="#{webFolderListBean.multiSelect}" onLabel="管理" offLabel="浏览" rendered="#{webFolderListBean.hasModuleManage()}">
+				<p:ajax update="webFoldersForm" />
+			</p:inputSwitch>
+			
+			<p:treeTable id="webFoldersSingle" value="#{webFolderListBean.rootModelTreeNode}" var="webFolder" resizableWebFolders="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{!webFolderListBean.multiSelect}">
+				<p:column headerText="网络文件夹ID" priority="1">
+					<h:outputText value="#{webFolder.webFolderId}" />
+				</p:column>
+				
+				<p:column headerText="名称" priority="1">
+					<h:outputText id="name" value="#{webFolder.name}" />
+				</p:column>	
+				
+				<p:column headerText="网络名称" priority="1">
+					<h:outputText id="webName" value="#{webFolder.webName}" />
+				</p:column>
+				
+				<p:column headerText="更新时间" priority="2">
+					<h:outputText value="#{webFolder.updateTime}">
+		    				<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+				
+				<p:column headerText="发布时间" priority="2">
+					<h:outputText value="#{webFolder.publishTime}">
+		    				<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+				
+				<p:column headerText="状态" priority="1">
+					<h:outputText value="#{webFolder.statusEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="排序代码" priority="2">
+					<h:outputText value="#{webFolder.code}" />
+				</p:column>
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="fa fa-fw fa-list" value="管理网络页面" actionListener="#{webFolderListBean.manageWebPagesAction(webFolder)}" />
+				</p:column>
+ 			</p:treeTable>
+			
+			<p:treeTable id="webFoldersMultiple" value="#{webFolderListBean.rootModelTreeNode}" var="webFolder" selectionMode="single" selection="#{webFolderListBean.selectedModelTreeNode}" resizableWebFolders="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{webFolderListBean.hasModuleManage() and webFolderListBean.multiSelect}">
+				<p:column headerText="网络文件夹ID" priority="1">
+					<h:outputText value="#{webFolder.webFolderId}" />
+				</p:column>
+				
+				<p:column headerText="名称" priority="1">
+					<h:outputText id="name" value="#{webFolder.name}" />
+				</p:column>	
+				
+				<p:column headerText="网络名称" priority="1">
+					<h:outputText id="webName" value="#{webFolder.webName}" />
+				</p:column>
+				
+				<p:column headerText="更新时间" priority="2">
+					<h:outputText value="#{webFolder.updateTime}">
+		    				<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+				
+				<p:column headerText="发布时间" priority="2">
+					<h:outputText value="#{webFolder.publishTime}">
+		    				<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+				
+				<p:column headerText="状态" priority="1">
+					<h:outputText value="#{webFolder.statusEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="排序代码" priority="2">
+					<h:outputText value="#{webFolder.code}" />
+				</p:column>
+				
+				<p:column headerText="发布" priority="1">
+					<p:commandButton icon="fa fa-fw fa-share" value="发布" actionListener="#{webFolderListBean.publishWebFolderAction(webFolder)}" update="webFoldersForm:messages webFoldersForm:webFoldersMultiple" rendered="#{webFolder.status == 0}">
+						<p:confirm header="发布网络文件夹" message="是否确定发布所选网络文件夹？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton icon="fa fa-fw fa-reply" value="撤销发布" actionListener="#{webFolderListBean.cancelPublishWebFolderAction(webFolder)}" update="webFoldersForm:messages webFoldersForm:webFoldersMultiple" rendered="#{webFolder.status == 1}">
+						<p:confirm header="撤销发布网络文件夹" message="是否确定撤销发布所选网络文件夹？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>	
+				
+				<p:column headerText="取消" priority="1">
+					<p:commandButton icon="fa fa-fw fa-reply" value="取消撤销" actionListener="#{webFolderListBean.unCancelWebFolderAction(webFolder)}" update="webFoldersForm:messages @namingcontainer" rendered="#{webFolder.status == 2}">
+						<p:confirm header="取消撤销网络文件夹" message="是否确定取消撤销网络文件夹？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{webFolderListBean.editModelAction(webFolder)}" rendered="#{webFolder.status == 0}">
+						<p:ajax event="dialogReturn" listener="#{webFolderListBean.handleEditTreeModelReturn}" update="webFoldersForm:messages webFoldersForm:webFoldersMultiple" />
+					</p:commandButton>
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{webFolderListBean.deleteWebFolderAction(webFolder)}" update="webFoldersForm:messages webFoldersForm:webFoldersMultiple" rendered="#{webFolder.status == 0}">
+						<p:confirm header="删除网络文件夹" message="是否确定删除所选网络文件夹？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+ 			</p:treeTable>
+			
+			<p:contextMenu for="webFoldersMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{webFolderListBean.addTreeModelAction}" />
+				<p:menuitem icon="ui-icon-close" value="删除" actionListener="#{webFolderListBean.deleteWebFolderAction}" update="messages webFoldersMultiple">
+					<p:confirm header="删除网络文件夹" message="是否确定删除所选网络文件夹？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+
+			<h:panelGrid webFolders="1" rendered="#{webFolderListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addWebFolder" icon="ui-icon-plus" value="添加" actionListener="#{webFolderListBean.addTreeModelAction}">
+						<p:ajax event="dialogReturn" listener="#{webFolderListBean.handleAddTreeModelReturn}" update="messages webFoldersMultiple" />
+					</p:commandButton>
+					<p:commandButton id="deletewebFolder" icon="ui-icon-close" value="删除" actionListener="#{webFolderListBean.deleteWebFolderAction}" update="messages webFoldersMultiple" style="margin-left:20px">
+						<p:confirm header="删除网络文件夹" message="是否确定删除所选网络文件夹？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton id="publishWebFolders" icon="fa fa-fw fa-share" value="一键发布" actionListener="#{webFolderListBean.publishAllWebFolersAction}" update="messages webFoldersMultiple" style="margin-left:20px">
+						<p:confirm header="发布全部网络文件夹" message="是否确定发布所有制作中网络文件夹" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid webFolders="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

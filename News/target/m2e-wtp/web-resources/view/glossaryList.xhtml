@@ -1,0 +1,147 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+ 			<f:viewParam name="newsSourceId" value="#{glossaryListBean.modelId1}" />
+			<f:viewParam name="multiSelect" value="#{glossaryListBean.multiSelect}" />
+			<f:viewAction action="#{glossaryListBean.validateModuleWithSpecificIdAction('NewsSource', glossaryListBean.newsSource.newsSourceId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		术语列表 - 
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span><a href="newsSourceList.xhtml" class="subitem">#{glossaryListBean.newsSource.name}</a><span class="subitem fontSize18">新闻源</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="glossariesForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:inputSwitch id="multiSelect" value="#{glossaryListBean.multiSelect}" onLabel="管理" offLabel="浏览" rendered="#{glossaryListBean.hasModuleManage()}">
+				<p:ajax update="glossariesForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="glossariesSingle" widgetVar="glossariesSingleTable" var="glossary" value="#{glossaryListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selectionMode="single" rowKey="#{glossary.glossaryId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!glossary.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{!glossaryListBean.multiSelect}">
+				<p:column headerText="术语ID" priority="1">
+					<h:outputText value="#{glossary.glossaryId}" />
+				</p:column>
+	
+				<p:column headerText="标题" priority="1" filterBy="#{glossary.title}" filterMatchMode="contains">
+					<h:outputText value="#{glossary.title}" />
+				</p:column>
+
+				<p:column headerText="图片比例" priority="1">
+					<h:outputText value="#{glossary.pictureRatioEnum.name().replace('_', ':')}" />
+				</p:column>
+				
+				<p:column headerText="图片" priority="1">
+					<p:graphicImage id="picture" value="#{glossaryListBean.loadPictureThumbnail(glossary)}" stream="false" height="50" />
+					<p:tooltip for="picture" value="#{glossary.pictureUpdateTime}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>																								
+				
+				<p:column headerText="显示优先级" priority="1" filterBy="#{glossary.displayPriority}" filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu onchange="PF('glossariesSingleTable').filter()" >
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{glossaryListBean.displayPriorityEnums}" var="displayPriorityEnum" itemLabel="#{displayPriorityEnum.name()}" itemValue="#{displayPriorityEnum.ordinal()}" />
+						</p:selectOneMenu>
+					</f:facet>
+					<h:outputText value="#{glossary.displayPriorityEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{glossary.enabledEnum.name()}" />
+				</p:column>	
+			</p:dataTable>
+
+			<p:dataTable id="glossariesMultiple" widgetVar="glossariesMultipleTable" var="glossary" value="#{glossaryListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selection="#{glossaryListBean.selectedModels}" rowKey="#{glossary.glossaryId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{!glossary.enabled? 'disabled' : null}" style="margin:20px 0px" rendered="#{glossaryListBean.hasModuleManage() and glossaryListBean.multiSelect}">
+				<p:ajax event="rowDblselect" listener="#{glossaryListBean.selectModelAction}" />
+				
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+	
+				<p:column headerText="术语ID" priority="1">
+					<h:outputText value="#{glossary.glossaryId}" />
+				</p:column>
+	
+				<p:column headerText="标题" priority="1" filterBy="#{glossary.title}" filterMatchMode="contains">
+					<h:outputText value="#{glossary.title}" />
+				</p:column>
+
+				<p:column headerText="图片比例" priority="1">
+					<h:outputText value="#{glossary.pictureRatioEnum.name().replace('_', ':')}" />
+				</p:column>
+				
+				<p:column headerText="图片" priority="1">
+					<p:graphicImage id="picture" value="#{glossaryListBean.loadPictureThumbnail(glossary)}" stream="false" height="50" />
+					<p:tooltip for="picture" value="#{glossary.pictureUpdateTime}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>																								
+	
+				<p:column headerText="显示优先级" priority="1" filterBy="#{glossary.displayPriority}" filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu onchange="PF('glossariesMultipleTable').filter()" >
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{glossaryListBean.displayPriorityEnums}" var="displayPriorityEnum" itemLabel="#{displayPriorityEnum.name()}" itemValue="#{displayPriorityEnum.ordinal()}" />
+						</p:selectOneMenu>
+					</f:facet>
+					<h:outputText value="#{glossary.displayPriorityEnum.name()}" />
+				</p:column>
+				
+				<p:column headerText="是否可用" priority="2">
+					<h:outputText value="#{glossary.enabledEnum.name()}" />
+				</p:column>				
+
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{glossaryListBean.editModelAction(glossary)}" />
+					<p:commandButton icon="ui-icon-close" value="删除" actionListener="#{glossaryListBean.deleteGlossaryAction(glossary)}" update="glossariesForm:messages glossariesForm:glossariesMultiple">
+						<p:confirm header="删除术语" message="是否确定删除所选术语？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="glossariesMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{glossaryListBean.addModelAction}" update="messages glossariesMultiple" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{glossaryListBean.editSelectedModelAction}" update="messages glossariesMultiple" />
+				<p:menuitem icon="ui-icon-unlocked" value="可用" actionListener="#{glossaryListBean.modifyGlossaryEnabledAction(true)}" update="messages glossariesMultiple">
+					<p:confirm header="修改术语" message="是否确定修改所选术语为可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-locked" value="不可用" actionListener="#{glossaryListBean.modifyGlossaryEnabledAction(false)}" update="messages glossariesMultiple">
+					<p:confirm header="修改术语" message="是否确定修改所选术语为不可用？" icon="ui-icon-alert" />
+				</p:menuitem>
+				<p:menuitem icon="ui-icon-close" value="批量删除" actionListener="#{glossaryListBean.deleteGlossariesAction}" update="messages glossariesMultiple">
+					<p:confirm header="删除术语" message="是否确定删除所选术语？" icon="ui-icon-alert" />
+				</p:menuitem>
+			</p:contextMenu>
+			
+			<h:panelGrid columns="1" rendered="#{glossaryListBean.hasModuleManage() and glossaryListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addGlossary" icon="ui-icon-plus" value="添加" actionListener="#{glossaryListBean.addModelAction}" update="messages glossariesMultiple" />
+					<p:commandButton id="editGlossary" icon="ui-icon-pencil" value="编辑" actionListener="#{glossaryListBean.editSelectedModelAction}" update="messages glossariesMultiple" style="margin-left:20px" />
+					<p:commandButton id="deleteGlossaries" icon="ui-icon-close" value="批量删除" actionListener="#{glossaryListBean.deleteGlossariesAction}" update="messages glossariesMultiple" style="margin-left:20px">
+						<p:confirm header="删除术语" message="是否确定删除所选术语？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

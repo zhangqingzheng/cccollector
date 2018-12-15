@@ -1,0 +1,67 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="userAppId" value="#{logListBean.modelId1}" />
+			<f:viewAction action="#{logListBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		日志列表 -
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span class="subitem" style="display:#{logListBean.userApp == null ? '' : 'none'}">全部</span>
+		<span style="display:#{logListBean.userApp != null ? '' : 'none'}"><a href="userAppList.xhtml" class="subitem">#{logListBean.userApp.name}</a><span class="subitem fontSize18">用户应用</span></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="logsForm">
+			<p:growl id="messages" showDetail="true" />
+
+			<p:dataTable id="logsSingle" widgetVar="logsSingleTable" var="log" value="#{logListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selectionMode="single" rowKey="#{log.logId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px">
+				<p:column headerText="日志ID" priority="1">
+					<h:outputText value="#{log.logId}" />
+				</p:column>
+
+				<p:column headerText="标题" priority="1" filterBy="#{log.title}" filterMatchMode="contains">
+					<h:outputText value="#{log.title}" />
+				</p:column>
+					
+				<p:column headerText="关联内容类别" priority="1" filterBy="#{log.modelId2}" filterMatchMode="exact">
+					<f:facet name="filter">	
+						<p:selectOneMenu onchange="PF('logsSingleTable').filter()">
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{logListBean.contentTypeEnums}" var="contentTypeEnum" itemLabel="#{contentTypeEnum.name()}" itemValue="#{contentTypeEnum.ordinal()}" />
+						</p:selectOneMenu>						
+					</f:facet>
+					<h:outputText value="#{log.contentTypeEnum.name()}" />
+				</p:column>
+
+				<p:column headerText="关联内容" priority="1">
+					<h:outputText value="#{log.relativeContentName}" />
+				</p:column>
+
+				<p:column headerText="主动用户应用" priority="1" filterBy="#{log.activeUserApp.name}" filterMatchMode="contains">
+					<h:outputText value="#{log.activeUserApp.name}" />
+				</p:column>
+
+				<p:column headerText="创建时间" priority="2">
+					<h:outputText value="#{log.createTimeDate}" >
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="所属用户应用" priority="1" filterBy="#{log.userApp.name}" filterMatchMode="contains" rendered="#{logListBean.userApp == null}">
+					<h:outputText value="#{log.userApp.name}" />
+				</p:column>
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

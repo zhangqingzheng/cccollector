@@ -1,0 +1,104 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="#{userAppBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{userAppBean.useDialog}" />
+			<f:viewParam name="userAppId" value="#{userAppBean.modelId}" />
+			<f:viewAction action="#{userAppBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{userAppBean.userApp.userAppId == null ? '添加' : '编辑'}用户应用
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="userAppList.xhtml?multiSelect=true" class="subitem"></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="userAppEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+			    <p:outputLabel for="userUserAppId" value="对应用户应用:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId == null}" />
+				<p:autoComplete id="userUserAppId" value="#{userAppBean.userUserAppId}" completeMethod="#{userAppBean.handleUserUserAppIdComplete}" var="userUserApp" itemLabel="#{userUserApp.user.nickName}" itemValue="#{userUserApp.userAppId}" dropdown="true" forceSelection="true" required="true" requiredMessage="对应用户应用为必填项" size="30" rendered="#{userAppBean.userApp.userAppId == null}">
+					<p:ajax event="itemSelect" listener="#{userAppBean.handleUserUserAppIdSelect}" immediate="true" />
+					<p:column headerText="昵称">
+						<h:outputText value="#{userUserApp.user.nickName}" />
+					</p:column>
+					
+					<p:column headerText="手机号" style="width:20%">
+						<h:outputText value="#{userUserApp.user.cellphone}" />
+					</p:column>
+					
+					<p:column headerText="电子邮箱" style="width:20%">
+						<h:outputText value="#{userUserApp.user.email}" />
+					</p:column>
+					
+					<p:column headerText="用户ID" style="width:10%">
+						<h:outputText value="#{userUserApp.user.userId}" />
+					</p:column>
+					
+					<p:column headerText="用户应用ID" style="width:10%">
+						<h:outputText value="#{userUserApp.userAppId}" />
+					</p:column>
+				</p:autoComplete>
+				
+				<p:outputLabel for="userId" value="用户ID:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId != null}" />
+				<p:outputLabel id="userId" value="#{userAppBean.userApp.user.userId}" rendered="#{userAppBean.userApp.userAppId != null}" />
+				
+				<p:outputLabel for="nickName" value="昵称:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId != null}" />
+				<p:outputLabel id="nickName" value="#{userAppBean.userApp.user.nickName}" rendered="#{userAppBean.userApp.userAppId != null}" />
+				
+				<p:outputLabel for="cellphone" value="手机号:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId != null}" />
+				<p:outputLabel id="cellphone" value="#{userAppBean.userApp.user.cellphone}" rendered="#{userAppBean.userApp.userAppId != null}" />
+				
+				<p:outputLabel for="email" value="电子邮箱:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId != null}" />
+				<p:outputLabel id="email" value="#{userAppBean.userApp.user.email}" rendered="#{userAppBean.userApp.userAppId != null}" />
+						
+				<p:outputLabel for="registerTime" value="注册时间:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId != null}" />
+				<p:outputLabel id="registerTime" value="#{userAppBean.userApp.user.registerTimeDate}" rendered="#{userAppBean.userApp.userAppId != null}">
+		    			<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<p:outputLabel for="userAppId" value="用户应用ID:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId != null}" />
+				<p:outputLabel id="userAppId" value="#{userAppBean.userApp.userAppId}" rendered="#{userAppBean.userApp.userAppId != null}" />
+						
+				<p:outputLabel for="createTime" value="创建时间:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId != null}" />
+				<p:outputLabel id="createTime" value="#{userAppBean.userApp.createTimeDate}" rendered="#{userAppBean.userApp.userAppId != null}">
+		    			<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<p:outputLabel for="appName" value="所属应用:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId != null}" />
+				<p:outputLabel id="appName" value="#{userAppBean.userApp.app.name}" rendered="#{userAppBean.userApp.userAppId != null}" />
+						
+				<p:outputLabel for="syncTime" value="同步时间:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId != null}" />
+				<p:outputLabel id="syncTime" value="#{userAppBean.userApp.syncTime}" rendered="#{userAppBean.userApp.userAppId != null}">
+		    			<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<p:outputLabel for="intro" value="自我介绍:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId != null}" />
+				<p:outputLabel id="intro" value="#{userAppBean.userApp.intro}" rendered="#{userAppBean.userApp.userAppId != null}" />
+				
+				<p:outputLabel for="isRecentVisible" value="动态可见:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId != null}" />
+				<p:outputLabel id="isRecentVisible" value="#{userAppBean.userApp.isRecentVisibleEnum.name()}" rendered="#{userAppBean.userApp.userAppId != null}" />
+				
+				<p:outputLabel for="followCount" value="关注数:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId != null}" />
+				<p:outputLabel id="followCount" value="#{userAppBean.userApp.followCount}" rendered="#{userAppBean.userApp.userAppId != null}" />
+				
+				<p:outputLabel for="followerCount" value="粉丝数:" style="font-weight:bold" rendered="#{userAppBean.userApp.userAppId != null}" />
+				<p:outputLabel id="followerCount" value="#{userAppBean.userApp.followerCount}" rendered="#{userAppBean.userApp.userAppId != null}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{userAppBean.saveAction}" update="messages" rendered="#{userAppBean.hasModuleManage()}" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<b:beans xmlns:b="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xmlns:cache="http://www.springframework.org/schema/cache"
+
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.2.xsd
+		http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd">
+
+	<!-- 引入属性文件 -->
+	<context:property-placeholder location="classpath*:*.properties" />
+	
+	<!-- CXF -->
+	<b:import resource="classpath:META-INF/cxf/cxf.xml"/>
+	<b:bean id="jsonProvider" class="com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider" />
+	<b:bean id="multipartProvider" class="org.apache.cxf.jaxrs.provider.MultipartProvider" />
+
+	<!-- 自动扫描 -->
+	<context:component-scan base-package="com.cccollector.news.task.**,com.cccollector.news.dao.**,com.cccollector.news.service.**,com.cccollector.news.api.**,com.cccollector.universal.app.dao.**,com.cccollector.universal.app.service.**,com.cccollector.universal.user.dao.**,com.cccollector.universal.user.service.**,com.cccollector.universal.user.api.**" />
+
+	<!--启用缓存注解-->
+    <cache:annotation-driven cache-manager="cacheManager"/>
+    <b:bean id="cacheManagerFactory" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+        <b:property name="configLocation" value="classpath:news-ehcache.xml"/>
+    </b:bean>
+    <b:bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager">
+        <b:property name="cacheManager" ref="cacheManagerFactory"/>
+    </b:bean>
+	
+	<!-- 导入配置文件 -->
+	<b:import resource="classpath:spring-hibernate.xml"/>
+	<b:import resource="classpath:spring-quartz.xml"/>
+	<!-- ${pom.cxf.importFront} -->
+	<!-- ${pom.cxf.importBack} -->
+	<!-- ${pom.security.importSecurity} -->
+</b:beans>

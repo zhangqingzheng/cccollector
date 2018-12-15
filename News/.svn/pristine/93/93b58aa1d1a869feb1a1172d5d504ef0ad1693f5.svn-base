@@ -1,0 +1,183 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="multiSelect" value="#{userAppListBean.multiSelect}" />
+			<f:viewAction action="#{userAppListBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		用户应用列表 - 
+	</ui:define>		
+	
+	<ui:define name="subtitle">
+		<span class="subitem">全部</span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="userAppsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:inputSwitch id="multiSelect" value="#{userAppListBean.multiSelect}" onLabel="管理" offLabel="浏览" rendered="#{userAppListBean.hasModuleManage()}">
+				<p:ajax update="userAppsForm" />
+			</p:inputSwitch>
+
+			<p:dataTable id="userAppsSingle" widgetVar="userAppsSingleTable" var="userApp" value="#{userAppListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selectionMode="single" rowKey="#{userApp.userAppId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{!userAppListBean.multiSelect}">
+				<p:ajax event="rowSelect" listener="#{userAppListBean.selectModelAction}" />
+				
+				<p:column headerText="用户ID" priority="1" filterBy="#{userApp.user.userId}" filterMatchMode="exact">
+					<h:outputText value="#{userApp.user.userId}" />
+				</p:column>
+
+				<p:column headerText="昵称" priority="1" filterBy="#{userApp.user.nickName}" filterMatchMode="contains">
+					<h:outputText id="nickName" value="#{userApp.user.nickName}" />
+					<p:tooltip for="nickName" value="#{userApp.user.registerTimeDate}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>
+				
+				<p:column headerText="电子邮箱" priority="1" filterBy="#{userApp.user.email}" filterMatchMode="contains">
+					<h:outputText value="#{userApp.user.email}" />
+				</p:column>
+				
+				<p:column headerText="手机号" priority="1" filterBy="#{userApp.user.cellphone}" filterMatchMode="contains">
+					<h:outputText value="#{userApp.user.cellphone}" />
+				</p:column>
+				
+				<p:column headerText="用户应用ID" priority="1" filterBy="#{userApp.userAppId}" filterMatchMode="exact">
+					<h:outputText value="#{userApp.userAppId}" />
+				</p:column>
+	
+				<p:column headerText="所属应用" priority="1" filterBy="#{userApp.app.appId}" filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu onchange="PF('userAppsSingleTable').filter()">
+							<f:selectItem itemLabel="选择应用" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{userAppListBean.allApps}" var="app" itemLabel="#{app.name}" itemValue="#{app.appId}" />
+						</p:selectOneMenu>
+					</f:facet>
+					<h:outputText id="appName" value="#{userApp.app.name}" />
+					<p:tooltip for="appName" value="#{userApp.createTimeDate}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>
+				
+				<p:column headerText="同步时间" priority="1">
+					<h:outputText value="#{userApp.syncTime}">
+					    <f:convertDateTime  pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai"/>
+					</h:outputText>
+				</p:column>
+								
+				<p:column headerText="关注 : 粉丝" priority="2">
+					<p:commandLink actionListener="#{userAppListBean.selectUserAppFollowAction(userApp)}">
+						<h:outputText value="#{userApp.followCount}" />
+					</p:commandLink>
+					<h:outputText value=" : " />
+					<p:commandLink actionListener="#{userAppListBean.selectUserAppFollowerAction(userApp)}">
+						<h:outputText value="#{userApp.followerCount}" />
+					</p:commandLink>
+					<h:outputText value=" " />
+					<p:commandLink actionListener="#{userAppListBean.selectUserAppFavoriteAction(userApp)}">
+						<h:outputText value="收藏" />
+					</p:commandLink>
+					<h:outputText value=" " />
+					<p:commandLink actionListener="#{userAppListBean.selectUserAppLikeAction(userApp)}">
+						<h:outputText value="喜欢" />
+					</p:commandLink>
+					<h:outputText value=" " />
+					<p:commandLink actionListener="#{userAppListBean.selectUserAppDislikeAction(userApp)}">
+						<h:outputText value="不喜欢" />
+					</p:commandLink>
+					<h:outputText value=" " />
+					<p:commandLink actionListener="#{userAppListBean.selectUserAppCommentAction(userApp)}">
+						<h:outputText value="评论" />
+					</p:commandLink>
+					<h:outputText value=" " />
+					<p:commandLink actionListener="#{userAppListBean.selectUserAppLogAction(userApp)}">
+						<h:outputText value="日志" />
+					</p:commandLink>
+				</p:column>
+			</p:dataTable>
+
+			<p:dataTable id="userAppsMultiple" widgetVar="userAppsMultipleTable" var="userApp" value="#{userAppListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selection="#{userAppListBean.selectedModels}" rowKey="#{userApp.userAppId}" resizableColumns="true" emptyMessage="无数据" style="margin:20px 0px" rendered="#{userAppListBean.hasModuleManage() and userAppListBean.multiSelect}">
+				<p:ajax event="rowDblselect" listener="#{userAppListBean.selectModelAction}" />
+
+				<p:column selectionMode="multiple" style="width:16px;text-align:center" />
+
+				<p:column headerText="用户ID" priority="1" filterBy="#{userApp.user.userId}" filterMatchMode="exact">
+					<h:outputText value="#{userApp.user.userId}" />
+				</p:column>
+
+				<p:column headerText="昵称" priority="1" filterBy="#{userApp.user.nickName}" filterMatchMode="contains">
+					<h:outputText id="nickName" value="#{userApp.user.nickName}" />
+					<p:tooltip for="nickName" value="#{userApp.user.registerTimeDate}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>
+				
+				<p:column headerText="电子邮箱" priority="1" filterBy="#{userApp.user.email}" filterMatchMode="contains">
+					<h:outputText value="#{userApp.user.email}" />
+				</p:column>
+				
+				<p:column headerText="手机号" priority="1" filterBy="#{userApp.user.cellphone}" filterMatchMode="contains">
+					<h:outputText value="#{userApp.user.cellphone}" />
+				</p:column>
+				
+				<p:column headerText="用户应用ID" priority="1" filterBy="#{userApp.userAppId}" filterMatchMode="exact">
+					<h:outputText value="#{userApp.userAppId}" />
+				</p:column>
+
+				<p:column headerText="所属应用" priority="1" filterBy="#{userApp.app.appId}" filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu onchange="PF('userAppsMultipleTable').filter()">
+							<f:selectItem itemLabel="选择应用" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{userAppListBean.allApps}" var="app" itemLabel="#{app.name}" itemValue="#{app.appId}" />
+						</p:selectOneMenu>
+					</f:facet>
+					<h:outputText id="appName" value="#{userApp.app.name}" />
+					<p:tooltip for="appName" value="#{userApp.createTimeDate}" trackMouse="true">
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+					</p:tooltip>
+				</p:column>
+				
+				<p:column headerText="同步时间" priority="1">
+					<h:outputText value="#{userApp.syncTime}">
+					    <f:convertDateTime  pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai"/>
+					</h:outputText>
+					<p:commandButton icon="ui-icon-refresh" actionListener="#{userAppListBean.syncUserAppAction(userApp)}" update="userAppsForm:messages @namingcontainer" />
+				</p:column>
+
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="ui-icon-pencil" value="编辑" actionListener="#{userAppListBean.editModelAction(userApp)}" update="userAppsForm:messages userAppsForm:userAppsMultiple" />
+				</p:column>
+			</p:dataTable>
+			
+			<p:contextMenu for="userAppsMultiple">
+				<p:menuitem icon="ui-icon-plus" value="添加" actionListener="#{userAppListBean.addModelAction}" />
+				<p:menuitem icon="ui-icon-pencil" value="编辑" actionListener="#{userAppListBean.editSelectedModelAction}" update="messages" />
+				<p:menuitem icon="ui-icon-refresh" value="批量同步" actionListener="#{userAppListBean.syncUserAppsAction}" update="messages userAppsMultiple" />
+			</p:contextMenu>
+
+			<h:panelGrid columns="1" rendered="#{userAppListBean.hasModuleManage() and userAppListBean.multiSelect}">
+				<h:panelGroup>
+					<p:commandButton id="addUserApp" icon="ui-icon-plus" value="添加" actionListener="#{userAppListBean.addModelAction}" />
+					<p:commandButton id="editUserApp" icon="ui-icon-pencil" value="编辑" actionListener="#{userAppListBean.editSelectedModelAction}" update="messages" style="margin-left:20px" />
+					<p:commandButton id="syncUserApps" icon="ui-icon-refresh" value="批量同步" actionListener="#{userAppListBean.syncUserAppsAction}" update="messages userAppsMultiple" style="margin-left:20px" />
+				</h:panelGroup>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

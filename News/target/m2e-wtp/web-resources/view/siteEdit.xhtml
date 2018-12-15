@@ -1,0 +1,61 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="#{siteBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{siteBean.useDialog}" />
+			<f:viewParam name="siteId" value="#{siteBean.modelId}" />
+			<f:viewAction action="#{siteBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{siteBean.site.siteId == null ? '添加' : '编辑'}站点
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="siteList.xhtml?multiSelect=true" class="subitem"><h:outputText id="subtitle" value="#{siteBean.site.name}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="siteEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="siteId" value="站点ID:" style="font-weight:bold" rendered="#{siteBean.site.siteId != null}" />
+				<p:outputLabel id="siteId" value="#{siteBean.site.siteId}" rendered="#{siteBean.site.siteId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" />
+				<p:inputText id="name" value="#{siteBean.site.name}" required="true" requiredMessage="名称为必填项" size="50">
+					<f:validateLength maximum="100" />
+					<p:ajax immediate="true" update="subtitle" />
+				</p:inputText>
+				
+				<p:outputLabel for="webAddress" value="网站地址:" style="font-weight:bold" />
+				<p:inputText id="webAddress" value="#{siteBean.site.webAddress}" required="true" requiredMessage="网站地址为必填项" size="50">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="rootPath" value="根路径:" style="font-weight:bold" />
+				<p:inputText id="rootPath" value="#{siteBean.site.rootPath}" required="true" requiredMessage="根路径为必填项" size="50">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				
+				<p:outputLabel for="remarks" value="备注:" style="font-weight:bold" />
+				<p:inputTextarea id="remarks" value="#{siteBean.site.remarks}" autoResize="false" rows="5" cols="50">
+					<f:validateLength maximum="1000" />
+				</p:inputTextarea>
+				
+				<p:outputLabel for="enabled" value="是否可用:" style="font-weight:bold" />
+				<p:inputSwitch id="enabled" value="#{siteBean.site.enabled}" onLabel="是" offLabel="否" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{siteBean.saveAction}" update="messages" rendered="#{siteBean.hasModuleManage()}" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

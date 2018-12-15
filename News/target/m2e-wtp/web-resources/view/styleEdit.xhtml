@@ -1,0 +1,57 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{styleBean.useDialog}" />
+			<f:viewParam name="newsSourceId" value="#{styleBean.modelId1}" />
+			<f:viewParam name="styleId" value="#{styleBean.modelId}" />
+			<f:viewAction action="#{styleBean.validateModuleWithSpecificIdAction('NewsSource', styleBean.style.newsSource.newsSourceId)}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{styleBean.style.styleId == null ? '添加' : '编辑'}样式
+	</ui:define>
+
+	<ui:define name="subtitle">
+		 - <span><a href="styleList.xhtml?multiSelect=true&amp;newsSourceId=#{styleBean.modelId1}" class="subitem"><h:outputText id="subtitle" value="#{styleBean.style.name}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="styleEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="styleId" value="样式ID:" style="font-weight:bold" rendered="#{styleBean.style.styleId != null}" />
+				<p:outputLabel id="styleId" value="#{styleBean.style.styleId}" rendered="#{styleBean.style.styleId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" />
+				<p:inputText id="name" value="#{styleBean.style.name}" required="true" requiredMessage="名称为必填项" size="100">
+					<f:validateLength maximum="100" />
+					<p:ajax update="subtitle" />
+				</p:inputText>
+		
+				<p:outputLabel for="templateType" value="模版类别:" style="font-weight:bold" rendered="#{styleBean.style.styleId == null}" />
+				<p:selectOneRadio id="templateType" value="#{styleBean.style.templateType}" required="true" requiredMessage="模版类别为必填项" rendered="#{styleBean.style.styleId == null}">
+					<f:selectItems value="#{styleBean.style.templateTypeEnums}" var="templateTypeEnum" itemLabel="#{templateTypeEnum.name()}" itemValue="#{templateTypeEnum.ordinal()}" />
+				</p:selectOneRadio>
+				
+                <p:outputLabel for="templateTypeName" value="模版类别:" style="font-weight:bold" rendered="#{styleBean.style.styleId != null}" />
+                <p:outputLabel id="templateTypeName" value="#{styleBean.style.templateTypeEnum.name()}" rendered="#{styleBean.style.styleId != null}" />                
+		
+				<p:outputLabel for="styleSheet" value="样式表:" style="font-weight:bold" />
+				<p:inputTextarea id="styleSheet" value="#{styleBean.style.styleSheet}" required="true" requiredMessage="样式表为必填项" autoResize="false" rows="30" cols="68" />
+			
+				<p:outputLabel for="newsSourceName" value="所属新闻源:" style="font-weight:bold" />
+				<p:outputLabel id="newsSourceName" value="#{styleBean.style.newsSource.name}" />
+				
+				<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{styleBean.saveAction}" update="styleEditForm:messages" rendered="#{styleBean.hasModuleManage()}" />
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>

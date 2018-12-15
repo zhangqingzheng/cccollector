@@ -1,0 +1,82 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				xmlns:pe="http://primefaces.org/ui/extensions"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewParam name="useDialog" value="#{templateVersionBean.useDialog}" />
+			<f:viewParam name="templateId" value="#{templateVersionBean.modelId1}" />
+			<f:viewParam name="siteVersionId" value="#{templateVersionBean.modelId2}" />
+			<f:viewParam name="siteId" value="#{templateVersionBean.modelId3}" />
+			<f:viewParam name="templateVersionId" value="#{templateVersionBean.modelId}" />
+			<f:viewAction action="#{templateVersionBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		#{templateVersionBean.templateVersion.templateVersionId == null ? '添加' : '编辑'}模板版本
+	</ui:define>
+	
+	<ui:define name="subtitle">
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="templateVersionEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="templateVersionId" value="模板版本ID:" style="font-weight:bold" rendered="#{templateVersionBean.templateVersion.templateVersionId != null}" />
+				<p:outputLabel id="templateVersionId" value="#{templateVersionBean.templateVersion.templateVersionId}" rendered="#{templateVersionBean.templateVersion.templateVersionId != null}" />
+				
+				<p:outputLabel for="versionId" value="版本号:" style="font-weight:bold" rendered="#{templateVersionBean.templateVersion.templateVersionId != null}" />
+				<p:outputLabel id="versionId" value="#{templateVersionBean.templateVersion.version}" rendered="#{templateVersionBean.templateVersion.templateVersionId != null}" />
+				
+				<p:outputLabel id="fileLabel" for="fileUpload_1" value="模板:" style="font-weight:bold" />
+				<h:panelGroup id="file">
+					<p:fileUpload id="fileUpload_1" fileUploadListener="#{templateVersionBean.handleFileUpload}" mode="advanced" dragDropSupport="false" label="选择文件" uploadLabel="上传" cancelLabel="取消" required="true" requiredMessage="模板文件为必填项" update="file templateContentId" />
+					<p:commandButton id="fileDownload_1" icon="fa fa-fw fa-cloud-download" value="下载" ajax="false" rendered="#{templateVersionBean.filePath(1) != null}">
+						<p:fileDownload value="#{templateVersionBean.file(1)}" />
+					</p:commandButton>
+				</h:panelGroup>
+				
+				<p:outputLabel value="模板内容:" style="font-weight:bold" rendered="#{templateVersionBean.templateVersion.templateVersionId != null}" />
+				<pe:codeMirror id="templateContentId" value="#{templateVersionBean.templateContent}" required="true" lineWrapping="true" lineNumbers="true" theme="eclipse" requiredMessage="模板内容不能为空 !" mode="javascript"  rendered="#{templateVersionBean.templateVersion.templateVersionId != null}" />
+				
+				<p:outputLabel for="updateTime" value="更新时间:" style="font-weight:bold" rendered="#{templateVersionBean.templateVersion.templateVersionId != null}" />
+				<p:outputLabel id="updateTime" value="#{templateVersionBean.templateVersion.updateTime}" rendered="#{templateVersionBean.templateVersion.templateVersionId != null}">
+		    			<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<p:outputLabel for="status" value="状态:" style="font-weight:bold" />
+				<p:outputLabel id="status" value="#{templateVersionBean.templateVersion.statusEnum.name()}" />
+				
+				<p:outputLabel for="template" value="所属模板:" style="font-weight:bold" />
+				<p:outputLabel id="template" value="#{templateVersionBean.templateVersion.template.name}" />
+
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{templateVersionBean.saveAction}" update="messages" rendered="#{templateVersionBean.hasModuleManage()}" />
+					<p:commandButton id="cancelButton" icon="ui-icon-cancel" value="取消" actionListener="#{templateVersionBean.cancelAction}" immediate="true" rendered="#{templateVersionBean.hasModuleManage()}" />
+					<p:commandButton id="testButton" icon="fa fa-fw fa-share" value="测试" actionListener="#{templateVersionBean.testAction}" update="templateVersionEditForm" style="margin-left:10px" rendered="#{templateVersionBean.hasModuleManage() and templateVersionBean.templateVersion.templateVersionId != null and templateVersionBean.templateVersion.status == 0}">
+						<p:confirm header="测试模板" message="是否确定测试模板？" icon="ui-icon-alert" />
+					</p:commandButton>
+					<p:commandButton id="untestButton" icon="fa fa-fw fa-reply" value="撤销测试" actionListener="#{templateVersionBean.untestAction}" update="templateVersionEditForm" style="margin-left:10px" rendered="#{templateVersionBean.hasModuleManage() and templateVersionBean.templateVersion.templateVersionId != null and templateVersionBean.templateVersion.status == 1}">
+						<p:confirm header="撤销测试模板" message="是否确定撤销测试模板？" icon="ui-icon-alert" />
+					</p:commandButton>
+				</f:facet>
+			</h:panelGrid>
+			
+			<p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+				<h:panelGrid columns="1" style="text-align:center;width:100%">
+					<h:panelGroup>
+						<p:commandButton icon="ui-icon-check" value="确定" type="button" styleClass="ui-confirmdialog-yes" />
+						<p:commandButton icon="ui-icon-close" value="取消" type="button" styleClass="ui-confirmdialog-no" />
+					</h:panelGroup>
+				</h:panelGrid>
+			</p:confirmDialog>
+		</h:form>
+	</ui:define>
+</ui:composition>

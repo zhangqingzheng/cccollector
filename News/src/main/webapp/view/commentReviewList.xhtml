@@ -1,0 +1,147 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:c="http://java.sun.com/jsp/jstl/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="/WEB-INF/templateMain.xhtml">
+	<ui:define name="head">
+		<f:metadata>
+			<f:viewAction action="#{commentReviewListBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+	</ui:define>
+
+	<ui:define name="title">
+		评论审核列表 - 
+	</ui:define>
+
+	<ui:define name="subtitle">
+		<span class="subitem">全部</span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="commentReviewsForm">
+			<p:growl id="messages" showDetail="true" />
+			
+			<p:inputSwitch id="multiSelect" value="#{commentReviewListBean.multiSelect}" onLabel="列表" offLabel="滚动" rendered="#{commentReviewListBean.hasModuleManage()}">
+				<p:ajax update="commentReviewsForm" />
+			</p:inputSwitch>
+			
+			<p:inputSwitch id="showNotProcessed" value="#{commentReviewListBean.showNotProcessed}" onLabel="未处理" offLabel="全部" style="margin-left:20px" rendered="#{commentReviewListBean.hasModuleManage()}">
+				<p:ajax update="commentReviewsForm" />
+			</p:inputSwitch>
+
+			<p:dataScroller id="commentReviewsSingle" widgetVar="commentReviewsSingleScroller" var="commentReview" value="#{commentReviewListBean.pageModel}" lazy="true" chunkSize="20" rendered="#{!commentReviewListBean.multiSelect}">
+				<f:facet name="header">评论审核</f:facet>
+				
+				<p:layout style="height:300px;">
+					<p:layoutUnit position="west" resizable="true" size="50%" minSize="500">
+						<h:panelGrid columns="2" class="#{commentReview.status == 0 ? 'toBeProcessed' : (commentReview.status gt 1 ? 'processed' : '')}">
+							<p:outputLabel for="type" value="类别:" style="font-weight:bold" />
+							<p:outputLabel id="type" value="#{commentReview.typeEnum.name()}" />
+							
+							<p:outputLabel for="userApp" value="用户应用:" style="font-weight:bold" />
+							<p:outputLabel id="userApp" value="#{commentReview.userApp.name}" />
+							
+							<p:outputLabel for="createTime" value="创建时间:" style="font-weight:bold" />
+							<p:outputLabel id="createTime" value="#{commentReview.createTimeDate}">
+							    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+							</p:outputLabel>
+							
+							<p:outputLabel for="status" value="状态:" style="font-weight:bold" />
+							<p:outputLabel id="status" value="#{commentReview.statusEnum.name()}" />
+							
+							<p:outputLabel for="content" value="内容:" style="font-weight:bold" />
+							<h:outputText id="content" value="#{commentReview.contentToHtml}" escape="false" />
+						
+							<f:facet name="footer">
+								<p:commandButton icon="fa fa-fw fa-check" value="审核通过" actionListener="#{commentReviewListBean.passCommentReviewAction(commentReview)}" update="commentReviewsForm:messages @parent:@parent:@parent:@parent" style="margin-right:20px" rendered="#{commentReview.status == 0}" />
+								<p:commandButton icon="fa fa-fw fa-ban" value="审核未通过" actionListener="#{commentReviewListBean.notPassCommentReviewAction(commentReview)}" update="commentReviewsForm:messages @parent:@parent:@parent:@parent" style="margin-right:20px" rendered="#{commentReview.status le 1}" />
+								<p:commandButton icon="fa fa-fw fa-remove" value="删除" actionListener="#{commentReviewListBean.deleteCommentReviewAction(commentReview)}" update="commentReviewsForm:messages @parent:@parent:@parent:@parent" style="margin-right:20px" rendered="#{commentReview.status le 1}" />
+								<p:commandButton icon="fa fa-fw fa-undo" value="恢复" actionListener="#{commentReviewListBean.recoverCommentReviewAction(commentReview)}" update="commentReviewsForm:messages @parent:@parent:@parent:@parent" rendered="#{commentReview.status == 2 or commentReview.status == 4}" />
+							</f:facet>
+						</h:panelGrid>
+					</p:layoutUnit>
+					<p:layoutUnit position="center">
+						<h:panelGrid columns="2" class="#{commentReview.comment.status == 0 ? 'toBeProcessed' : (commentReview.comment.status gt 1 ? 'processed' : '')}">
+							<p:outputLabel for="commentContentType" value="关联内容类别:" style="font-weight:bold" />
+							<p:outputLabel id="commentContentType" value="#{commentReview.comment.contentTypeEnum.name()}" />
+							
+							<p:outputLabel for="commentRelativeContentName" value="关联内容:" style="font-weight:bold" />
+							<p:outputLabel id="commentRelativeContentName" value="#{commentReview.comment.relativeContentName}" />
+							
+							<p:outputLabel for="commentUserApp" value="用户应用:" style="font-weight:bold" />
+							<p:outputLabel id="commentUserApp" value="#{commentReview.comment.userApp.name}" />
+							
+							<p:outputLabel for="commentCreateTime" value="创建时间:" style="font-weight:bold" />
+							<p:outputLabel id="commentCreateTime" value="#{commentReview.comment.createTimeDate}">
+							    <f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+							</p:outputLabel>
+							
+							<p:outputLabel for="commentStatus" value="状态:" style="font-weight:bold" />
+							<p:outputLabel id="commentStatus" value="#{commentReview.comment.statusEnum.name()}" />
+							
+							<p:outputLabel for="commentContent" value="内容:" style="font-weight:bold" />
+							<h:outputText id="commentContent" value="#{commentReview.comment.contentToHtml}" escape="false" />
+						</h:panelGrid>
+					</p:layoutUnit>
+				</p:layout>
+			</p:dataScroller>
+			
+			<p:dataTable id="commentReviewsMultiple" widgetVar="commentReviewsMultipleTable" var="commentReview" value="#{commentReviewListBean.pageModel}" lazy="true" rows="20" paginator="true" paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {CurrentPageReport}" rowsPerPageTemplate="20,50,100" currentPageReportTemplate="第{currentPage}/{totalPages}页，第{startRecord}-{endRecord}/{totalRecords}行" selectionMode="single" rowKey="#{commentReview.commentReviewId}" resizableColumns="true" emptyMessage="无数据" rowStyleClass="#{commentReview.status == 0 ? 'toBeProcessed' : (commentReview.status gt 1 ? 'processed' : '')}" style="margin:20px 0px" rendered="#{commentReviewListBean.hasModuleManage() and commentReviewListBean.multiSelect}">
+				<p:column headerText="评论ID : 回复ID" priority="1">
+					<h:outputText value="#{commentReview.commentReviewId.commentId} : #{commentReview.commentReviewId.replyId}" />
+				</p:column>
+					
+				<p:column headerText="类别" priority="1" filterBy="#{commentReview.type}" filterMatchMode="exact">
+					<f:facet name="filter">	
+						<p:selectOneMenu onchange="PF('commentReviewsMultipleTable').filter()">
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{commentReviewListBean.typeEnums}" var="typeEnum" itemLabel="#{typeEnum.name()}" itemValue="#{typeEnum.ordinal()}" />
+						</p:selectOneMenu>						
+					</f:facet>
+					<h:outputText value="#{commentReview.typeEnum.name()}" />
+				</p:column>
+
+				<p:column headerText="内容" priority="1" filterBy="#{commentReview.content}" filterMatchMode="contains">
+					<h:outputText value="#{commentReview.contentToHtml}" escape="false" />
+				</p:column>																								
+
+				<p:column headerText="用户应用" priority="1">
+					<h:outputText value="#{commentReview.userApp.name}" />
+				</p:column>
+			
+				<p:column headerText="创建时间" priority="1">
+					<h:outputText value="#{commentReview.createTimeDate}" >
+						<f:convertDateTime pattern="yyyy年M月d日 HH:mm:ss" timeZone="Asia/Shanghai" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="状态" priority="1" filterBy="#{commentReview.status}" filterMatchMode="exact">
+					<f:facet name="filter">
+						<p:selectOneMenu onchange="PF('commentReviewsMultipleTable').filter()">
+							<f:selectItem itemLabel="选择" itemValue="#{null}" noSelectionOption="true" />
+							<f:selectItems value="#{commentReviewListBean.statusEnums}" var="statusEnum" itemLabel="#{statusEnum.name()}" itemValue="#{statusEnum.ordinal()}" />
+						</p:selectOneMenu>
+					</f:facet>
+					<h:outputText value="#{commentReview.statusEnum.name()}" />
+				</p:column>
+
+				<p:column headerText="关联内容类别" priority="1">
+					<h:outputText value="#{commentReview.comment.contentTypeEnum.name()}" />
+				</p:column>
+
+				<p:column headerText="关联内容" priority="1">
+					<h:outputText value="#{commentReview.comment.relativeContentName}" />
+				</p:column>
+				
+				<p:column headerText="操作" priority="1">
+					<p:commandButton icon="fa fa-fw fa-check" value="通过" actionListener="#{commentReviewListBean.passCommentReviewAction(commentReview)}" update="commentReviewsForm:messages @parent:@parent" style="margin-right:5px" rendered="#{commentReview.status == 0}" />
+					<p:commandButton icon="fa fa-fw fa-ban" value="未通过" actionListener="#{commentReviewListBean.notPassCommentReviewAction(commentReview)}" update="commentReviewsForm:messages @parent:@parent" style="margin-right:5px" rendered="#{commentReview.status le 1}" />
+					<p:commandButton icon="fa fa-fw fa-remove" value="删除" actionListener="#{commentReviewListBean.deleteCommentReviewAction(commentReview)}" update="commentReviewsForm:messages @parent:@parent" style="margin-right:5px" rendered="#{commentReview.status le 1}" />
+					<p:commandButton icon="fa fa-fw fa-undo" value="恢复" actionListener="#{commentReviewListBean.recoverCommentReviewAction(commentReview)}" update="commentReviewsForm:messages @parent:@parent" rendered="#{commentReview.status == 2 or commentReview.status == 4}" />
+				</p:column>
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

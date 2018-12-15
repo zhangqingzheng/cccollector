@@ -1,0 +1,78 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+				xmlns:ui="http://java.sun.com/jsf/facelets"
+				xmlns:h="http://java.sun.com/jsf/html"
+				xmlns:f="http://java.sun.com/jsf/core"
+				xmlns:p="http://primefaces.org/ui"
+				template="#{webFolderBean.usingDialog ? '/WEB-INF/templateDialog.xhtml' : '/WEB-INF/templateMain.xhtml'}">
+	<ui:define name="head">
+		<f:metadata>
+			<f:metadata>
+			<f:viewParam name="useDialog" value="#{webFolderBean.useDialog}" />
+			<f:viewParam name="siteVersionId" value="#{webFolderBean.modelId1}" />
+			<f:viewParam name="parentModelId" value="#{webFolderBean.modelId2}" />
+			<f:viewParam name="webFolderId" value="#{webFolderBean.modelId}" />
+			<f:viewAction action="#{webFolderBean.validateModuleAction}" onPostback="false" />
+		</f:metadata>
+		</f:metadata>
+	</ui:define>
+	
+	<ui:define name="title">
+		#{webFolderBean.webFolder.webFolderId == null ? '添加' : '编辑'}网络文件夹
+	</ui:define>
+	
+	<ui:define name="subtitle">
+		 - <span><a href="webFolderList.xhtml?multiSelect=true&amp;siteVersionId=#{webFolderBean.modelId1}" class="subitem"><h:outputText id="subtitle" value="#{webFolderBean.webFolder.name}" /></a></span>
+	</ui:define>
+
+	<ui:define name="implementation">
+		<h:form id="webFolderEditForm">
+			<p:messages id="messages" />
+			
+			<h:panelGrid columns="2">
+				<p:outputLabel for="webFolderId" value="网络文件夹ID:" style="font-weight:bold" rendered="#{webFolderBean.webFolder.webFolderId != null}" />
+				<p:outputLabel id="webFolderId" value="#{webFolderBean.webFolder.webFolderId}" rendered="#{webFolderBean.webFolder.webFolderId != null}" />
+				
+				<p:outputLabel for="name" value="名称:" style="font-weight:bold" rendered="#{webFolderBean.webFolder.status == 0}" />
+				<p:inputText id="name" value="#{webFolderBean.webFolder.name}" required="true" requiredMessage="名称为必填项" size="50" rendered="#{webFolderBean.webFolder.status == 0}">
+					<f:validateLength maximum="100" />
+					<p:ajax immediate="true" update="subtitle" />
+				</p:inputText>
+				<p:outputLabel for="nameId" value="名称:" style="font-weight:bold" rendered="#{webFolderBean.webFolder.status != 0}" />
+				<p:outputLabel id="nameId" value="#{webFolderBean.webFolder.name}" rendered="#{webFolderBean.webFolder.status != 0}" />
+				
+				<p:outputLabel for="webName" value="网络名称:" style="font-weight:bold" rendered="#{webFolderBean.webFolder.status == 0}" />
+				<p:inputText id="webName" value="#{webFolderBean.webFolder.webName}" required="true" requiredMessage="网络名称为必填项" size="50" rendered="#{webFolderBean.webFolder.status == 0}">
+					<f:validateLength maximum="100" />
+				</p:inputText>
+				<p:outputLabel for="webNameId" value="网络名称:" style="font-weight:bold" rendered="#{webFolderBean.webFolder.status != 0}" />
+				<p:outputLabel id="webNameId" value="#{webFolderBean.webFolder.webName}" rendered="#{webFolderBean.webFolder.status != 0}" />
+				
+				<p:outputLabel for="parentWebFolderName" value="父网络文件夹:" style="font-weight:bold" />
+				<p:outputLabel id="parentWebFolderName" value="#{webFolderBean.webFolder.parentWebFolder.name}" />
+				
+				<p:outputLabel for="code" value="排序代码:" style="font-weight:bold" rendered="#{webFolderBean.webFolder.webFolderId != null}" />
+				<p:outputLabel id="code" value="#{webFolderBean.webFolder.code}" rendered="#{webFolderBean.webFolder.webFolderId != null}" />
+				
+				<p:outputLabel for="updateTime" value="更新时间:" style="font-weight:bold" rendered="#{webFolderBean.webFolder.webFolderId != null}" />
+				<p:outputLabel id="updateTime" value="#{webFolderBean.webFolder.updateTime}" rendered="#{webFolderBean.webFolder.webFolderId != null}">
+		    			<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<p:outputLabel for="publishTime" value="发布时间:" style="font-weight:bold" rendered="#{webFolderBean.webFolder.webFolderId != null and webFolderBean.webFolder.status == 1}" />
+				<p:outputLabel id="publishTime" value="#{webFolderBean.webFolder.publishTime}" rendered="#{webFolderBean.webFolder.webFolderId != null and webFolderBean.webFolder.status == 1}">
+		    			<f:convertDateTime pattern="yyyy年M月d日 HH:mm" timeZone="Asia/Shanghai" />
+				</p:outputLabel>
+				
+				<p:outputLabel for="status" value="状态:" style="font-weight:bold" />
+				<p:outputLabel id="status" value="#{webFolderBean.webFolder.statusEnum.name()}" />
+				
+				<p:outputLabel for="siteVersionName" value="所属站点版本:" style="font-weight:bold" />
+				<p:outputLabel id="siteVersionName" value="#{webFolderBean.webFolder.siteVersion.name}" />
+				
+				<f:facet name="footer">
+					<p:commandButton id="saveButton" icon="ui-icon-disk" value="保存" actionListener="#{webFolderBean.saveAction}" update="messages" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</ui:define>
+</ui:composition>
